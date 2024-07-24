@@ -15,11 +15,16 @@ export class UsersController {
   @Get()
   async findAll() {
     const users = await this.usersService.findAll();
-    return instanceToPlain(users, { groups: ['admin'] });
+    return instanceToPlain(users, { groups: ['public'] });
   }
 
   @Get(':id')
   async findOne(@Param('id') id: string): Promise<User> {
+    return await this.usersService.findById(id);
+  }
+
+  @Get(':id/profile')
+  async getProfile(@Param('id') id: string): Promise<User> {
     return await this.usersService.findById(id);
   }
 

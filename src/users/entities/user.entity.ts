@@ -1,4 +1,4 @@
-import { Expose } from 'class-transformer';
+import { Expose, Type } from 'class-transformer';
 import {
   Column,
   Entity,
@@ -12,7 +12,7 @@ import {
 
 import { Post } from 'src/posts/entities/post.entity';
 import { Like } from 'src/likes/entities/like.entity';
-import { Follow } from 'src/follow/entities/follow.entity';
+import { Follow } from 'src/follows/entities/follow.entity';
 import { Comment } from 'src/comments/entities/comment.entity';
 import { Profile } from 'src/profiles/entities/profile.entity';
 import { Bookmark } from 'src/bookmarks/entities/bookmark.entity';

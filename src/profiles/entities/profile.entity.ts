@@ -27,6 +27,9 @@ export class Profile {
   @Column()
   website: string;
 
+  @Column()
+  isPublic: boolean;
+
   @UpdateDateColumn()
   updatedAt: Date;
 
