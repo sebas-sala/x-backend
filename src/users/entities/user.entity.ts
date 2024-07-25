@@ -20,7 +20,7 @@ import { BlockedUser } from 'src/blocked-users/entities/blocked-user.entity';
 
 @Entity()
 export class User {
-  @Expose({ groups: ['profile', 'admin'] })
+  @Expose({ groups: ['public', 'profile', 'admin'] })
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -40,6 +40,7 @@ export class User {
   @Expose({ groups: ['admin'] })
   password: string;
 
+  @Expose()
   @CreateDateColumn()
   createdAt: Date;
 

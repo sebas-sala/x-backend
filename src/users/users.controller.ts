@@ -11,7 +11,6 @@ import { Role, Roles } from 'src/common/decorators/roles.decorator';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @Roles(Role.Admin)
   @Get()
   async findAll() {
     const users = await this.usersService.findAll();

@@ -55,6 +55,8 @@ export class FollowService {
         throw new NotFoundException('Following not found');
       }
 
+      console.log(await this.followRepository.find());
+
       const existingFollow = await this.findFollow(followerId, followingId);
       if (existingFollow) {
         throw new ConflictException('Follow already exists');

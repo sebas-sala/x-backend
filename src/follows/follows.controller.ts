@@ -8,13 +8,13 @@ export class FollowController {
   constructor(private readonly followService: FollowService) {}
 
   @Post()
-  create(@Body() createFollowDto: CreateFollowDto) {
-    return this.followService.create(createFollowDto);
+  async create(@Body() createFollowDto: CreateFollowDto) {
+    return await this.followService.create(createFollowDto);
   }
 
   @Delete()
-  remove(@Body() deleteFollowDto: DeleteFollowDto) {
-    return this.followService.remove(deleteFollowDto);
+  async remove(@Body() deleteFollowDto: DeleteFollowDto) {
+    return await this.followService.remove(deleteFollowDto);
   }
 
   @Get('users/:userId/followers')

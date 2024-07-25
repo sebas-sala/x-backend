@@ -46,7 +46,7 @@ import { HttpExceptionFilter } from './common/filters/http-exception.filter';
     ]),
     TypeOrmModule.forRoot({
       type: 'sqlite',
-      database: ':memory:',
+      database: 'database.sqlite',
       entities: [
         User,
         Post,
