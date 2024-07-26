@@ -41,6 +41,7 @@ export class Profile {
   @JoinColumn()
   cover?: Image;
 
-  @OneToOne(() => User, (user) => user.profile)
-  user: User;
+  // @OneToOne(() => User, (user) => user.profile)
+  // @JoinColumn()
+  // user: User;
 }

@@ -4,7 +4,7 @@ import {
   FastifyAdapter,
   NestFastifyApplication,
 } from '@nestjs/platform-fastify';
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe, VersioningType } from '@nestjs/common';
 import fastifyCookie from '@fastify/cookie';
 import fastifyHelmet from '@fastify/helmet';
 import fastifyCsrfProtection from '@fastify/csrf-protection';
@@ -24,6 +24,7 @@ async function bootstrap() {
       maxParamLength: 5000,
     }),
   );
+
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -36,6 +37,11 @@ async function bootstrap() {
 
   await app.register(fastifyHelmet);
   await app.register(fastifyCsrfProtection);
+
+  app.enableVersioning({
+    type: VersioningType.URI,
+    defaultVersion: '1',
+  });
 
   await app.listen(8000, '0.0.0.0');
 }

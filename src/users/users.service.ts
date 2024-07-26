@@ -3,12 +3,12 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { CreateUserDto } from './dto/create-user.dto';
-import { User } from './entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-
 import * as bcrypt from 'bcrypt';
+
+import { User } from './entities/user.entity';
+import { CreateUserDto } from './dto/create-user.dto';
 
 @Injectable()
 export class UsersService {
@@ -21,16 +21,16 @@ export class UsersService {
     return this.usersRepository.find();
   }
 
-  findById(id: string): Promise<User | any> {
-    return this.findOnebyField('id', id);
+  async findById(id: string): Promise<User> {
+    return await this.findOneByField('id', id);
   }
 
-  findByEmail(email: string): Promise<User | any> {
-    return this.findOnebyField('email', email);
+  async findByEmail(email: string): Promise<User> {
+    return await this.findOneByField('email', email);
   }
 
-  findByUsername(username: string): Promise<User | any> {
-    return this.findOnebyField('username', username);
+  async findByUsername(username: string): Promise<User> {
+    return await this.findOneByField('username', username);
   }
 
   async create(createUserDto: CreateUserDto): Promise<User> {
@@ -45,7 +45,7 @@ export class UsersService {
     return await this.usersRepository.save(newUser);
   }
 
-  private async findOnebyField(field: string, value: string): Promise<User> {
+  private async findOneByField(field: string, value: string): Promise<User> {
     const user = await this.usersRepository.findOneBy({ [field]: value });
 
     if (!user) {
@@ -55,7 +55,7 @@ export class UsersService {
     return user;
   }
 
-  private async hashPassword(password: string): Promise<string> {
+  async hashPassword(password: string): Promise<string> {
     const saltOrRounds = await bcrypt.genSalt(10);
     return await bcrypt.hash(password, saltOrRounds);
   }

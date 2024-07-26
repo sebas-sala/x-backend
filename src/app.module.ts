@@ -15,7 +15,6 @@ import { Follow } from './follows/entities/follow.entity';
 import { Comment } from './comments/entities/comment.entity';
 import { Profile } from './profiles/entities/profile.entity';
 import { Bookmark } from './bookmarks/entities/bookmark.entity';
-import { BlockedUser } from './blocked-users/entities/blocked-user.entity';
 
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
@@ -25,15 +24,13 @@ import { ImagesModule } from './images/images.module';
 import { ProfilesModule } from './profiles/profiles.module';
 import { CommentsModule } from './comments/comments.module';
 import { BookmarksModule } from './bookmarks/bookmarks.module';
-import { BlockedUsersModule } from './blocked-users/blocked-users.module';
 
 import configuration from './config/configuration';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
+import { PostsModule } from './posts/posts.module';
 
 @Module({
   imports: [
-    AuthModule,
-    UsersModule,
     ConfigModule.forRoot({
       isGlobal: true,
       load: [configuration],
@@ -47,26 +44,19 @@ import { HttpExceptionFilter } from './common/filters/http-exception.filter';
     TypeOrmModule.forRoot({
       type: 'sqlite',
       database: 'database.sqlite',
-      entities: [
-        User,
-        Post,
-        Like,
-        Image,
-        Follow,
-        Comment,
-        Profile,
-        Bookmark,
-        BlockedUser,
-      ],
+      entities: [User, Post, Like, Image, Follow, Comment, Profile, Bookmark],
       synchronize: true,
+      autoLoadEntities: true,
     }),
-    ProfilesModule,
-    ImagesModule,
+    AuthModule,
+    UsersModule,
+    PostsModule,
     LikesModule,
-    BookmarksModule,
-    CommentsModule,
-    BlockedUsersModule,
     FollowModule,
+    ImagesModule,
+    ProfilesModule,
+    CommentsModule,
+    BookmarksModule,
   ],
   controllers: [AppController],
   providers: [
