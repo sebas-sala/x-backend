@@ -44,7 +44,6 @@ import { PostsModule } from './posts/posts.module';
     TypeOrmModule.forRoot({
       type: 'sqlite',
       database: 'database.sqlite',
-      entities: [User, Post, Like, Image, Follow, Comment, Profile, Bookmark],
       synchronize: true,
       autoLoadEntities: true,
     }),
