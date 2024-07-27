@@ -16,32 +16,17 @@ import { Follow } from 'src/follows/entities/follow.entity';
 import { Comment } from 'src/comments/entities/comment.entity';
 import { Profile } from 'src/profiles/entities/profile.entity';
 import { Bookmark } from 'src/bookmarks/entities/bookmark.entity';
-import {
-  IsEmail,
-  IsNotEmpty,
-  IsStrongPassword,
-  MaxLength,
-  MinLength,
-} from 'class-validator';
 
 @Entity()
 export class User {
-  @IsNotEmpty()
-  @MinLength(3)
-  @MaxLength(50)
   @Expose({ groups: ['public', 'profile', 'admin'] })
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @IsEmail()
-  @IsNotEmpty()
   @Expose({ groups: ['public', 'private', 'admin'] })
   @Column()
   name: string;
 
-  @IsNotEmpty()
-  @MinLength(3)
-  @MaxLength(20)
   @Expose({ groups: ['private', 'admin'] })
   @Column({ unique: true })
   email: string;
@@ -50,9 +35,6 @@ export class User {
   @Column({ unique: true })
   username: string;
 
-  @IsNotEmpty()
-  @MaxLength(30)
-  @IsStrongPassword()
   @Column()
   @Exclude()
   password: string;

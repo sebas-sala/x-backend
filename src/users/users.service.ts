@@ -45,6 +45,11 @@ export class UsersService {
     return await this.usersRepository.save(newUser);
   }
 
+  private async hashPassword(password: string): Promise<string> {
+    const saltOrRounds = await bcrypt.genSalt(10);
+    return await bcrypt.hash(password, saltOrRounds);
+  }
+
   private async findOneByField(field: string, value: string): Promise<User> {
     const user = await this.usersRepository.findOneBy({ [field]: value });
 
@@ -53,11 +58,6 @@ export class UsersService {
     }
 
     return user;
-  }
-
-  async hashPassword(password: string): Promise<string> {
-    const saltOrRounds = await bcrypt.genSalt(10);
-    return await bcrypt.hash(password, saltOrRounds);
   }
 
   private async validateUserDoesNotExist(
