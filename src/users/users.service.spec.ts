@@ -1,4 +1,4 @@
-import { DataSource, EntityManager, QueryRunner, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { Test, TestingModule } from '@nestjs/testing';
 import { TypeOrmModule, getRepositoryToken } from '@nestjs/typeorm';
 import { ConflictException, NotFoundException } from '@nestjs/common';
@@ -9,6 +9,7 @@ import { UsersService } from './users.service';
 import { Profile } from 'src/profiles/entities/profile.entity';
 
 import { CreateUserDto } from './dto/create-user.dto';
+
 import { QueryRunnerFactory } from 'src/dababase/query-runner.factory';
 import { createMockQueryRunner } from 'src/utils/mocks/query-runner.mock';
 
@@ -39,7 +40,7 @@ describe('UsersService', () => {
           entities: [User, Profile],
           synchronize: true,
         }),
-        TypeOrmModule.forFeature([User, Profile]),
+        TypeOrmModule.forFeature([User]),
       ],
       providers: [
         UsersService,

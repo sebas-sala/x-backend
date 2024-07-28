@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, EntityManager, Repository } from 'typeorm';
+import { EntityManager, Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 
 import { User } from './entities/user.entity';
@@ -89,27 +89,9 @@ export class UsersService {
   private async validateUserDoesNotExist(
     username: string,
     email: string,
-    manager?: EntityManager,
+    manager: EntityManager,
   ): Promise<void> {
-    if (manager) {
-      const existingUser = await manager.findOne(User, {
-        where: [{ username }, { email }],
-      });
-
-      if (existingUser) {
-        if (existingUser.username === username) {
-          throw new ConflictException('Username already exists');
-        }
-
-        if (existingUser.email === email) {
-          throw new ConflictException('Email already exists');
-        }
-      }
-
-      return;
-    }
-
-    const existingUser = await this.usersRepository.findOne({
+    const existingUser = await manager.findOne(User, {
       where: [{ username }, { email }],
     });
 
