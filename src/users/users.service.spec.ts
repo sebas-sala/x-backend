@@ -1,19 +1,24 @@
-import { Repository } from 'typeorm';
+import { DataSource, EntityManager, QueryRunner, Repository } from 'typeorm';
 import { Test, TestingModule } from '@nestjs/testing';
 import { TypeOrmModule, getRepositoryToken } from '@nestjs/typeorm';
+import { ConflictException, NotFoundException } from '@nestjs/common';
 
 import { User } from './entities/user.entity';
 import { UsersService } from './users.service';
 
-import { CreateUserDto } from './dto/create-user.dto';
-import { ConflictException, NotFoundException } from '@nestjs/common';
+import { Profile } from 'src/profiles/entities/profile.entity';
 
-const mockUser = {
+import { CreateUserDto } from './dto/create-user.dto';
+import { QueryRunnerFactory } from 'src/dababase/query-runner.factory';
+import { createMockQueryRunner } from 'src/utils/mocks/query-runner.mock';
+
+const mockUser: User = {
   id: '1',
   name: 'Pedrito',
   email: 'pedrito@gmail.com',
   username: 'pedrito',
   password: '123456',
+  profile: undefined as any,
   createdAt: new Date(),
   updatedAt: new Date(),
 };
@@ -21,19 +26,31 @@ const mockUser = {
 describe('UsersService', () => {
   let usersService: UsersService;
   let usersRepository: Repository<User>;
+  let queryRunner: any;
 
   beforeEach(async () => {
+    queryRunner = createMockQueryRunner();
+
     const module: TestingModule = await Test.createTestingModule({
       imports: [
         TypeOrmModule.forRoot({
           type: 'sqlite',
           database: ':memory:',
-          entities: [User],
+          entities: [User, Profile],
           synchronize: true,
         }),
-        TypeOrmModule.forFeature([User]),
+        TypeOrmModule.forFeature([User, Profile]),
       ],
-      providers: [UsersService],
+      providers: [
+        UsersService,
+        QueryRunnerFactory,
+        {
+          provide: QueryRunnerFactory,
+          useValue: {
+            createQueryRunner: jest.fn(() => queryRunner),
+          },
+        },
+      ],
     }).compile();
 
     usersService = module.get<UsersService>(UsersService);
@@ -52,58 +69,53 @@ describe('UsersService', () => {
       password: '123456',
     };
 
-    const savedUser = {
-      ...createUserDto,
-      id: mockUser.id,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-
     it('should save a user', async () => {
-      jest.spyOn(usersRepository, 'findOne').mockResolvedValue(null);
-      jest.spyOn(usersRepository, 'create').mockReturnValue(savedUser);
-      jest.spyOn(usersRepository, 'save').mockResolvedValue(savedUser);
+      const { manager } = queryRunner;
+
+      jest.spyOn(manager, 'create').mockResolvedValue(mockUser);
 
       const result = await usersService.create(createUserDto);
 
       expect(result).toEqual({
         ...mockUser,
+        id: expect.any(String),
+        password: expect.any(String),
         createdAt: expect.any(Date),
         updatedAt: expect.any(Date),
       });
-      expect(usersRepository.findOne).toHaveBeenCalledWith({
-        where: [
-          {
-            username: createUserDto.username,
-          },
-          {
-            email: createUserDto.email,
-          },
-        ],
+      expect(manager.create).toHaveBeenCalled();
+      expect(manager.save).toHaveBeenCalled();
+      expect(manager.findOne).toHaveBeenCalledWith(User, {
+        where: [{ username: mockUser.username }, { email: mockUser.email }],
       });
-      expect(usersRepository.create).toHaveBeenCalledWith(createUserDto);
-      expect(usersRepository.save).toHaveBeenCalledWith(savedUser);
     });
 
     it('should handle ConflictException when username already exists', async () => {
-      jest.spyOn(usersRepository, 'findOne').mockResolvedValue({
-        ...mockUser,
-        email: 'anotherEmail@gmail.com',
-      });
+      const { manager } = queryRunner;
+
+      jest.spyOn(manager, 'findOne').mockResolvedValue(mockUser);
 
       await expect(usersService.create(createUserDto)).rejects.toThrow(
-        new ConflictException('Username already exists'),
+        ConflictException,
+      );
+      await expect(usersService.create(createUserDto)).rejects.toThrow(
+        'Username already exists',
       );
     });
 
     it('should handle ConflictException when email already exists', async () => {
-      jest.spyOn(usersRepository, 'findOne').mockResolvedValueOnce({
+      const { manager } = queryRunner;
+
+      jest.spyOn(manager, 'findOne').mockResolvedValue({
         ...mockUser,
-        username: 'anotherUsername',
+        username: 'aoierstnoart',
       });
 
       await expect(usersService.create(createUserDto)).rejects.toThrow(
-        new ConflictException('Email already exists'),
+        ConflictException,
+      );
+      await expect(usersService.create(createUserDto)).rejects.toThrow(
+        'Email already exists',
       );
     });
   });
@@ -148,23 +160,32 @@ describe('UsersService', () => {
       jest.spyOn(usersRepository, 'findOneBy').mockResolvedValue(null);
 
       await expect(usersService.findById('999')).rejects.toThrow(
-        new NotFoundException('User not found'),
+        'User not found',
+      );
+      await expect(usersService.findById('999')).rejects.toThrow(
+        NotFoundException,
       );
     });
 
     it('should throw an error if the user does not exist by email', async () => {
-      jest.spyOn(usersRepository, 'findOneBy').mockResolvedValueOnce(null);
+      jest.spyOn(usersRepository, 'findOneBy').mockResolvedValue(null);
 
       await expect(
         usersService.findByEmail('HlqQp@example.com'),
-      ).rejects.toThrow(new NotFoundException('User not found'));
+      ).rejects.toThrow('User not found');
+      await expect(
+        usersService.findByEmail('HlqQp@example.com'),
+      ).rejects.toThrow(NotFoundException);
     });
 
     it('should throw an error if the user does not exist by username', async () => {
-      jest.spyOn(usersRepository, 'findOneBy').mockResolvedValueOnce(null);
+      jest.spyOn(usersRepository, 'findOneBy').mockResolvedValue(null);
 
       await expect(usersService.findByUsername('user1')).rejects.toThrow(
-        new NotFoundException('User not found'),
+        'User not found',
+      );
+      await expect(usersService.findByUsername('user1')).rejects.toThrow(
+        NotFoundException,
       );
     });
   });
