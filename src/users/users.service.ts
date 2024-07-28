@@ -4,17 +4,21 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, EntityManager, Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 
 import { User } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
+import { Profile } from 'src/profiles/entities/profile.entity';
+import { BCRYPT_SALT_ROUNDS, DEFAULT_PROFILE } from 'src/config/constants';
+import { QueryRunnerFactory } from 'src/dababase/query-runner.factory';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User)
     private readonly usersRepository: Repository<User>,
+    private readonly queryRunnerFactory: QueryRunnerFactory,
   ) {}
 
   async findAll(): Promise<User[]> {
@@ -33,20 +37,42 @@ export class UsersService {
     return await this.findOneByField('username', username);
   }
 
-  async create(createUserDto: CreateUserDto): Promise<User> {
-    const { username, email, password } = createUserDto;
+  async create(createUserDto: CreateUserDto): Promise<User | undefined> {
+    const queryRunner = this.queryRunnerFactory.createQueryRunner();
 
-    await this.validateUserDoesNotExist(username, email);
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
 
-    const hashedPassword = await this.hashPassword(password);
-    createUserDto.password = hashedPassword;
+    try {
+      const { username, email, password } = createUserDto;
 
-    const newUser = this.usersRepository.create(createUserDto);
-    return await this.usersRepository.save(newUser);
+      await this.validateUserDoesNotExist(username, email, queryRunner.manager);
+
+      const hashedPassword = await this.hashPassword(password);
+      createUserDto.password = hashedPassword;
+
+      const user = queryRunner.manager.create(User, createUserDto);
+      await queryRunner.manager.save(User, user);
+
+      const profile = queryRunner.manager.create(Profile, {
+        user,
+        ...DEFAULT_PROFILE,
+      });
+      await queryRunner.manager.save(Profile, profile);
+
+      await queryRunner.commitTransaction();
+
+      return user;
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
   }
 
   private async hashPassword(password: string): Promise<string> {
-    const saltOrRounds = await bcrypt.genSalt(10);
+    const saltOrRounds = await bcrypt.genSalt(BCRYPT_SALT_ROUNDS);
     return await bcrypt.hash(password, saltOrRounds);
   }
 
@@ -63,7 +89,26 @@ export class UsersService {
   private async validateUserDoesNotExist(
     username: string,
     email: string,
+    manager?: EntityManager,
   ): Promise<void> {
+    if (manager) {
+      const existingUser = await manager.findOne(User, {
+        where: [{ username }, { email }],
+      });
+
+      if (existingUser) {
+        if (existingUser.username === username) {
+          throw new ConflictException('Username already exists');
+        }
+
+        if (existingUser.email === email) {
+          throw new ConflictException('Email already exists');
+        }
+      }
+
+      return;
+    }
+
     const existingUser = await this.usersRepository.findOne({
       where: [{ username }, { email }],
     });
