@@ -15,33 +15,33 @@ export class Profile {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column()
-  bio: string;
+  @Column({ nullable: true })
+  bio?: string;
 
-  @Column()
-  location: string;
+  @Column({ nullable: true })
+  location?: string;
 
-  @Column()
-  birthdate: Date;
+  @Column({ nullable: true })
+  birthdate?: Date;
 
-  @Column()
-  website: string;
+  @Column({ nullable: true })
+  website?: string;
 
-  @Column()
+  @Column({ default: true })
   isPublic: boolean;
 
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @OneToOne(() => Image, { cascade: true, nullable: true })
-  @JoinColumn()
-  avatar?: Image;
+  @OneToOne(() => User, (user) => user.profile)
+  @JoinColumn({ name: 'userId' })
+  user: User;
 
-  @OneToOne(() => Image, { cascade: true, nullable: true })
-  @JoinColumn()
-  cover?: Image;
-
-  // @OneToOne(() => User, (user) => user.profile)
+  // @OneToOne(() => Image, { cascade: true, nullable: true })
   // @JoinColumn()
-  // user: User;
+  // avatar?: Image;
+
+  // @OneToOne(() => Image, { cascade: true, nullable: true })
+  // @JoinColumn()
+  // cover?: Image;
 }
