@@ -5,27 +5,28 @@ import { User } from './entities/user.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConflictException, NotFoundException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
+import { Profile } from 'src/profiles/entities/profile.entity';
 
-const mockUsers = [
-  {
-    name: 'User 1',
-    email: 'HlqQp@example.com',
-    username: 'user1',
-    password: 'password1',
-    id: '1',
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    name: 'User 2',
-    email: 'HlqQp@example.com',
-    username: 'user2',
-    password: 'password2',
-    id: '2',
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-];
+const mockProfile = {
+  bio: 'Bio 1',
+  location: 'Location 1',
+  birthdate: new Date(),
+  website: 'website.com',
+  isPublic: true,
+  id: '1',
+  updatedAt: new Date(),
+};
+
+const mockUser = {
+  name: 'User 1',
+  email: 'HlqQp@example.com',
+  username: 'user1',
+  password: 'password1',
+  id: '1',
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  profile: mockProfile,
+};
 
 describe('UsersController', () => {
   let usersController: UsersController;
@@ -37,7 +38,7 @@ describe('UsersController', () => {
         TypeOrmModule.forRoot({
           type: 'sqlite',
           database: ':memory:',
-          entities: [User],
+          entities: [User, Profile],
           synchronize: true,
         }),
         TypeOrmModule.forFeature([User]),
@@ -56,9 +57,9 @@ describe('UsersController', () => {
 
   describe('findAll()', () => {
     it('should return an array of users', async () => {
-      jest.spyOn(usersService, 'findAll').mockResolvedValueOnce(mockUsers);
+      jest.spyOn(usersService, 'findAll').mockResolvedValueOnce([mockUser]);
       const result = await usersController.findAll();
-      expect(result).toEqual(mockUsers);
+      expect(result).toEqual([mockUser]);
       expect(usersService.findAll).toHaveBeenCalled();
       expect(usersService.findAll).toHaveBeenCalledTimes(1);
     });
@@ -72,9 +73,9 @@ describe('UsersController', () => {
 
   describe('findOne()', () => {
     it('should return a user', async () => {
-      jest.spyOn(usersService, 'findById').mockResolvedValueOnce(mockUsers[0]);
+      jest.spyOn(usersService, 'findById').mockResolvedValueOnce(mockUser);
       const result = await usersController.findOne('1');
-      expect(result).toEqual(mockUsers[0]);
+      expect(result).toEqual(mockUser);
       expect(usersService.findById).toHaveBeenCalledWith('1');
     });
 
@@ -126,11 +127,11 @@ describe('UsersController', () => {
         .spyOn(usersService, 'create')
         .mockRejectedValue(new ConflictException('Username already exists'));
 
-      await expect(usersController.create(mockUsers[0])).rejects.toThrow(
+      await expect(usersController.create(mockUser)).rejects.toThrow(
         ConflictException,
       );
 
-      await expect(usersController.create(mockUsers[0])).rejects.toThrow(
+      await expect(usersController.create(mockUser)).rejects.toThrow(
         'Username already exists',
       );
     });
@@ -140,11 +141,11 @@ describe('UsersController', () => {
         .spyOn(usersService, 'create')
         .mockRejectedValue(new ConflictException('Email already exists'));
 
-      await expect(usersController.create(mockUsers[0])).rejects.toThrow(
+      await expect(usersController.create(mockUser)).rejects.toThrow(
         ConflictException,
       );
 
-      await expect(usersController.create(mockUsers[0])).rejects.toThrow(
+      await expect(usersController.create(mockUser)).rejects.toThrow(
         'Email already exists',
       );
     });
