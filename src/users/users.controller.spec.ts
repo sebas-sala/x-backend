@@ -6,18 +6,10 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConflictException, NotFoundException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { Profile } from 'src/profiles/entities/profile.entity';
+import { createMockQueryRunner } from 'src/utils/mocks/query-runner.mock';
+import { QueryRunnerFactory } from 'src/dababase/query-runner.factory';
 
-const mockProfile = {
-  bio: 'Bio 1',
-  location: 'Location 1',
-  birthdate: new Date(),
-  website: 'website.com',
-  isPublic: true,
-  id: '1',
-  updatedAt: new Date(),
-};
-
-const mockUser = {
+const mockUser: User = {
   name: 'User 1',
   email: 'HlqQp@example.com',
   username: 'user1',
@@ -25,14 +17,17 @@ const mockUser = {
   id: '1',
   createdAt: new Date(),
   updatedAt: new Date(),
-  profile: mockProfile,
+  profile: undefined as any,
 };
 
 describe('UsersController', () => {
   let usersController: UsersController;
   let usersService: UsersService;
+  let queryRunner: any;
 
   beforeEach(async () => {
+    queryRunner = createMockQueryRunner();
+
     const module: TestingModule = await Test.createTestingModule({
       imports: [
         TypeOrmModule.forRoot({
@@ -44,7 +39,15 @@ describe('UsersController', () => {
         TypeOrmModule.forFeature([User]),
       ],
       controllers: [UsersController],
-      providers: [UsersService],
+      providers: [
+        UsersService,
+        {
+          provide: QueryRunnerFactory,
+          useValue: {
+            createQueryRunner: jest.fn(() => queryRunner),
+          },
+        },
+      ],
     }).compile();
 
     usersController = module.get<UsersController>(UsersController);
@@ -103,7 +106,9 @@ describe('UsersController', () => {
     };
 
     it('should create a user', async () => {
-      jest.spyOn(usersService, 'create').mockResolvedValueOnce({
+      const { manager } = queryRunner;
+
+      jest.spyOn(manager, 'create').mockResolvedValueOnce({
         ...createUserDto,
         id: '3',
         createdAt: new Date(),
@@ -116,35 +121,43 @@ describe('UsersController', () => {
         ...createUserDto,
         createdAt: expect.any(Date),
         updatedAt: expect.any(Date),
+        password: expect.any(String),
         id: '3',
       });
-      expect(usersService.create).toHaveBeenCalledWith(createUserDto);
-      expect(usersService.create).toHaveBeenCalledTimes(1);
+      expect(manager.create).toHaveBeenCalled();
+      expect(manager.save).toHaveBeenCalled();
+      expect(manager.findOne).toHaveBeenCalledWith(User, {
+        where: [
+          { username: createUserDto.username },
+          { email: createUserDto.email },
+        ],
+      });
     });
 
     it('should throw an error if the username already exists', async () => {
-      jest
-        .spyOn(usersService, 'create')
-        .mockRejectedValue(new ConflictException('Username already exists'));
+      const { manager } = queryRunner;
+
+      jest.spyOn(manager, 'findOne').mockResolvedValue(mockUser);
 
       await expect(usersController.create(mockUser)).rejects.toThrow(
         ConflictException,
       );
-
       await expect(usersController.create(mockUser)).rejects.toThrow(
         'Username already exists',
       );
     });
 
     it('should throw an error if the email already exists', async () => {
-      jest
-        .spyOn(usersService, 'create')
-        .mockRejectedValue(new ConflictException('Email already exists'));
+      const { manager } = queryRunner;
+
+      jest.spyOn(manager, 'findOne').mockResolvedValue({
+        ...mockUser,
+        username: 'aoierstnoart',
+      });
 
       await expect(usersController.create(mockUser)).rejects.toThrow(
         ConflictException,
       );
-
       await expect(usersController.create(mockUser)).rejects.toThrow(
         'Email already exists',
       );
