@@ -8,6 +8,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { Profile } from 'src/profiles/entities/profile.entity';
 import { createMockQueryRunner } from 'src/utils/mocks/query-runner.mock';
 import { QueryRunnerFactory } from 'src/dababase/query-runner.factory';
+import { ProfilesModule } from 'src/profiles/profiles.module';
 
 const mockUser: User = {
   name: 'User 1',
@@ -30,6 +31,7 @@ describe('UsersController', () => {
 
     const module: TestingModule = await Test.createTestingModule({
       imports: [
+        ProfilesModule,
         TypeOrmModule.forRoot({
           type: 'sqlite',
           database: ':memory:',
@@ -76,15 +78,15 @@ describe('UsersController', () => {
 
   describe('findOne()', () => {
     it('should return a user', async () => {
-      jest.spyOn(usersService, 'findById').mockResolvedValueOnce(mockUser);
+      jest.spyOn(usersService, 'findOneById').mockResolvedValueOnce(mockUser);
       const result = await usersController.findOne('1');
       expect(result).toEqual(mockUser);
-      expect(usersService.findById).toHaveBeenCalledWith('1');
+      expect(usersService.findOneById).toHaveBeenCalledWith('1');
     });
 
     it('should throw an error if the user does not exist', async () => {
       jest
-        .spyOn(usersService, 'findById')
+        .spyOn(usersService, 'findOneById')
         .mockRejectedValue(new NotFoundException('User not found'));
 
       await expect(usersController.findOne('1')).rejects.toThrow(
@@ -92,6 +94,29 @@ describe('UsersController', () => {
       );
 
       await expect(usersController.findOne('1')).rejects.toThrow(
+        'User not found',
+      );
+    });
+  });
+
+  describe('getProfile()', () => {
+    it('should return a user profile', async () => {
+      jest.spyOn(usersService, 'findOneById').mockResolvedValueOnce(mockUser);
+      const result = await usersController.getProfile('1');
+      expect(result).toEqual(mockUser);
+      expect(usersService.findOneById).toHaveBeenCalledWith('1');
+    });
+
+    it('should throw an error if the user does not exist', async () => {
+      jest
+        .spyOn(usersService, 'findOneById')
+        .mockRejectedValue(new NotFoundException('User not found'));
+
+      await expect(usersController.getProfile('1')).rejects.toThrow(
+        NotFoundException,
+      );
+
+      await expect(usersController.getProfile('1')).rejects.toThrow(
         'User not found',
       );
     });
