@@ -25,16 +25,12 @@ export class UsersService {
     return this.usersRepository.find();
   }
 
-  async findById(id: string): Promise<User> {
-    return await this.findOneByField('id', id);
-  }
-
-  async findByEmail(email: string): Promise<User> {
-    return await this.findOneByField('email', email);
+  async findOneById(id: string): Promise<User> {
+    return await this.findOneBy({ id }, ['profile']);
   }
 
   async findByUsername(username: string): Promise<User> {
-    return await this.findOneByField('username', username);
+    return await this.findOneBy({ username }, ['profile']);
   }
 
   async create(createUserDto: CreateUserDto): Promise<User | undefined> {
@@ -71,19 +67,22 @@ export class UsersService {
     }
   }
 
-  private async hashPassword(password: string): Promise<string> {
-    const saltOrRounds = await bcrypt.genSalt(BCRYPT_SALT_ROUNDS);
-    return await bcrypt.hash(password, saltOrRounds);
-  }
-
-  private async findOneByField(field: string, value: string): Promise<User> {
-    const user = await this.usersRepository.findOneBy({ [field]: value });
+  private async findOneBy(options: any, relations?: string[]): Promise<User> {
+    const user = await this.usersRepository.findOne({
+      where: options,
+      relations,
+    });
 
     if (!user) {
       throw new NotFoundException('User not found');
     }
 
     return user;
+  }
+
+  private async hashPassword(password: string): Promise<string> {
+    const saltOrRounds = await bcrypt.genSalt(BCRYPT_SALT_ROUNDS);
+    return await bcrypt.hash(password, saltOrRounds);
   }
 
   private async validateUserDoesNotExist(

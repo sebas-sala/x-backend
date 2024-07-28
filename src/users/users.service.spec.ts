@@ -7,6 +7,7 @@ import { User } from './entities/user.entity';
 import { UsersService } from './users.service';
 
 import { Profile } from 'src/profiles/entities/profile.entity';
+import { ProfilesModule } from 'src/profiles/profiles.module';
 
 import { CreateUserDto } from './dto/create-user.dto';
 
@@ -34,6 +35,7 @@ describe('UsersService', () => {
 
     const module: TestingModule = await Test.createTestingModule({
       imports: [
+        ProfilesModule,
         TypeOrmModule.forRoot({
           type: 'sqlite',
           database: ':memory:',
@@ -137,51 +139,31 @@ describe('UsersService', () => {
     });
   });
 
-  describe('findOneBy()', () => {
-    beforeEach(() => {
-      jest.spyOn(usersRepository, 'findOneBy').mockResolvedValue(mockUser);
+  describe('findOne()', () => {
+    it('should return a user by id', async () => {
+      jest.spyOn(usersRepository, 'findOne').mockResolvedValue(mockUser);
+
+      const result = await usersService.findOneById(mockUser.id);
+      expect(result).toEqual(mockUser);
     });
 
     it('should return a user by username', async () => {
-      const result = await usersService.findById('user1');
-      expect(result).toEqual(mockUser);
-    });
+      jest.spyOn(usersRepository, 'findOne').mockResolvedValue(mockUser);
 
-    it('should return a user by email', async () => {
-      const result = await usersService.findByEmail('HlqQp@example.com');
-      expect(result).toEqual(mockUser);
-    });
-
-    it('should return a user by email', async () => {
-      const result = await usersService.findByUsername('user1');
+      const result = await usersService.findByUsername(mockUser.username);
       expect(result).toEqual(mockUser);
     });
 
     it('should throw an error if the user does not exist by id', async () => {
-      jest.spyOn(usersRepository, 'findOneBy').mockResolvedValue(null);
-
-      await expect(usersService.findById('999')).rejects.toThrow(
+      await expect(usersService.findOneById('999')).rejects.toThrow(
         'User not found',
       );
-      await expect(usersService.findById('999')).rejects.toThrow(
+      await expect(usersService.findOneById('999')).rejects.toThrow(
         NotFoundException,
       );
     });
 
-    it('should throw an error if the user does not exist by email', async () => {
-      jest.spyOn(usersRepository, 'findOneBy').mockResolvedValue(null);
-
-      await expect(
-        usersService.findByEmail('HlqQp@example.com'),
-      ).rejects.toThrow('User not found');
-      await expect(
-        usersService.findByEmail('HlqQp@example.com'),
-      ).rejects.toThrow(NotFoundException);
-    });
-
     it('should throw an error if the user does not exist by username', async () => {
-      jest.spyOn(usersRepository, 'findOneBy').mockResolvedValue(null);
-
       await expect(usersService.findByUsername('user1')).rejects.toThrow(
         'User not found',
       );
