@@ -1,15 +1,20 @@
 import { instanceToPlain } from 'class-transformer';
-import { Controller, Get, Post, Body, Param } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Patch } from '@nestjs/common';
 
 import { User } from './entities/user.entity';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 
 import { Role, Roles } from 'src/common/decorators/roles.decorator';
+import { ProfilesService } from 'src/profiles/profiles.service';
+import { UpdateProfileDto } from 'src/profiles/dto/update-profile.dto';
 
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly profilesService: ProfilesService,
+  ) {}
 
   @Get()
   async findAll() {
@@ -18,13 +23,23 @@ export class UsersController {
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string): Promise<User> {
-    return await this.usersService.findById(id);
+  async findOne(@Param('id') id: string) {
+    const user = await this.usersService.findOneById(id);
+    return instanceToPlain(user, { groups: ['private'] });
   }
 
   @Get(':id/profile')
-  async getProfile(@Param('id') id: string): Promise<User> {
-    return await this.usersService.findById(id);
+  async getProfile(@Param('id') id: string) {
+    const user = await this.usersService.findOneById(id);
+    return instanceToPlain(user, { groups: ['profile'] });
+  }
+
+  @Patch(':id/profile')
+  async updateProfile(
+    @Param('id') id: string,
+    @Body() profile: UpdateProfileDto,
+  ) {
+    return await this.profilesService.update(id, profile);
   }
 
   @Post()
