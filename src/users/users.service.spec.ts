@@ -12,8 +12,8 @@ import { ProfilesModule } from '@/src/profiles/profiles.module';
 
 import { Post } from '@/src/posts/entities/post.entity';
 
-import { QueryRunnerFactory } from '@/src/dababase/query-runner.factory';
-import { createMockQueryRunner } from '@/src/utils/mocks/query-runner.mock';
+import { QueryRunnerFactory } from '@/src/common/factories/query-runner.factory';
+import { createMockQueryRunner } from '@/src/common/tests/mocks/query-runner.mock';
 
 const mockUser: User = {
   id: '1',

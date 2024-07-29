@@ -11,7 +11,7 @@ import { User } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { Profile } from '@/src/profiles/entities/profile.entity';
 import { BCRYPT_SALT_ROUNDS, DEFAULT_PROFILE } from '@/src/config/constants';
-import { QueryRunnerFactory } from '@/src/dababase/query-runner.factory';
+import { QueryRunnerFactory } from '@/src/common/factories/query-runner.factory';
 
 @Injectable()
 export class UsersService {

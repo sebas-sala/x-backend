@@ -6,7 +6,7 @@ import { UsersService } from './users.service';
 import { UsersController } from './users.controller';
 
 import { ProfilesModule } from '@/src/profiles/profiles.module';
-import { QueryRunnerFactory } from '@/src/dababase/query-runner.factory';
+import { QueryRunnerFactory } from '@/src/common/factories/query-runner.factory';
 
 @Module({
   imports: [ProfilesModule, TypeOrmModule.forFeature([User])],
