@@ -7,13 +7,13 @@ import { User } from './entities/user.entity';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 
-import { Profile } from 'src/profiles/entities/profile.entity';
-import { ProfilesModule } from 'src/profiles/profiles.module';
+import { Profile } from '@/src/profiles/entities/profile.entity';
+import { ProfilesModule } from '@/src/profiles/profiles.module';
 
-import { Post } from 'src/posts/entities/post.entity';
+import { Post } from '@/src/posts/entities/post.entity';
 
-import { QueryRunnerFactory } from 'src/dababase/query-runner.factory';
-import { createMockQueryRunner } from 'src/utils/mocks/query-runner.mock';
+import { QueryRunnerFactory } from '@/src/dababase/query-runner.factory';
+import { createMockQueryRunner } from '@/src/utils/mocks/query-runner.mock';
 
 const mockUser: User = {
   id: '1',

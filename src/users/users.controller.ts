@@ -4,9 +4,9 @@ import { Controller, Get, Post, Body, Param, Patch } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 
-import { Profile } from 'src/profiles/entities/profile.entity';
-import { ProfilesService } from 'src/profiles/profiles.service';
-import { UpdateProfileDto } from 'src/profiles/dto/update-profile.dto';
+import { Profile } from '@/src/profiles/entities/profile.entity';
+import { ProfilesService } from '@/src/profiles/profiles.service';
+import { UpdateProfileDto } from '@/src/profiles/dto/update-profile.dto';
 
 @Controller('users')
 export class UsersController {
