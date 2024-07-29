@@ -5,11 +5,12 @@ import { ConflictException, NotFoundException } from '@nestjs/common';
 
 import { User } from './entities/user.entity';
 import { UsersService } from './users.service';
+import { CreateUserDto } from './dto/create-user.dto';
 
 import { Profile } from 'src/profiles/entities/profile.entity';
 import { ProfilesModule } from 'src/profiles/profiles.module';
 
-import { CreateUserDto } from './dto/create-user.dto';
+import { Post } from 'src/posts/entities/post.entity';
 
 import { QueryRunnerFactory } from 'src/dababase/query-runner.factory';
 import { createMockQueryRunner } from 'src/utils/mocks/query-runner.mock';
@@ -21,6 +22,7 @@ const mockUser: User = {
   username: 'pedrito',
   password: '123456',
   profile: undefined as any,
+  posts: [],
   createdAt: new Date(),
   updatedAt: new Date(),
 };
@@ -39,7 +41,7 @@ describe('UsersService', () => {
         TypeOrmModule.forRoot({
           type: 'sqlite',
           database: ':memory:',
-          entities: [User, Profile],
+          entities: [User, Profile, Post],
           synchronize: true,
         }),
         TypeOrmModule.forFeature([User]),
