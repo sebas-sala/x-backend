@@ -4,8 +4,8 @@ import { UpdatePostDto } from './dto/update-post.dto';
 
 @Injectable()
 export class PostsService {
-  create(createPostDto: CreatePostDto) {
-    return 'This action adds a new post';
+  async create(createPostDto: CreatePostDto) {
+    await new Promise((resolve) => setTimeout(resolve, 1000));
   }
 
   findAll() {

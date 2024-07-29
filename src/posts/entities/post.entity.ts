@@ -21,23 +21,20 @@ export class Post {
   @Column()
   content: string;
 
-  @Column()
-  userId: string;
-
   @CreateDateColumn()
   createdAt: Date;
 
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @OneToMany(() => Image, (image) => image.post)
-  images: Image[];
+  // @OneToMany(() => Image, (image) => image.post)
+  // images: Image[];
 
-  @OneToMany(() => Bookmark, (bookmark) => bookmark.post)
-  bookmarks: Bookmark[];
+  // @OneToMany(() => Bookmark, (bookmark) => bookmark.post)
+  // bookmarks: Bookmark[];
 
-  @OneToMany(() => Like, (like) => like.post)
-  likes: Like[];
+  // @OneToMany(() => Like, (like) => like.post)
+  // likes: Like[];
 
   @ManyToOne(() => User, (user) => user.posts)
   user: User;
