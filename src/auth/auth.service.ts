@@ -9,15 +9,17 @@ import { UsersService } from '../users/users.service';
 export class AuthService {
   constructor(
     private readonly usersService: UsersService,
-    private jwtService: JwtService,
+    private readonly jwtService: JwtService,
   ) {}
 
   async validateUser(username: string, password: string): Promise<User | null> {
     const user = await this.usersService.findByUsername(username);
+
     if (user && (await bcrypt.compare(password, user.password))) {
       const { password, ...result } = user as User;
       return result as User;
     }
+
     return null;
   }
 
