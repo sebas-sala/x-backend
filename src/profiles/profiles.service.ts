@@ -13,7 +13,6 @@ export class ProfilesService {
   ) {}
 
   async update(userId: string, updateProfileDto: UpdateProfileDto) {
-    // Find the profile by user ID
     const profile = await this.findOneBy({
       user: { id: userId },
     });
@@ -28,6 +27,20 @@ export class ProfilesService {
     return await this.findOneBy({ id: profile.id });
   }
 
+  // Find a profile by options
+  async findOneBy(options: any, relations?: string[]) {
+    const profile = await this.profilesRepository.findOne({
+      where: options,
+      relations,
+    });
+
+    if (!profile) {
+      throw new NotFoundException('Profile not found');
+    }
+
+    return profile;
+  }
+
   // Convert a string date to a Date object
   private convertDate(date?: string): Date | undefined {
     return date ? new Date(date) : undefined;
@@ -40,16 +53,5 @@ export class ProfilesService {
       ...rest,
       birthdate: this.convertDate(birthdate),
     };
-  }
-
-  // Find a profile by options
-  private async findOneBy(options: any) {
-    const profile = await this.profilesRepository.findOne(options);
-
-    if (!profile) {
-      throw new NotFoundException('Profile not found');
-    }
-
-    return profile;
   }
 }

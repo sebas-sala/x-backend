@@ -83,12 +83,38 @@ describe('ProfilesService', () => {
       expect(result).toEqual(updatedProfile);
 
       expect(profilesRepository.findOne).toHaveBeenCalledWith({
-        user: { id: '1' },
+        where: { user: { id: '1' } },
       });
       expect(profilesRepository.findOne).toHaveBeenCalledTimes(2);
       expect(profilesRepository.update).toHaveBeenCalledWith('1', {
         ...updateProfileDto,
         birthdate: new Date(updateProfileDto.birthdate as string),
+      });
+    });
+
+    it('should update a profile when date is not provided', async () => {
+      jest
+        .spyOn(profilesRepository, 'findOne')
+        .mockResolvedValueOnce(mockProfile);
+      jest.spyOn(profilesRepository, 'update').mockResolvedValue(updateResult);
+      jest
+        .spyOn(profilesRepository, 'findOne')
+        .mockResolvedValueOnce(updatedProfile);
+
+      const result = await profilesService.update('1', {
+        ...updateProfileDto,
+        birthdate: undefined,
+      });
+
+      expect(result).toEqual(updatedProfile);
+
+      expect(profilesRepository.findOne).toHaveBeenCalledWith({
+        where: { user: { id: '1' } },
+      });
+      expect(profilesRepository.findOne).toHaveBeenCalledTimes(2);
+      expect(profilesRepository.update).toHaveBeenCalledWith('1', {
+        ...updateProfileDto,
+        birthdate: undefined,
       });
     });
 
