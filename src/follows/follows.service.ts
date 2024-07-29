@@ -8,7 +8,7 @@ import { DeleteFollowDto } from './dto/delete-follow.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Follow } from './entities/follow.entity';
 import { Repository } from 'typeorm';
-import { UsersService } from 'src/users/users.service';
+import { UsersService } from '@/src/users/users.service';
 
 @Injectable()
 export class FollowService {
