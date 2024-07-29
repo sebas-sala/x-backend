@@ -8,10 +8,10 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
-import { User } from 'src/users/entities/user.entity';
-import { Image } from 'src/images/entities/image.entity';
-import { Like } from 'src/likes/entities/like.entity';
-import { Bookmark } from 'src/bookmarks/entities/bookmark.entity';
+import { User } from '@/src/users/entities/user.entity';
+import { Image } from '@/src/images/entities/image.entity';
+import { Like } from '@/src/likes/entities/like.entity';
+import { Bookmark } from '@/src/bookmarks/entities/bookmark.entity';
 
 @Entity()
 export class Post {

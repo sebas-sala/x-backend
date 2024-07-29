@@ -13,12 +13,12 @@ import { User } from '../users/entities/user.entity';
 import { UsersModule } from '../users/users.module';
 import { UsersService } from '../users/users.service';
 
-import { Profile } from 'src/profiles/entities/profile.entity';
+import { Profile } from '@/src/profiles/entities/profile.entity';
 
-import { Post } from 'src/posts/entities/post.entity';
+import { Post } from '@/src/posts/entities/post.entity';
 
-import { QueryRunnerFactory } from 'src/dababase/query-runner.factory';
-import { createMockQueryRunner } from 'src/utils/mocks/query-runner.mock';
+import { QueryRunnerFactory } from '@/src/dababase/query-runner.factory';
+import { createMockQueryRunner } from '@/src/utils/mocks/query-runner.mock';
 
 const mockUser: User = {
   id: '1',

@@ -1,6 +1,6 @@
 import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 
-import { Post } from 'src/posts/entities/post.entity';
+import { Post } from '@/src/posts/entities/post.entity';
 
 @Entity()
 export class Image {
