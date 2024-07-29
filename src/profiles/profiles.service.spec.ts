@@ -4,7 +4,7 @@ import { getRepositoryToken, TypeOrmModule } from '@nestjs/typeorm';
 
 import { Profile } from './entities/profile.entity';
 import { ProfilesService } from './profiles.service';
-import { User } from 'src/users/entities/user.entity';
+import { User } from '@/src/users/entities/user.entity';
 
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { NotFoundException } from '@nestjs/common';
