@@ -1,11 +1,10 @@
 import { instanceToPlain } from 'class-transformer';
 import { Controller, Get, Post, Body, Param, Patch } from '@nestjs/common';
 
-import { User } from './entities/user.entity';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 
-import { Role, Roles } from 'src/common/decorators/roles.decorator';
+import { Profile } from 'src/profiles/entities/profile.entity';
 import { ProfilesService } from 'src/profiles/profiles.service';
 import { UpdateProfileDto } from 'src/profiles/dto/update-profile.dto';
 
@@ -38,7 +37,7 @@ export class UsersController {
   async updateProfile(
     @Param('id') id: string,
     @Body() profile: UpdateProfileDto,
-  ) {
+  ): Promise<Profile> {
     return await this.profilesService.update(id, profile);
   }
 

@@ -1,14 +1,20 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { UsersController } from './users.controller';
-import { UsersService } from './users.service';
-import { User } from './entities/user.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { Test, TestingModule } from '@nestjs/testing';
 import { ConflictException, NotFoundException } from '@nestjs/common';
+
+import { User } from './entities/user.entity';
+import { UsersService } from './users.service';
+import { UsersController } from './users.controller';
 import { CreateUserDto } from './dto/create-user.dto';
+
 import { Profile } from 'src/profiles/entities/profile.entity';
-import { createMockQueryRunner } from 'src/utils/mocks/query-runner.mock';
-import { QueryRunnerFactory } from 'src/dababase/query-runner.factory';
 import { ProfilesModule } from 'src/profiles/profiles.module';
+import { ProfilesService } from 'src/profiles/profiles.service';
+
+import { Post } from 'src/posts/entities/post.entity';
+
+import { QueryRunnerFactory } from 'src/dababase/query-runner.factory';
+import { createMockQueryRunner } from 'src/utils/mocks/query-runner.mock';
 
 const mockUser: User = {
   name: 'User 1',
@@ -19,11 +25,24 @@ const mockUser: User = {
   createdAt: new Date(),
   updatedAt: new Date(),
   profile: undefined as any,
+  posts: [],
+};
+
+const mockProfile: Profile = {
+  id: '1',
+  bio: 'test bio',
+  birthdate: new Date(),
+  isPublic: false,
+  location: 'test location',
+  website: 'test website',
+  updatedAt: new Date(),
+  user: {} as any,
 };
 
 describe('UsersController', () => {
   let usersController: UsersController;
   let usersService: UsersService;
+  let profilesService: ProfilesService;
   let queryRunner: any;
 
   beforeEach(async () => {
@@ -35,7 +54,7 @@ describe('UsersController', () => {
         TypeOrmModule.forRoot({
           type: 'sqlite',
           database: ':memory:',
-          entities: [User, Profile],
+          entities: [User, Profile, Post],
           synchronize: true,
         }),
         TypeOrmModule.forFeature([User]),
@@ -43,10 +62,20 @@ describe('UsersController', () => {
       controllers: [UsersController],
       providers: [
         UsersService,
+        ProfilesService,
         {
           provide: QueryRunnerFactory,
           useValue: {
             createQueryRunner: jest.fn(() => queryRunner),
+          },
+        },
+        {
+          provide: ProfilesService,
+          useValue: {
+            findOneBy: jest.fn(),
+            update: jest
+              .fn()
+              .mockImplementation(() => Promise.resolve(mockProfile)),
           },
         },
       ],
@@ -54,6 +83,7 @@ describe('UsersController', () => {
 
     usersController = module.get<UsersController>(UsersController);
     usersService = module.get<UsersService>(UsersService);
+    profilesService = module.get<ProfilesService>(ProfilesService);
   });
 
   it('should be defined', () => {
@@ -186,6 +216,20 @@ describe('UsersController', () => {
       await expect(usersController.create(mockUser)).rejects.toThrow(
         'Email already exists',
       );
+    });
+  });
+
+  describe('updateProfile()', () => {
+    it('should update a user profile', async () => {
+      const updateProfileDto = {
+        bio: 'New bio',
+        birthdate: '2020-01-01',
+      };
+
+      jest.spyOn(profilesService, 'update').mockResolvedValueOnce(mockProfile);
+
+      const result = await usersController.updateProfile('1', updateProfileDto);
+      expect(result).toEqual(mockProfile);
     });
   });
 });
