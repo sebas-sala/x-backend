@@ -14,7 +14,7 @@ import { ProfilesService } from '@/src/profiles/profiles.service';
 import { Post } from '@/src/posts/entities/post.entity';
 
 import { QueryRunnerFactory } from '@/src/common/factories/query-runner.factory';
-import { createMockQueryRunner } from '@/src/common/tests/mocks/query-runner.mock';
+import { createMockQueryRunner } from '@/tests/utils/mocks/query-runner.mock';
 
 const mockUser: User = {
   name: 'User 1',

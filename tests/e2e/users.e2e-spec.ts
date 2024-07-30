@@ -13,8 +13,8 @@ import { Post } from '@/src/posts/entities/post.entity';
 
 import { Profile } from '@/src/profiles/entities/profile.entity';
 
-import { createTestUser } from '@/src/common/tests/factories/user.factory';
-import { createTestProfile } from '@/src/common/tests/factories/profile.factory';
+import { createTestUser } from '@/tests/utils/factories/user.factory';
+import { createTestProfile } from '@/tests/utils/factories/profile.factory';
 
 describe('AppController (e2e)', () => {
   let app: NestFastifyApplication;
