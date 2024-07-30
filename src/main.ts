@@ -19,8 +19,8 @@ async function bootstrap() {
       caseSensitive: false,
       onProtoPoisoning: 'error',
       onConstructorPoisoning: 'error',
-      connectionTimeout: 10000,
-      bodyLimit: 10485760,
+      connectionTimeout: 10_000,
+      bodyLimit: 10_485_760,
       maxParamLength: 5000,
     }),
   );

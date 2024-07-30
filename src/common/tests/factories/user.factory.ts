@@ -2,7 +2,7 @@ import { Repository } from 'typeorm';
 
 import { User } from '@/src/users/entities/user.entity';
 
-type Params = {
+type Parameters_ = {
   userRepository: Repository<User>;
   userDate?: Partial<User>;
 };
@@ -16,7 +16,7 @@ type Params = {
 export async function createTestUser({
   userRepository,
   userDate = {},
-}: Params): Promise<User> {
+}: Parameters_): Promise<User> {
   const defaultData = {
     name: 'Test User',
     email: 'test@example.com',

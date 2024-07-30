@@ -3,7 +3,7 @@ import { Repository } from 'typeorm';
 import { User } from '@/src/users/entities/user.entity';
 import { Profile } from '@/src/profiles/entities/profile.entity';
 
-type Params = {
+type Parameters_ = {
   profileRepository: Repository<Profile>;
   user: User;
   profileData?: Partial<Profile>;
@@ -20,7 +20,7 @@ export async function createTestProfile({
   profileRepository,
   user,
   profileData = {},
-}: Params): Promise<Profile> {
+}: Parameters_): Promise<Profile> {
   const defaultData = {
     bio: 'Test bio',
   };
