@@ -3,9 +3,9 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { TypeOrmModule, getRepositoryToken } from '@nestjs/typeorm';
 import { ConflictException, NotFoundException } from '@nestjs/common';
 
-import { User } from './entities/user.entity';
-import { UsersService } from './users.service';
-import { CreateUserDto } from './dto/create-user.dto';
+import { User } from '@/src/users/entities/user.entity';
+import { UsersService } from '@/src/users/users.service';
+import { CreateUserDto } from '@/src/users/dto/create-user.dto';
 
 import { Profile } from '@/src/profiles/entities/profile.entity';
 import { ProfilesModule } from '@/src/profiles/profiles.module';

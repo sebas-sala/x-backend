@@ -1,5 +1,6 @@
 import { validate } from 'class-validator';
-import { UpdateProfileDto } from './update-profile.dto';
+
+import { UpdateProfileDto } from '@/src/profiles/dto/update-profile.dto';
 
 describe('UpdateProfileDto', () => {
   let updateProfileDto: UpdateProfileDto;
@@ -62,13 +63,15 @@ describe('UpdateProfileDto', () => {
     );
   });
 
-  it('should fail if birthdate is not a string', async () => {
+  it('should fail if birthdate is not a date string', async () => {
     updateProfileDto.birthdate = 123 as any;
 
     const errors = await validate(updateProfileDto);
     expect(errors.length).toBeGreaterThan(0);
     expect(errors[0].property).toBe('birthdate');
-    expect(errors[0].constraints?.isString).toBe('birthdate must be a string');
+    expect(errors[0].constraints?.isDateString).toBe(
+      'birthdate must be a valid ISO 8601 date string',
+    );
   });
 
   it('should fail if website is not a string', async () => {

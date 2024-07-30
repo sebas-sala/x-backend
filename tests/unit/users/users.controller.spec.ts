@@ -2,10 +2,10 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConflictException, NotFoundException } from '@nestjs/common';
 
-import { User } from './entities/user.entity';
-import { UsersService } from './users.service';
-import { UsersController } from './users.controller';
-import { CreateUserDto } from './dto/create-user.dto';
+import { User } from '@/src/users/entities/user.entity';
+import { UsersService } from '@/src/users/users.service';
+import { UsersController } from '@/src/users/users.controller';
+import { CreateUserDto } from '@/src/users/dto/create-user.dto';
 
 import { Profile } from '@/src/profiles/entities/profile.entity';
 import { ProfilesModule } from '@/src/profiles/profiles.module';

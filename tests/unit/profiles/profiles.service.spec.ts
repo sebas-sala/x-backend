@@ -1,13 +1,14 @@
-import { Repository, UpdateResult } from 'typeorm';
+import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { Repository, UpdateResult } from 'typeorm';
 import { getRepositoryToken, TypeOrmModule } from '@nestjs/typeorm';
 
-import { Profile } from './entities/profile.entity';
-import { ProfilesService } from './profiles.service';
+import { Profile } from '@/src/profiles/entities/profile.entity';
+import { ProfilesService } from '@/src/profiles/profiles.service';
 import { User } from '@/src/users/entities/user.entity';
 
-import { UpdateProfileDto } from './dto/update-profile.dto';
-import { NotFoundException } from '@nestjs/common';
+import { UpdateProfileDto } from '@/src/profiles/dto/update-profile.dto';
+import { Post } from '@/src/posts/entities/post.entity';
 
 const mockProfile: Profile = {
   id: '1',
@@ -44,7 +45,7 @@ describe('ProfilesService', () => {
         TypeOrmModule.forRoot({
           type: 'sqlite',
           database: ':memory:',
-          entities: [Profile, User],
+          entities: [Profile, User, Post],
           synchronize: true,
         }),
         TypeOrmModule.forFeature([Profile]),

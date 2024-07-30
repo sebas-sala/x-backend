@@ -7,11 +7,11 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { getRepositoryToken, TypeOrmModule } from '@nestjs/typeorm';
 
-import { AuthService } from './auth.service';
+import { AuthService } from '@/src/auth/auth.service';
 
-import { User } from '../users/entities/user.entity';
-import { UsersModule } from '../users/users.module';
-import { UsersService } from '../users/users.service';
+import { User } from '@/src/users/entities/user.entity';
+import { UsersModule } from '@/src/users/users.module';
+import { UsersService } from '@/src/users/users.service';
 
 import { Profile } from '@/src/profiles/entities/profile.entity';
 
