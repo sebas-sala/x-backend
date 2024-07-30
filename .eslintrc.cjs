@@ -139,7 +139,7 @@ module.exports = {
     'unicorn/prefer-ternary': 'warn',
     'unicorn/prefer-top-level-await': 'warn',
     'unicorn/prefer-type-error': 'warn',
-    'unicorn/prevent-abbreviations': 'warn',
+    'unicorn/prevent-abbreviations': 'off',
     'unicorn/relative-url-style': 'warn',
     'unicorn/require-array-join-separator': 'warn',
     'unicorn/require-number-to-fixed-digits-argument': 'warn',
