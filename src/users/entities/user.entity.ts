@@ -12,6 +12,7 @@ import {
 
 import { Post } from '@/src/posts/entities/post.entity';
 import { Profile } from '@/src/profiles/entities/profile.entity';
+import { ApiHideProperty } from '@nestjs/swagger';
 
 @Entity()
 export class User {
@@ -48,6 +49,7 @@ export class User {
   @JoinColumn({ name: 'profileId' })
   profile: Profile;
 
+  @ApiHideProperty()
   @OneToMany(() => Post, (post) => post.user)
   posts: Post[];
 

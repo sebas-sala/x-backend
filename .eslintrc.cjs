@@ -137,7 +137,7 @@ module.exports = {
     'unicorn/prefer-structured-clone': 'warn',
     'unicorn/prefer-switch': 'warn',
     'unicorn/prefer-ternary': 'warn',
-    'unicorn/prefer-top-level-await': 'warn',
+    'unicorn/prefer-top-level-await': 'off',
     'unicorn/prefer-type-error': 'warn',
     'unicorn/prevent-abbreviations': 'off',
     'unicorn/relative-url-style': 'warn',
