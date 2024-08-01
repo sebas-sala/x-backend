@@ -2,7 +2,6 @@ services:
   app:
     build:
       context: .
-      dockerfile: Dockerfile
       target: dev
     environment:
       - NODE_ENV=development

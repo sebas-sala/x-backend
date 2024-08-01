@@ -1,33 +1,34 @@
-import { Repository } from 'typeorm';
+import { faker } from '@faker-js/faker';
+import { DataSource } from 'typeorm';
 
 import { User } from '@/src/users/entities/user.entity';
+import { CreateUserDto } from '@/src/users/dto/create-user.dto';
 
-type Parameters_ = {
-  userRepository: Repository<User>;
-  userDate?: Partial<User>;
+type userEntityFactoryParams = {
+  dataSource: DataSource;
+  userData?: Partial<User>;
 };
 
-/**
- * Creates a test user.
- * @param userRepository - Users repository.
- * @param userData - Optional data to override default values.
- * @returns The created user.
- */
-export async function createTestUser({
-  userRepository,
-  userDate = {},
-}: Parameters_): Promise<User> {
-  const defaultData = {
-    name: 'Test User',
-    email: 'test@example.com',
-    username: 'testuser',
-    password: 'password',
-  };
+export const userEntityFactory = async ({
+  dataSource,
+  userData = {},
+}: userEntityFactoryParams): Promise<User> => {
+  const userRepository = dataSource.getRepository(User);
+  const user = userDtoFactory({ userData });
+  return await userRepository.save(user);
+};
 
-  const user = userRepository.create({ ...defaultData, ...userDate });
-  try {
-    return await userRepository.save(user);
-  } catch (error) {
-    throw error;
-  }
+type userDtoFactoryParams = {
+  userData?: Partial<CreateUserDto>;
+};
+
+export function userDtoFactory({
+  userData,
+}: userDtoFactoryParams = {}): CreateUserDto {
+  return {
+    name: userData?.name || faker.person.fullName(),
+    email: userData?.email || faker.internet.email(),
+    username: userData?.username || faker.internet.userName(),
+    password: userData?.password || faker.internet.password(),
+  };
 }

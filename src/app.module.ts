@@ -28,6 +28,7 @@ import { BookmarksModule } from './bookmarks/bookmarks.module';
 import configuration from './config/configuration';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { PostsModule } from './posts/posts.module';
+import { QueryRunnerFactory } from './common/factories/query-runner.factory';
 
 @Module({
   imports: [
@@ -60,7 +61,6 @@ import { PostsModule } from './posts/posts.module';
   controllers: [AppController],
   providers: [
     AppService,
-
     {
       provide: APP_FILTER,
       useClass: HttpExceptionFilter,

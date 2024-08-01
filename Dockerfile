@@ -6,6 +6,7 @@ WORKDIR $DIR
 COPY package.json ./
 RUN npm i
 
+COPY . .
 COPY tsconfig*.json .
 COPY nest-cli.json .
 COPY src src
@@ -26,17 +27,18 @@ RUN apk add --no-cache dumb-init
 RUN npm run build && npm prune --production
 
 # PRODUCTION
-from base as prod
+FROM node:22.5.1-alpine3.20 as prod
 
 ENV NODE_ENV=production
 ENV USER=node
 
 WORKDIR /app
 
-COPY --from=build /usr/bin/dumb-init /usr/bin/dumb-init
-COPY --from=build /app/package*.json .
-COPY --from=build /app/node_modules node_modules
-COPY --from=build /app/dist dist
+COPY --from=build /app/package*.json ./
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/dist ./dist
+
+RUN apk add --no-cache dumb-init
 
 USER $USER
 EXPOSE $PORT

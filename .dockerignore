@@ -1,0 +1,27 @@
+# Dependency directories
+node_modules/
+
+# Build files
+dist/
+
+# Git
+.git/
+.gitignore
+
+# Config
+.vscode/
+.priettierignore
+
+# Logs
+*.log
+
+# Tests Files
+tests/
+*.spec.ts
+
+# Database
+database.sqlite
+
+# Documentation
+README.md
+

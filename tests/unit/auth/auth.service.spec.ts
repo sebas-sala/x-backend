@@ -94,8 +94,6 @@ describe('AuthService', () => {
     it('should return an access token', async () => {
       const token = await authService.login(mockUser);
 
-      console.log(token);
-
       expect(token).toEqual({ access_token: 'token' });
     });
   });

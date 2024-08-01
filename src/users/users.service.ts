@@ -9,16 +9,20 @@ import * as bcrypt from 'bcrypt';
 
 import { User } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
+
 import { Profile } from '@/src/profiles/entities/profile.entity';
-import { BCRYPT_SALT_ROUNDS, DEFAULT_PROFILE } from '@/src/config/constants';
+
 import { QueryRunnerFactory } from '@/src/common/factories/query-runner.factory';
+import { BCRYPT_SALT_ROUNDS, DEFAULT_PROFILE } from '@/src/config/constants';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User)
     private readonly usersRepository: Repository<User>,
-    private queryRunnerFactory: QueryRunnerFactory,
+    private readonly queryRunnerFactory: QueryRunnerFactory,
+    @InjectRepository(Profile)
+    private readonly profilesRepository: Repository<Profile>,
   ) {}
 
   async findAll(): Promise<User[]> {
@@ -90,6 +94,7 @@ export class UsersService {
     email: string,
     manager: EntityManager,
   ): Promise<void> {
+    await manager.find(User);
     const existingUser = await manager.findOne(User, {
       where: [{ username }, { email }],
     });

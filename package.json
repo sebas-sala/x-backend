@@ -29,11 +29,9 @@
     "dev": "nest start --watch",
     "lint": "eslint \"{src,apps,libs,tests}/**/*.ts\" --fix",
     "test": "rimraf coverage .nyc_output && npm run test:unit && npm run test:e2e && npm run test:cov",
-    "test:watch": "jest --config ./tests/unit/jest-unit.json --watch",
-    "test:unit": "jest --config ./tests/unit/jest-unit.json",
     "test:cov": "jest --coverage",
-    "test:e2e": "jest --config ./tests/e2e/jest-e2e.json",
-    "test:e2e:watch": "jest --config ./tests/e2e/jest-e2e.json --watch"
+    "test:unit": "jest --config ./tests/unit/jest-unit.json --watch",
+    "test:e2e": "jest --config ./tests/e2e/jest-e2e.json --watch"
   },
   "dependencies": {
     "@fastify/cookie": "^9.3.1",
@@ -64,6 +62,7 @@
     "typeorm": "^0.3.20"
   },
   "devDependencies": {
+    "@faker-js/faker": "^8.4.1",
     "@nestjs/cli": "^10.0.0",
     "@nestjs/schematics": "^10.0.0",
     "@nestjs/testing": "^10.0.0",

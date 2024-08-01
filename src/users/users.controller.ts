@@ -48,15 +48,16 @@ export class UsersController {
     return instanceToPlain(user, { groups: ['private'] });
   }
 
-  @ApiOperation({ summary: 'Get user profile by id' })
+  @ApiOperation({ summary: 'Get user profile by username' })
   @ApiResponse({
     status: 200,
     type: Profile,
     description: 'Return user profile',
   })
-  @Get(':id/profile')
-  async getProfile(@Param('id') id: string) {
-    const user = await this.usersService.findOneById(id);
+  @Get(':username/profile')
+  async getProfile(@Param('username') username: string) {
+    const user = await this.usersService.findByUsername(username);
+
     return instanceToPlain(user, { groups: ['profile'] });
   }
 

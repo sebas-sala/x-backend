@@ -1,35 +1,50 @@
-import { Repository } from 'typeorm';
+import { DataSource } from 'typeorm';
+import { faker } from '@faker-js/faker';
 
 import { User } from '@/src/users/entities/user.entity';
 import { Profile } from '@/src/profiles/entities/profile.entity';
 
-type Parameters_ = {
-  profileRepository: Repository<Profile>;
+type profileEntityFactoryParams = {
+  dataSource: DataSource;
   user: User;
   profileData?: Partial<Profile>;
 };
 
-/**
- * Creates a test profile.
- * @param {Params} params - The parameters for creating the test profile.
- * @param {ProfileRepository} params.profileRepository - The profile repository.
- * @param {User} params.user - The user.
- * @returns {Promise<Profile>} The created test profile.
- */
-export async function createTestProfile({
-  profileRepository,
+export async function profileEntityFactory({
+  dataSource,
   user,
-  profileData = {},
-}: Parameters_): Promise<Profile> {
-  const defaultData = {
-    bio: 'Test bio',
-  };
+  profileData,
+}: profileEntityFactoryParams): Promise<Profile> {
+  const profileDto = profileDtoFactory({ profileData });
 
-  const profile = new Profile();
-  profile.user = user;
+  const profile = Object.assign(new Profile(), profileDto);
+
   try {
-    return await profileRepository.save(profile);
+    const _profile = await dataSource.manager.save(profile);
+
+    user.profile = _profile;
+
+    const usersRepository = dataSource.getRepository(User);
+    await usersRepository.save(user);
+
+    return _profile;
   } catch (error) {
     throw error;
   }
+}
+
+type profileDtoFactoryParams = {
+  profileData?: Partial<Profile>;
+};
+
+export function profileDtoFactory({
+  profileData,
+}: profileDtoFactoryParams = {}) {
+  return {
+    bio: profileData?.bio || faker.lorem.sentence(),
+    location: profileData?.location || faker.location.city(),
+    birthdate: profileData?.birthdate || faker.date.past(),
+    website: profileData?.website || faker.internet.url(),
+    isPublic: profileData?.isPublic || faker.datatype.boolean(),
+  };
 }
