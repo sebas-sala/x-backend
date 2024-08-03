@@ -21,8 +21,6 @@ export class UsersService {
     @InjectRepository(User)
     private readonly usersRepository: Repository<User>,
     private readonly queryRunnerFactory: QueryRunnerFactory,
-    @InjectRepository(Profile)
-    private readonly profilesRepository: Repository<Profile>,
   ) {}
 
   async findAll(): Promise<User[]> {
@@ -94,7 +92,6 @@ export class UsersService {
     email: string,
     manager: EntityManager,
   ): Promise<void> {
-    await manager.find(User);
     const existingUser = await manager.findOne(User, {
       where: [{ username }, { email }],
     });
