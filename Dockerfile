@@ -3,13 +3,9 @@ FROM node:22.5.1-alpine3.20 as base
 ENV DIR /app
 WORKDIR $DIR
 
-COPY package.json ./
-RUN npm i
-
 COPY . .
-COPY tsconfig*.json .
-COPY nest-cli.json .
-COPY src src
+
+RUN npm install
 
 # DEVELOPMENT
 FROM base AS dev
