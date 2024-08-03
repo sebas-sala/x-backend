@@ -12,19 +12,10 @@ import { Post } from '@/src/posts/entities/post.entity';
 
 import { QueryRunnerFactory } from '@/src/common/factories/query-runner.factory';
 import { createMockQueryRunner } from '@/tests/utils/mocks/query-runner.mock';
-import { userDtoFactory } from '@/tests/utils/factories/user.factory';
-
-const mockUser: User = {
-  id: '1',
-  name: 'Pedrito',
-  email: 'pedrito@gmail.com',
-  username: 'pedrito',
-  password: '123456',
-  profile: undefined as any,
-  posts: [],
-  createdAt: new Date(),
-  updatedAt: new Date(),
-};
+import {
+  userDtoFactory,
+  userFactory,
+} from '@/tests/utils/factories/user.factory';
 
 describe('UsersService', () => {
   let usersService: UsersService;
@@ -137,6 +128,8 @@ describe('UsersService', () => {
   });
 
   describe('findAll()', () => {
+    const mockUser = userFactory();
+
     it('should return an array of users', async () => {
       usersRepository.find.mockResolvedValue([mockUser]);
 
@@ -155,6 +148,8 @@ describe('UsersService', () => {
   });
 
   describe('findOne()', () => {
+    const mockUser = userFactory();
+
     it('should return a user by id', async () => {
       usersRepository.findOne.mockResolvedValue(mockUser);
 
