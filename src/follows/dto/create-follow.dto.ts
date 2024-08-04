@@ -8,4 +8,8 @@ export class CreateFollowDto {
   @IsNotEmpty()
   @IsUUID()
   followingId: string;
+
+  constructor(partial?: Partial<CreateFollowDto>) {
+    Object.assign(this, partial);
+  }
 }
