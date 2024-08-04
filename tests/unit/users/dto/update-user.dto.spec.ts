@@ -18,7 +18,6 @@ describe('UpdateUserDto', () => {
   });
 
   it('should pass if all fields are valid', async () => {
-    console.error('updateUserDto', updateUserDto);
     const errors = await validate(updateUserDto);
     expect(errors.length).toBe(0);
   });

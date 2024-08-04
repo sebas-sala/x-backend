@@ -40,6 +40,7 @@ export default class ProfileFactory {
     const profileDto = ProfileFactory.createProfileDto(profileData);
     const profileRepository = this.dataSource.getRepository(Profile);
     const profile = profileRepository.create(profileDto);
+    profile.user = user;
 
     try {
       const savedProfile = await profileRepository.save(profile);
