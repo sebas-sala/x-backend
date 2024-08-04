@@ -4,47 +4,55 @@ import { faker } from '@faker-js/faker';
 import { User } from '@/src/users/entities/user.entity';
 import { Profile } from '@/src/profiles/entities/profile.entity';
 
-type profileEntityFactoryParams = {
-  dataSource: DataSource;
-  user: User;
-  profileData?: Partial<Profile>;
-};
+export default class ProfileFactory {
+  constructor(private dataSource?: DataSource) {}
 
-export async function profileEntityFactory({
-  dataSource,
-  user,
-  profileData,
-}: profileEntityFactoryParams): Promise<Profile> {
-  const profileDto = profileDtoFactory({ profileData });
-
-  const profile = Object.assign(new Profile(), profileDto);
-
-  try {
-    const _profile = await dataSource.manager.save(profile);
-
-    user.profile = _profile;
-
-    const usersRepository = dataSource.getRepository(User);
-    await usersRepository.save(user);
-
-    return _profile;
-  } catch (error) {
-    throw error;
+  static createProfileDto(
+    profileData: Partial<Profile> = {},
+  ): Partial<Profile> {
+    return {
+      bio: profileData.bio ?? faker.lorem.sentence(),
+      location: profileData.location ?? faker.location.city(),
+      birthdate: profileData.birthdate ?? faker.date.past(),
+      website: profileData.website ?? faker.internet.url(),
+      isPublic: profileData.isPublic ?? faker.datatype.boolean(),
+    };
   }
-}
 
-type profileDtoFactoryParams = {
-  profileData?: Partial<Profile>;
-};
+  static createProfileData(
+    profileData: Partial<Profile> = {},
+  ): Partial<Profile> {
+    return {
+      id: profileData.id ?? faker.string.uuid(),
+      ...ProfileFactory.createProfileDto(profileData),
+      updatedAt: profileData.updatedAt ?? faker.date.recent(),
+    };
+  }
 
-export function profileDtoFactory({
-  profileData,
-}: profileDtoFactoryParams = {}) {
-  return {
-    bio: profileData?.bio || faker.lorem.sentence(),
-    location: profileData?.location || faker.location.city(),
-    birthdate: profileData?.birthdate || faker.date.past(),
-    website: profileData?.website || faker.internet.url(),
-    isPublic: profileData?.isPublic || faker.datatype.boolean(),
-  };
+  async createProfileEntity(
+    user: User,
+    profileData?: Partial<Profile>,
+  ): Promise<Profile> {
+    if (!this.dataSource) {
+      throw new Error('DataSource is required to create a Profile entity.');
+    }
+
+    const profileDto = ProfileFactory.createProfileDto(profileData);
+    const profileRepository = this.dataSource.getRepository(Profile);
+    const profile = profileRepository.create(profileDto);
+
+    try {
+      const savedProfile = await profileRepository.save(profile);
+      user.profile = savedProfile;
+
+      await this.dataSource.manager.save(user);
+      user.profile = savedProfile;
+
+      await this.dataSource.getRepository(User).save(user);
+
+      return savedProfile;
+    } catch (error) {
+      throw error;
+    }
+  }
 }
