@@ -4,47 +4,40 @@ import { DataSource } from 'typeorm';
 import { User } from '@/src/users/entities/user.entity';
 import { CreateUserDto } from '@/src/users/dto/create-user.dto';
 
-type userFactoryParams = {
-  userData?: Partial<User>;
-};
+export default class UserFactory {
+  constructor(private dataSource?: DataSource) {}
 
-export const userFactory = ({ userData }: userFactoryParams = {}) => {
-  return {
-    id: userData?.id || faker.string.uuid(),
-    name: userData?.name || faker.person.fullName(),
-    email: userData?.email || faker.internet.email(),
-    username: userData?.username || faker.internet.userName(),
-    password: userData?.password || faker.internet.password(),
-    createdAt: userData?.createdAt || faker.date.recent(),
-    updatedAt: userData?.updatedAt || faker.date.recent(),
-  };
-};
+  static createUserDto(userData: Partial<CreateUserDto> = {}): CreateUserDto {
+    return {
+      name: userData.name ?? faker.person.fullName(),
+      email: userData.email ?? faker.internet.email(),
+      username: userData.username ?? faker.internet.userName(),
+      password: userData.password ?? faker.internet.password(),
+    };
+  }
 
-type userEntityFactoryParams = {
-  dataSource: DataSource;
-  userData?: Partial<User>;
-};
+  static createUserData(userData: Partial<User> = {}): Partial<User> {
+    return {
+      id: userData.id ?? faker.string.uuid(),
+      ...UserFactory.createUserDto(userData),
+      createdAt: userData.createdAt ?? faker.date.recent(),
+      updatedAt: userData.updatedAt ?? faker.date.recent(),
+    };
+  }
 
-export const userEntityFactory = async ({
-  dataSource,
-  userData = {},
-}: userEntityFactoryParams): Promise<User> => {
-  const userRepository = dataSource.getRepository(User);
-  const user = userDtoFactory({ userData });
-  return await userRepository.save(user);
-};
+  async createUserEntity(userData: Partial<User> = {}): Promise<User> {
+    if (!this.dataSource) {
+      throw new Error('DataSource is required to create a User entity.');
+    }
 
-type userDtoFactoryParams = {
-  userData?: Partial<CreateUserDto>;
-};
+    const userDto = UserFactory.createUserDto(userData);
+    const usersRepository = this.dataSource.getRepository(User);
+    const user = usersRepository.create(userDto);
 
-export function userDtoFactory({
-  userData,
-}: userDtoFactoryParams = {}): CreateUserDto {
-  return {
-    name: userData?.name || faker.person.fullName(),
-    email: userData?.email || faker.internet.email(),
-    username: userData?.username || faker.internet.userName(),
-    password: userData?.password || faker.internet.password(),
-  };
+    try {
+      return await usersRepository.save(user);
+    } catch (error) {
+      throw error;
+    }
+  }
 }
