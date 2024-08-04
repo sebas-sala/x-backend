@@ -43,4 +43,8 @@ export class Profile {
   // @OneToOne(() => Image, { cascade: true, nullable: true })
   // @JoinColumn()
   // cover?: Image;
+
+  constructor(partial: Partial<Profile>) {
+    Object.assign(this, partial);
+  }
 }
