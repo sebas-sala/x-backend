@@ -6,15 +6,25 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { instanceToPlain } from 'class-transformer';
-import { Controller, Get, Post, Body, Param, Patch } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Patch,
+  UseGuards,
+} from '@nestjs/common';
 
+import { User } from './entities/user.entity';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 
 import { Profile } from '@/src/profiles/entities/profile.entity';
 import { ProfilesService } from '@/src/profiles/profiles.service';
 import { UpdateProfileDto } from '@/src/profiles/dto/update-profile.dto';
-import { User } from './entities/user.entity';
+
+import { NonEmptyPayloadGuard } from '../common/guards/non-empty-payload.guard';
 
 @ApiTags('users')
 @Controller('users')
@@ -62,6 +72,7 @@ export class UsersController {
   }
 
   @ApiOperation({ summary: 'Update user profile by id' })
+  @UseGuards(NonEmptyPayloadGuard)
   @Patch(':id/profile')
   async updateProfile(
     @Param('id') id: string,
