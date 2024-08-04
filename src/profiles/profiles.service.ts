@@ -1,4 +1,4 @@
-import { EntityNotFoundError, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Injectable, NotFoundException } from '@nestjs/common';
 
@@ -17,18 +17,13 @@ export class ProfilesService {
       user: { id: userId },
     });
 
-    // Prepare the updated DTO
     const updatedDto = this.prepareUpdateDto(updateProfileDto);
-
-    // Update the profile
     await this.profilesRepository.update(profile.id, updatedDto);
 
-    // Return the updated profile
     return await this.findOneBy({ id: profile.id });
   }
 
-  // Find a profile by options
-  async findOneBy(options: any, relations?: string[]) {
+  async findOneBy(options: any, relations?: string[]): Promise<Profile> {
     const profile = await this.profilesRepository.findOne({
       where: options,
       relations,
