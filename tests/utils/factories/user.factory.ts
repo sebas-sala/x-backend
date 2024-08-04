@@ -12,7 +12,12 @@ export default class UserFactory {
       name: userData.name ?? faker.person.fullName(),
       email: userData.email ?? faker.internet.email(),
       username: userData.username ?? faker.internet.userName(),
-      password: userData.password ?? faker.internet.password(),
+      password:
+        userData.password ??
+        faker.internet.password({
+          length: 20,
+          prefix: 'Aa1!',
+        }),
     };
   }
 
