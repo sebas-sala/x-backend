@@ -1,29 +1,29 @@
 import { validate } from 'class-validator';
 
-import { DeleteFollowDto } from '@/src/follows/dto/delete-follow.dto';
+import { CreateFollowDto } from '@/src/follows/dto/create-follow.dto';
 
 import FollowFactory from '@/tests/utils/factories/follow.factory';
 
-describe('DeleteFollowDto', () => {
-  let deleteFollowDto: DeleteFollowDto;
+describe('CreateFollowDto', () => {
+  let createFollowDto: CreateFollowDto;
 
   beforeEach(() => {
-    deleteFollowDto = FollowFactory.deleteFollowDto();
+    createFollowDto = FollowFactory.createFollowDto();
   });
 
   it('should be defined', () => {
-    expect(deleteFollowDto).toBeDefined();
+    expect(createFollowDto).toBeDefined();
   });
 
   it('should pass if all fields are valid', async () => {
-    const errors = await validate(deleteFollowDto);
+    const errors = await validate(createFollowDto);
     expect(errors.length).toBe(0);
   });
 
   it('should fail if followerId is empty', async () => {
-    deleteFollowDto.followerId = '';
+    createFollowDto.followerId = '';
 
-    const errors = await validate(deleteFollowDto);
+    const errors = await validate(createFollowDto);
     expect(errors.length).toBeGreaterThan(0);
     expect(errors[0].property).toBe('followerId');
     expect(errors[0].constraints?.isNotEmpty).toBe(
@@ -32,18 +32,17 @@ describe('DeleteFollowDto', () => {
   });
 
   it('should fail if followerId is not a UUID', async () => {
-    deleteFollowDto.followerId = 'invalid';
+    createFollowDto.followerId = 'invalid';
 
-    const errors = await validate(deleteFollowDto);
-    console.log(errors);
+    const errors = await validate(createFollowDto);
     expect(errors[0].property).toBe('followerId');
     expect(errors[0].constraints?.isUuid).toBe('followerId must be a UUID');
   });
 
   it('should fail if followingId is empty', async () => {
-    deleteFollowDto.followingId = '';
+    createFollowDto.followingId = '';
 
-    const errors = await validate(deleteFollowDto);
+    const errors = await validate(createFollowDto);
     expect(errors.length).toBeGreaterThan(0);
     expect(errors[0].property).toBe('followingId');
     expect(errors[0].constraints?.isNotEmpty).toBe(
@@ -52,9 +51,9 @@ describe('DeleteFollowDto', () => {
   });
 
   it('should fail if followingId is not a UUID', async () => {
-    deleteFollowDto.followingId = 'invalid';
+    createFollowDto.followingId = 'invalid';
 
-    const errors = await validate(deleteFollowDto);
+    const errors = await validate(createFollowDto);
     expect(errors.length).toBeGreaterThan(0);
     expect(errors[0].property).toBe('followingId');
     expect(errors[0].constraints?.isUuid).toBe('followingId must be a UUID');
