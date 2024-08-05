@@ -18,14 +18,4 @@ export class FollowController {
   async remove(@Body() deleteFollowDto: DeleteFollowDto) {
     return await this.followService.remove(deleteFollowDto);
   }
-
-  @Get('users/:userId/followers')
-  getFollowers(@Param('userId') userId: string) {
-    return this.followService.findFollowers(userId);
-  }
-
-  @Get('users/:userId/following')
-  getFollowing(@Param('userId') userId: string) {
-    return this.followService.findFollowing(userId);
-  }
 }

@@ -12,11 +12,11 @@ export class Follow {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ManyToOne(() => User, (user) => user.following, { nullable: false })
+  @ManyToOne(() => User, (user) => user.following)
   @JoinColumn({ name: 'followingId' })
   following: User;
 
-  @ManyToOne(() => User, (user) => user.followers, { nullable: false })
+  @ManyToOne(() => User, (user) => user.followers)
   @JoinColumn({ name: 'followerId' })
   follower: User;
 

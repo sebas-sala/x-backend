@@ -8,7 +8,6 @@ import {
 } from 'typeorm';
 
 import { User } from '@/src/users/entities/user.entity';
-import { Image } from '@/src/images/entities/image.entity';
 
 @Entity()
 export class Comment {
@@ -18,9 +17,9 @@ export class Comment {
   @Column()
   content: string;
 
-  @OneToOne(() => Image, { cascade: true, nullable: true })
-  @JoinColumn()
-  image?: Image;
+  // @OneToOne(() => Image, { cascade: true, nullable: true })
+  // @JoinColumn()
+  // image?: Image;
 
   @OneToOne(() => User)
   @JoinColumn()

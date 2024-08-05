@@ -5,6 +5,9 @@ import { Injectable } from '@nestjs/common';
 import { User } from '../users/entities/user.entity';
 import { UsersService } from '../users/users.service';
 
+import type { AuthPayload } from './types/auth-request.types';
+import type { LoginResponse } from './types/auth-response.types';
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -23,8 +26,8 @@ export class AuthService {
     return null;
   }
 
-  async login(user: User) {
-    const payload = {
+  async login(user: User): Promise<LoginResponse> {
+    const payload: AuthPayload = {
       sub: user.id,
       username: user.username,
     };

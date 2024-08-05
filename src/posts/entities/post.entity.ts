@@ -9,9 +9,6 @@ import {
 } from 'typeorm';
 
 import { User } from '@/src/users/entities/user.entity';
-import { Image } from '@/src/images/entities/image.entity';
-import { Like } from '@/src/likes/entities/like.entity';
-import { Bookmark } from '@/src/bookmarks/entities/bookmark.entity';
 
 @Entity()
 export class Post {
@@ -36,6 +33,6 @@ export class Post {
   // @OneToMany(() => Like, (like) => like.post)
   // likes: Like[];
 
-  @ManyToOne(() => User, (user) => user.posts)
-  user: User;
+  // @ManyToOne(() => User, (user) => user.posts)
+  // user: User;
 }
