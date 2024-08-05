@@ -16,39 +16,29 @@ import { UsersService } from '@/src/users/users.service';
 import { Profile } from '@/src/profiles/entities/profile.entity';
 
 import { Post } from '@/src/posts/entities/post.entity';
-
+import AuthFactory from '@/tests/utils/factories/auth.factory';
+import UserFactory from '@/tests/utils/factories/user.factory';
+import { Follow } from '@/src/follows/entities/follow.entity';
 import { QueryRunnerFactory } from '@/src/common/factories/query-runner.factory';
-import { createMockQueryRunner } from '@/tests/utils/mocks/query-runner.mock';
 
-const mockUser: User = {
-  id: '1',
-  name: 'Pedrito',
-  email: 'test@gmail.com',
-  username: 'test',
-  password: '123456',
-  profile: undefined as any,
-  posts: [],
-  createdAt: new Date(),
-  updatedAt: new Date(),
-};
+jest.mock('bcrypt', () => ({
+  compare: jest.fn(),
+}));
 
 describe('AuthService', () => {
   let authService: AuthService;
   let usersService: UsersService;
-  let usersRepository: Repository<User>;
-  let queryRunner: any;
 
   beforeEach(async () => {
-    queryRunner = createMockQueryRunner();
-
     const module: TestingModule = await Test.createTestingModule({
       imports: [
         PassportModule,
         ConfigModule,
+        UsersModule,
         TypeOrmModule.forRoot({
           type: 'sqlite',
           database: ':memory:',
-          entities: [User, Profile, Post],
+          autoLoadEntities: true,
           synchronize: true,
         }),
         JwtModule.registerAsync({
@@ -59,22 +49,15 @@ describe('AuthService', () => {
           }),
           inject: [ConfigService],
         }),
-        TypeOrmModule.forFeature([User]),
-        UsersModule,
+        TypeOrmModule.forFeature([User, Profile, Follow]),
       ],
       providers: [
         AuthService,
-        UsersService,
-        {
-          provide: QueryRunnerFactory,
-          useValue: {
-            createQueryRunner: jest.fn(() => queryRunner),
-          },
-        },
+        QueryRunnerFactory,
         {
           provide: JwtService,
           useValue: {
-            sign: jest.fn(() => 'token'),
+            sign: jest.fn(),
           },
         },
       ],
@@ -82,7 +65,6 @@ describe('AuthService', () => {
 
     authService = module.get<AuthService>(AuthService);
     usersService = module.get<UsersService>(UsersService);
-    usersRepository = module.get<Repository<User>>(getRepositoryToken(User));
   });
 
   it('should be defined', () => {
@@ -90,22 +72,31 @@ describe('AuthService', () => {
     expect(usersService).toBeDefined();
   });
 
-  describe('login()', () => {
-    it('should return an access token', async () => {
-      const token = await authService.login(mockUser);
+  afterEach(() => {
+    jest.resetAllMocks();
+  });
 
+  describe('login()', () => {
+    it('should return a token', async () => {
+      const user = UserFactory.createUserData() as User;
+
+      jest
+        .spyOn(authService, 'login')
+        .mockResolvedValue({ access_token: 'token' });
+
+      const token = await authService.login(user);
       expect(token).toEqual({ access_token: 'token' });
     });
   });
 
   describe('validateUser()', () => {
-    beforeEach(() => {
-      jest.clearAllMocks();
-    });
-
     it('should return a user if the credentials are valid', async () => {
-      jest.spyOn(usersRepository, 'findOne').mockResolvedValue(mockUser);
-      jest.spyOn(bcrypt, 'compare').mockImplementation(() => true);
+      const mockUser = UserFactory.createUserData() as User;
+
+      jest.spyOn(usersService, 'findByUsername').mockResolvedValue(mockUser);
+      jest
+        .spyOn(bcrypt, 'compare')
+        .mockImplementation(() => Promise.resolve(true));
 
       const user = await authService.validateUser(
         mockUser.username,
@@ -116,24 +107,29 @@ describe('AuthService', () => {
 
       expect(user).toEqual(result);
     });
-  });
 
-  it('should return NotFoundError if the user does not exist', async () => {
-    await expect(
-      authService.validateUser(mockUser.username, mockUser.password),
-    ).rejects.toThrow(NotFoundException);
+    it('should return NotFoundError if the user does not exist', async () => {
+      const mockUser = UserFactory.createUserData() as User;
 
-    await expect(
-      authService.validateUser(mockUser.username, mockUser.password),
-    ).rejects.toThrow('User not found');
-  });
+      await expect(
+        authService.validateUser(mockUser.username, mockUser.password),
+      ).rejects.toThrow(NotFoundException);
+      await expect(
+        authService.validateUser(mockUser.username, mockUser.password),
+      ).rejects.toThrow('User not found');
+    });
 
-  it('should return NotFoundError if the password is invalid', async () => {
-    jest.spyOn(usersRepository, 'findOne').mockResolvedValue(mockUser);
-    jest.spyOn(bcrypt, 'compare').mockImplementation(() => false);
+    it('should return NotFoundError if the password is invalid', async () => {
+      const mockUser = UserFactory.createUserData() as User;
 
-    await expect(
-      authService.validateUser(mockUser.username, mockUser.password),
-    ).resolves.toBeNull();
+      jest.spyOn(usersService, 'findByUsername').mockResolvedValue(mockUser);
+      jest
+        .spyOn(bcrypt, 'compare')
+        .mockImplementation(() => Promise.resolve(false));
+
+      await expect(
+        authService.validateUser(mockUser.username, mockUser.password),
+      ).resolves.toBeNull();
+    });
   });
 });

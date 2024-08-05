@@ -15,7 +15,10 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
-  async validateUser(username: string, password: string): Promise<User | null> {
+  async validateUser(
+    username: string,
+    password: string,
+  ): Promise<User | undefined> {
     const user = await this.usersService.findByUsername(username);
 
     if (user && (await bcrypt.compare(password, user.password))) {
@@ -23,7 +26,7 @@ export class AuthService {
       return result as User;
     }
 
-    return null;
+    return undefined;
   }
 
   async login(user: User): Promise<LoginResponse> {
