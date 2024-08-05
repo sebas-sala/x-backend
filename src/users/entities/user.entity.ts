@@ -63,9 +63,11 @@ export class User {
   // @OneToMany(() => Comment, (comment) => comment.user)
   // comments: Comment[];
 
+  @ApiHideProperty()
   @OneToMany(() => Follow, (follow) => follow.follower, { cascade: true })
   followers: Follow[];
 
+  @ApiHideProperty()
   @OneToMany(() => Follow, (follow) => follow.following, { cascade: true })
   following: Follow[];
 

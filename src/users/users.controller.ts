@@ -94,6 +94,28 @@ export class UsersController {
     return instanceToPlain(user, { groups: ['profile'] });
   }
 
+  @ApiOperation({ summary: 'Get user followers' })
+  @ApiResponse({
+    status: 200,
+    type: User,
+    description: 'Return user followers',
+  })
+  @Get('users/:userId/followers')
+  getFollowers(@Param('userId') userId: string) {
+    return this.usersService.getFollowers(userId);
+  }
+
+  @ApiOperation({ summary: 'Get user following' })
+  @ApiResponse({
+    status: 200,
+    type: User,
+    description: 'Return user following',
+  })
+  @Get('users/:userId/following')
+  getFollowing(@Param('userId') userId: string) {
+    return this.usersService.getFollowing(userId);
+  }
+
   // @Roles('user')
   // @UseGuards(JwtAuthGuard)
   // @Get('profile')
