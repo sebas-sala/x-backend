@@ -13,6 +13,7 @@ import { Post } from '@/src/posts/entities/post.entity';
 
 import UserFactory from '@/tests/utils/factories/user.factory';
 import ProfileFactory from '@/tests/utils/factories/profile.factory';
+import { Follow } from '@/src/follows/entities/follow.entity';
 
 describe('UsersController', () => {
   let usersController: UsersController;
@@ -26,10 +27,10 @@ describe('UsersController', () => {
         TypeOrmModule.forRoot({
           type: 'sqlite',
           database: ':memory:',
-          entities: [User, Profile, Post],
+          autoLoadEntities: true,
           synchronize: true,
         }),
-        TypeOrmModule.forFeature([User, Profile]),
+        TypeOrmModule.forFeature([User, Profile, Follow]),
       ],
       controllers: [UsersController],
       providers: [

@@ -13,6 +13,7 @@ import { Post } from '@/src/posts/entities/post.entity';
 import { QueryRunnerFactory } from '@/src/common/factories/query-runner.factory';
 import { createMockQueryRunner } from '@/tests/utils/mocks/query-runner.mock';
 import UserFactory from '@/tests/utils/factories/user.factory';
+import { Follow } from '@/src/follows/entities/follow.entity';
 
 describe('UsersService', () => {
   let usersService: UsersService;
@@ -33,10 +34,10 @@ describe('UsersService', () => {
         TypeOrmModule.forRoot({
           type: 'sqlite',
           database: ':memory:',
-          entities: [User, Profile, Post],
+          autoLoadEntities: true,
           synchronize: true,
         }),
-        TypeOrmModule.forFeature([User]),
+        TypeOrmModule.forFeature([User, Follow]),
       ],
       providers: [
         UsersService,
