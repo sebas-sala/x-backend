@@ -1,11 +1,10 @@
 import * as bcrypt from 'bcrypt';
-import { Repository } from 'typeorm';
 import { JwtModule, JwtService } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { getRepositoryToken, TypeOrmModule } from '@nestjs/typeorm';
+import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { AuthService } from '@/src/auth/auth.service';
 
@@ -15,8 +14,6 @@ import { UsersService } from '@/src/users/users.service';
 
 import { Profile } from '@/src/profiles/entities/profile.entity';
 
-import { Post } from '@/src/posts/entities/post.entity';
-import AuthFactory from '@/tests/utils/factories/auth.factory';
 import UserFactory from '@/tests/utils/factories/user.factory';
 import { Follow } from '@/src/follows/entities/follow.entity';
 import { QueryRunnerFactory } from '@/src/common/factories/query-runner.factory';
@@ -32,8 +29,6 @@ describe('AuthService', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [
-        PassportModule,
-        ConfigModule,
         UsersModule,
         TypeOrmModule.forRoot({
           type: 'sqlite',
@@ -129,7 +124,7 @@ describe('AuthService', () => {
 
       await expect(
         authService.validateUser(mockUser.username, mockUser.password),
-      ).resolves.toBeNull();
+      ).resolves.toBeUndefined();
     });
   });
 });
