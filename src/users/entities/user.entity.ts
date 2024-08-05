@@ -13,6 +13,7 @@ import {
 import { Post } from '@/src/posts/entities/post.entity';
 import { Profile } from '@/src/profiles/entities/profile.entity';
 import { ApiHideProperty } from '@nestjs/swagger';
+import { Follow } from '@/src/follows/entities/follow.entity';
 
 @Entity()
 export class User {
@@ -49,9 +50,9 @@ export class User {
   @JoinColumn({ name: 'profileId' })
   profile: Profile;
 
-  @ApiHideProperty()
-  @OneToMany(() => Post, (post) => post.user)
-  posts: Post[];
+  // @ApiHideProperty()
+  // @OneToMany(() => Post, (post) => post.user)
+  // posts: Post[];
 
   // @OneToMany(() => Bookmark, (bookmark) => bookmark.user)
   // bookmarks: Bookmark[];
@@ -62,11 +63,11 @@ export class User {
   // @OneToMany(() => Comment, (comment) => comment.user)
   // comments: Comment[];
 
-  // @OneToMany(() => Follow, (follow) => follow.follower)
-  // followers: Follow[];
+  @OneToMany(() => Follow, (follow) => follow.follower, { cascade: true })
+  followers: Follow[];
 
-  // @OneToMany(() => Follow, (follow) => follow.following)
-  // following: Follow[];
+  @OneToMany(() => Follow, (follow) => follow.following, { cascade: true })
+  following: Follow[];
 
   constructor(partial: Partial<User>) {
     Object.assign(this, partial);

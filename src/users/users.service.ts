@@ -27,12 +27,34 @@ export class UsersService {
     return this.usersRepository.find();
   }
 
+  async getFollowers(userId: string): Promise<User[]> {
+    return await this.usersRepository.find({
+      where: { following: { id: userId } },
+      relations: ['profile'],
+    });
+  }
+
+  async getFollowing(userId: string): Promise<User[]> {
+    return await this.usersRepository.find({
+      where: { followers: { id: userId } },
+      relations: ['profile'],
+    });
+  }
+
   async findOneById(id: string): Promise<User> {
-    return await this.findOneBy({ id }, ['profile']);
+    return await this.findOneBy({
+      options: { id },
+      error: 'User not found',
+      relations: ['profile'],
+    });
   }
 
   async findByUsername(username: string): Promise<User> {
-    return await this.findOneBy({ username }, ['profile']);
+    return await this.findOneBy({
+      options: { username },
+      error: 'User not found',
+      relations: ['profile'],
+    });
   }
 
   async create(createUserDto: CreateUserDto): Promise<User | undefined> {
@@ -69,14 +91,22 @@ export class UsersService {
     }
   }
 
-  private async findOneBy(options: any, relations?: string[]): Promise<User> {
+  async findOneBy({
+    options,
+    error,
+    relations,
+  }: {
+    options: Record<string, unknown>;
+    error: string;
+    relations?: string[];
+  }): Promise<User> {
     const user = await this.usersRepository.findOne({
       where: options,
       relations,
     });
 
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException(error);
     }
 
     return user;
