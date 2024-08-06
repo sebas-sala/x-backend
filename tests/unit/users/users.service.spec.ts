@@ -184,4 +184,40 @@ describe('UsersService', () => {
       );
     });
   });
+
+  describe('getFollowers()', () => {
+    const mockUser = UserFactory.createUserData() as User;
+
+    it('should return an array of followers', async () => {
+      usersRepository.find.mockResolvedValue([mockUser]);
+
+      const result = await usersService.getFollowers(mockUser.id);
+      expect(result).toEqual([mockUser]);
+    });
+
+    it('should return an empty array if no followers exist', async () => {
+      usersRepository.find.mockResolvedValue([]);
+
+      const result = await usersService.getFollowers(mockUser.id);
+      expect(result).toEqual([]);
+    });
+  });
+
+  describe('getFollowing()', () => {
+    const mockUser = UserFactory.createUserData() as User;
+
+    it('should return an array of following', async () => {
+      usersRepository.find.mockResolvedValue([mockUser]);
+
+      const result = await usersService.getFollowing(mockUser.id);
+      expect(result).toEqual([mockUser]);
+    });
+
+    it('should return an empty array if no following exist', async () => {
+      usersRepository.find.mockResolvedValue([]);
+
+      const result = await usersService.getFollowing(mockUser.id);
+      expect(result).toEqual([]);
+    });
+  });
 });

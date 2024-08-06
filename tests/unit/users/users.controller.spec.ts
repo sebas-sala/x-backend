@@ -86,6 +86,36 @@ describe('UsersController', () => {
     });
   });
 
+  describe('getFollowers()', () => {
+    const mockUser = UserFactory.createUserData() as User;
+
+    it('should return an array of followers', async () => {
+      jest
+        .spyOn(usersService, 'getFollowers')
+        .mockResolvedValueOnce([mockUser]);
+
+      const result = await usersController.getFollowers('1');
+
+      expect(result).toEqual([mockUser]);
+      expect(usersService.getFollowers).toHaveBeenCalledWith('1');
+    });
+  });
+
+  describe('getFollowing()', () => {
+    const mockUser = UserFactory.createUserData() as User;
+
+    it('should return an array of following users', async () => {
+      jest
+        .spyOn(usersService, 'getFollowing')
+        .mockResolvedValueOnce([mockUser]);
+
+      const result = await usersController.getFollowing('1');
+
+      expect(result).toEqual([mockUser]);
+      expect(usersService.getFollowing).toHaveBeenCalledWith('1');
+    });
+  });
+
   describe('findOne()', () => {
     const mockUser = UserFactory.createUserData() as User;
 
