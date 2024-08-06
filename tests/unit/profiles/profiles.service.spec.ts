@@ -87,6 +87,7 @@ describe('ProfilesService', () => {
         where: { user: { id: '1' } },
       });
       expect(profilesRepository.findOne).toHaveBeenCalledTimes(2);
+      expect(profilesRepository.findOne).toHaveBeenCalledTimes(2);
       expect(profilesRepository.update).toHaveBeenCalledWith('1', {
         ...updateProfileDto,
         birthdate: new Date(updateProfileDto.birthdate as string),
@@ -120,7 +121,9 @@ describe('ProfilesService', () => {
     });
 
     it('should throw an error if the profile does not exist', async () => {
-      jest.spyOn(profilesRepository, 'findOne').mockResolvedValue(null);
+      jest
+        .spyOn(profilesRepository, 'findOne')
+        .mockResolvedValue(undefined as any);
 
       await expect(
         profilesService.update('1', updateProfileDto),
