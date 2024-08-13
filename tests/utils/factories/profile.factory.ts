@@ -3,17 +3,20 @@ import { faker } from '@faker-js/faker';
 
 import { User } from '@/src/users/entities/user.entity';
 import { Profile } from '@/src/profiles/entities/profile.entity';
+import { UpdateProfileDto } from '@/src/profiles/dto/update-profile.dto';
 
 export default class ProfileFactory {
   constructor(private dataSource?: DataSource) {}
 
   static createProfileDto(
     profileData: Partial<Profile> = {},
-  ): Partial<Profile> {
+  ): UpdateProfileDto {
     return {
       bio: profileData.bio ?? faker.lorem.sentence(),
       location: profileData.location ?? faker.location.city(),
-      birthdate: profileData.birthdate ?? faker.date.past(),
+      birthdate: profileData.birthdate
+        ? profileData.birthdate.toISOString()
+        : faker.date.past().toISOString(),
       website: profileData.website ?? faker.internet.url(),
       isPublic: profileData.isPublic ?? faker.datatype.boolean(),
     };
@@ -26,7 +29,7 @@ export default class ProfileFactory {
       id: profileData.id ?? faker.string.uuid(),
       ...ProfileFactory.createProfileDto(profileData),
       updatedAt: profileData.updatedAt ?? faker.date.recent(),
-    };
+    } as Partial<Profile>;
   }
 
   async createProfileEntity(
@@ -57,3 +60,13 @@ export default class ProfileFactory {
     }
   }
 }
+
+export const mockProfilesService = {
+  update: jest.fn(),
+  findOneBy: jest.fn(),
+};
+
+export const mockProfilesRepository = {
+  findOne: jest.fn(),
+  update: jest.fn(),
+};

@@ -8,35 +8,39 @@ import { ProfilesService } from '@/src/profiles/profiles.service';
 import { User } from '@/src/users/entities/user.entity';
 
 import { UpdateProfileDto } from '@/src/profiles/dto/update-profile.dto';
+import ProfileFactory, {
+  mockProfilesRepository,
+} from '@/tests/utils/factories/profile.factory';
+import { Follow } from '@/src/follows/entities/follow.entity';
 
-const mockProfile: Profile = {
-  id: '1',
-  bio: 'test bio',
-  birthdate: new Date(),
-  isPublic: false,
-  location: 'test location',
-  website: 'test website',
-  updatedAt: new Date(),
-  user: undefined as any,
-};
+// const mockProfile: Profile = {
+//   id: '1',
+//   bio: 'test bio',
+//   birthdate: new Date(),
+//   isPublic: false,
+//   location: 'test location',
+//   website: 'test website',
+//   updatedAt: new Date(),
+//   user: undefined as any,
+// };
 
-const updateProfileDto: UpdateProfileDto = {
-  bio: 'new bio',
-  birthdate: new Date().toISOString(),
-  isPublic: true,
-  location: 'new location',
-  website: 'new website',
-};
+// const updateProfileDto: UpdateProfileDto = {
+//   bio: 'new bio',
+//   birthdate: new Date().toISOString(),
+//   isPublic: true,
+//   location: 'new location',
+//   website: 'new website',
+// };
 
-const updatedProfile: Profile = {
-  ...mockProfile,
-  ...updateProfileDto,
-  birthdate: new Date(updateProfileDto.birthdate as string),
-};
+// const updatedProfile: Profile = {
+//   ...mockProfile,
+//   ...updateProfileDto,
+//   birthdate: new Date(updateProfileDto.birthdate as string),
+// };
 
 describe('ProfilesService', () => {
   let profilesService: ProfilesService;
-  let profilesRepository: Repository<Profile>;
+  const profilesRepository = mockProfilesRepository;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -44,18 +48,25 @@ describe('ProfilesService', () => {
         TypeOrmModule.forRoot({
           type: 'sqlite',
           database: ':memory:',
-          entities: [Profile, User],
+          autoLoadEntities: true,
           synchronize: true,
         }),
-        TypeOrmModule.forFeature([Profile]),
+        TypeOrmModule.forFeature([Profile, User, Follow]),
       ],
-      providers: [ProfilesService],
+      providers: [
+        ProfilesService,
+        {
+          provide: getRepositoryToken(Profile),
+          useValue: profilesRepository,
+        },
+      ],
     }).compile();
 
     profilesService = module.get<ProfilesService>(ProfilesService);
-    profilesRepository = module.get<Repository<Profile>>(
-      getRepositoryToken(Profile),
-    );
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
   });
 
   it('should be defined', () => {
@@ -69,67 +80,95 @@ describe('ProfilesService', () => {
       affected: 1,
     };
 
-    it('should update a profile', async () => {
-      jest
-        .spyOn(profilesRepository, 'findOne')
-        .mockResolvedValueOnce(mockProfile);
-      jest.spyOn(profilesRepository, 'update').mockResolvedValue(updateResult);
-      jest
-        .spyOn(profilesRepository, 'findOne')
-        .mockResolvedValueOnce(updatedProfile);
+    it('Should update a profile with full data', async () => {
+      // Arrange
+      const mockProfile = ProfileFactory.createProfileData();
+      const updateProfileDto =
+        ProfileFactory.createProfileDto() as UpdateProfileDto;
 
-      const result = await profilesService.update('1', updateProfileDto);
+      profilesRepository.findOne.mockResolvedValueOnce(mockProfile);
+      profilesRepository.update.mockResolvedValue({
+        ...updateResult,
+        raw: updateProfileDto,
+      });
+      profilesRepository.findOne.mockResolvedValueOnce({
+        ...updateProfileDto,
+      });
 
-      expect(result).toEqual(updatedProfile);
+      // Act
+      const result = await profilesService.update(
+        mockProfile.id as string,
+        updateProfileDto,
+      );
+
+      // Assert
+      expect(result).toMatchObject({
+        ...updateProfileDto,
+      });
 
       expect(profilesRepository.findOne).toHaveBeenCalledWith({
-        where: { user: { id: '1' } },
+        where: { user: { id: mockProfile.id } },
       });
       expect(profilesRepository.findOne).toHaveBeenCalledTimes(2);
-      expect(profilesRepository.findOne).toHaveBeenCalledTimes(2);
-      expect(profilesRepository.update).toHaveBeenCalledWith('1', {
+      expect(profilesRepository.update).toHaveBeenCalledWith(mockProfile.id, {
         ...updateProfileDto,
-        birthdate: new Date(updateProfileDto.birthdate as string),
+        birthdate: new Date(updateProfileDto.birthdate!),
       });
     });
 
-    it('should update a profile when date is not provided', async () => {
-      jest
-        .spyOn(profilesRepository, 'findOne')
-        .mockResolvedValueOnce(mockProfile);
-      jest.spyOn(profilesRepository, 'update').mockResolvedValue(updateResult);
-      jest
-        .spyOn(profilesRepository, 'findOne')
-        .mockResolvedValueOnce(updatedProfile);
+    it('Should update a profile with partial data', async () => {
+      // Arrange
+      const mockProfile = ProfileFactory.createProfileData();
+      const updateProfileDto = {
+        bio: 'new bio',
+      } as UpdateProfileDto;
 
-      const result = await profilesService.update('1', {
-        ...updateProfileDto,
-        birthdate: undefined,
+      profilesRepository.findOne.mockResolvedValueOnce(mockProfile);
+      profilesRepository.update.mockResolvedValue({
+        ...updateResult,
       });
+      profilesRepository.findOne.mockResolvedValueOnce(updateProfileDto);
 
-      expect(result).toEqual(updatedProfile);
+      // Act
+      const result = await profilesService.update(
+        mockProfile.id as string,
+        updateProfileDto,
+      );
 
+      // Assert
+      expect(result).toMatchObject({
+        ...updateProfileDto,
+      });
       expect(profilesRepository.findOne).toHaveBeenCalledWith({
-        where: { user: { id: '1' } },
+        where: { user: { id: mockProfile.id } },
       });
       expect(profilesRepository.findOne).toHaveBeenCalledTimes(2);
-      expect(profilesRepository.update).toHaveBeenCalledWith('1', {
+      expect(profilesRepository.update).toHaveBeenCalledWith(mockProfile.id, {
         ...updateProfileDto,
-        birthdate: undefined,
       });
     });
 
-    it('should throw an error if the profile does not exist', async () => {
-      jest
-        .spyOn(profilesRepository, 'findOne')
-        .mockResolvedValue(undefined as any);
+    it('should throw not found exception if the profile does not exist', async () => {
+      profilesRepository.findOne.mockResolvedValue(undefined);
 
       await expect(
-        profilesService.update('1', updateProfileDto),
+        profilesService.update('1', ProfileFactory.createProfileDto()),
       ).rejects.toThrow(NotFoundException);
       await expect(
-        profilesService.update('1', updateProfileDto),
+        profilesService.update('1', ProfileFactory.createProfileDto()),
       ).rejects.toThrow('Profile not found');
+    });
+
+    it('should throw an error if the update fails', async () => {
+      const mockProfile = ProfileFactory.createProfileData();
+      const updateProfileDto = ProfileFactory.createProfileDto();
+
+      profilesRepository.findOne.mockResolvedValueOnce(mockProfile);
+      profilesRepository.update.mockRejectedValue(new Error('Update failed'));
+
+      await expect(
+        profilesService.update(mockProfile.id as string, updateProfileDto),
+      ).rejects.toThrow('Update failed');
     });
   });
 });
