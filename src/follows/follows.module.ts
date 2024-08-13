@@ -9,7 +9,7 @@ import { User } from '../users/entities/user.entity';
 import { UsersModule } from '@/src/users/users.module';
 
 @Module({
-  imports: [UsersModule, TypeOrmModule.forFeature([Follow, User])],
+  imports: [UsersModule, TypeOrmModule.forFeature([Follow])],
   controllers: [FollowController],
   providers: [FollowService],
 })

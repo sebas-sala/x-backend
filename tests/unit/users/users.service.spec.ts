@@ -5,22 +5,19 @@ import { ConflictException, NotFoundException } from '@nestjs/common';
 import { User } from '@/src/users/entities/user.entity';
 import { UsersService } from '@/src/users/users.service';
 
-import { Profile } from '@/src/profiles/entities/profile.entity';
 import { ProfilesModule } from '@/src/profiles/profiles.module';
+
+import { Follow } from '@/src/follows/entities/follow.entity';
 
 import { QueryRunnerFactory } from '@/src/common/factories/query-runner.factory';
 import { createMockQueryRunner } from '@/tests/utils/mocks/query-runner.mock';
-import UserFactory from '@/tests/utils/factories/user.factory';
-import { Follow } from '@/src/follows/entities/follow.entity';
+import UserFactory, {
+  mockUsersRepository,
+} from '@/tests/utils/factories/user.factory';
 
 describe('UsersService', () => {
   let usersService: UsersService;
-  const usersRepository = {
-    find: jest.fn(),
-    findOne: jest.fn(),
-    create: jest.fn(),
-    save: jest.fn(),
-  };
+  const usersRepository = mockUsersRepository;
   let queryRunner: any;
 
   beforeEach(async () => {
