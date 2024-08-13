@@ -41,6 +41,8 @@ describe('UsersController', () => {
             findByUsername: jest.fn(),
             create: jest.fn(),
             update: jest.fn(),
+            getFollowers: jest.fn(),
+            getFollowing: jest.fn(),
           },
         },
         {
