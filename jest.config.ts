@@ -17,6 +17,7 @@ const config: Config = {
     '!src/main.ts',
     '!src/app.module.ts',
     '!src/**/*.entity.ts',
+    '!src/swagger/**',
   ],
   coverageDirectory: './coverage',
   testEnvironment: 'node',
