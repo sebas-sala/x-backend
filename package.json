@@ -30,10 +30,8 @@
     "lint": "eslint \"{src,apps,libs,tests}/**/*.ts\" --fix",
     "test": "rimraf coverage .nyc_output && npm run test:unit && npm run test:e2e && npm run test:cov",
     "test:cov": "jest --coverage",
-    "test:unit": "jest --config ./tests/unit/jest-unit.json",
-    "test:e2e": "jest --config ./tests/e2e/jest-e2e.json",
-    "test:unit:watch": "jest --config ./tests/unit/jest-unit.json --watchAll",
-    "test:e2e:watch": "jest --config ./tests/e2e/jest-e2e.json --watchAll"
+    "test:unit": "jest --config ./tests/unit/jest-unit.json --watchAll",
+    "test:e2e": "jest --config ./tests/e2e/jest-e2e.json --watchAll"
   },
   "dependencies": {
     "@fastify/cookie": "^9.3.1",

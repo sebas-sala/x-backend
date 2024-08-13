@@ -10,7 +10,6 @@ import {
   OneToMany,
 } from 'typeorm';
 
-import { Post } from '@/src/posts/entities/post.entity';
 import { Profile } from '@/src/profiles/entities/profile.entity';
 import { ApiHideProperty } from '@nestjs/swagger';
 import { Follow } from '@/src/follows/entities/follow.entity';

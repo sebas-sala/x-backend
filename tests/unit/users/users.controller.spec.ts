@@ -9,11 +9,10 @@ import { UsersController } from '@/src/users/users.controller';
 import { Profile } from '@/src/profiles/entities/profile.entity';
 import { ProfilesService } from '@/src/profiles/profiles.service';
 
-import { Post } from '@/src/posts/entities/post.entity';
+import { Follow } from '@/src/follows/entities/follow.entity';
 
 import UserFactory from '@/tests/utils/factories/user.factory';
 import ProfileFactory from '@/tests/utils/factories/profile.factory';
-import { Follow } from '@/src/follows/entities/follow.entity';
 
 describe('UsersController', () => {
   let usersController: UsersController;

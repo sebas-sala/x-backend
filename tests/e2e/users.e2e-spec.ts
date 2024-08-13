@@ -9,12 +9,11 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from '@/src/users/entities/user.entity';
 import { UsersModule } from '@/src/users/users.module';
 import { CreateUserDto } from '@/src/users/dto/create-user.dto';
-
-import { Post } from '@/src/posts/entities/post.entity';
+import UserFactory from '../utils/factories/user.factory';
 
 import { Profile } from '@/src/profiles/entities/profile.entity';
-import UserFactory from '../utils/factories/user.factory';
 import ProfileFactory from '../utils/factories/profile.factory';
+
 import { ValidationPipe } from '@nestjs/common';
 
 describe('Users API (e2e)', () => {
@@ -29,7 +28,7 @@ describe('Users API (e2e)', () => {
         TypeOrmModule.forRoot({
           type: 'sqlite',
           database: ':memory:',
-          entities: [User, Profile, Post],
+          entities: [User, Profile],
           synchronize: true,
         }),
       ],

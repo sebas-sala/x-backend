@@ -11,11 +11,9 @@ import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { FollowModule } from './follows/follows.module';
 import { ProfilesModule } from './profiles/profiles.module';
-import { CommentsModule } from './comments/comments.module';
 
 import configuration from './config/configuration';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
-import { PostsModule } from './posts/posts.module';
 
 @Module({
   imports: [
@@ -37,10 +35,8 @@ import { PostsModule } from './posts/posts.module';
     }),
     AuthModule,
     UsersModule,
-    PostsModule,
     FollowModule,
     ProfilesModule,
-    CommentsModule,
   ],
   controllers: [AppController],
   providers: [

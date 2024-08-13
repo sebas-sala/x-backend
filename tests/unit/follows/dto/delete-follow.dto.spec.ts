@@ -35,7 +35,7 @@ describe('DeleteFollowDto', () => {
     deleteFollowDto.followerId = 'invalid';
 
     const errors = await validate(deleteFollowDto);
-    console.log(errors);
+
     expect(errors[0].property).toBe('followerId');
     expect(errors[0].constraints?.isUuid).toBe('followerId must be a UUID');
   });

@@ -8,7 +8,6 @@ import { ProfilesService } from '@/src/profiles/profiles.service';
 import { User } from '@/src/users/entities/user.entity';
 
 import { UpdateProfileDto } from '@/src/profiles/dto/update-profile.dto';
-import { Post } from '@/src/posts/entities/post.entity';
 
 const mockProfile: Profile = {
   id: '1',
@@ -45,7 +44,7 @@ describe('ProfilesService', () => {
         TypeOrmModule.forRoot({
           type: 'sqlite',
           database: ':memory:',
-          entities: [Profile, User, Post],
+          entities: [Profile, User],
           synchronize: true,
         }),
         TypeOrmModule.forFeature([Profile]),

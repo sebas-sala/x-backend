@@ -8,8 +8,6 @@ import { UsersService } from '@/src/users/users.service';
 import { Profile } from '@/src/profiles/entities/profile.entity';
 import { ProfilesModule } from '@/src/profiles/profiles.module';
 
-import { Post } from '@/src/posts/entities/post.entity';
-
 import { QueryRunnerFactory } from '@/src/common/factories/query-runner.factory';
 import { createMockQueryRunner } from '@/tests/utils/mocks/query-runner.mock';
 import UserFactory from '@/tests/utils/factories/user.factory';

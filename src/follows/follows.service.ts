@@ -56,8 +56,6 @@ export class FollowService {
   }
 
   private async deleteFollow(followerId: string, followingId: string) {
-    console.log('followerId', followerId);
-
     const result = await this.followRepository
       .createQueryBuilder()
       .delete()
