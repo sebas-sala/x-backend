@@ -100,9 +100,9 @@ export class UsersController {
     type: User,
     description: 'Return user followers',
   })
-  @Get('users/:userId/followers')
-  getFollowers(@Param('userId') userId: string) {
-    return this.usersService.getFollowers(userId);
+  @Get(':id/followers')
+  async getFollowers(@Param('id') id: string) {
+    return await this.usersService.getFollowers(id);
   }
 
   @ApiOperation({ summary: 'Get user following' })
@@ -111,9 +111,9 @@ export class UsersController {
     type: User,
     description: 'Return user following',
   })
-  @Get('users/:userId/following')
-  getFollowing(@Param('userId') userId: string) {
-    return this.usersService.getFollowing(userId);
+  @Get(':id/following')
+  async getFollowing(@Param('id') id: string) {
+    return await this.usersService.getFollowing(id);
   }
 
   // @Roles('user')

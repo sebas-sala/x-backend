@@ -1,4 +1,3 @@
-import { User } from '@/src/users/entities/user.entity';
 import {
   Entity,
   ManyToOne,
@@ -6,6 +5,8 @@ import {
   CreateDateColumn,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+
+import { User } from '@/src/users/entities/user.entity';
 
 @Entity()
 export class Follow {

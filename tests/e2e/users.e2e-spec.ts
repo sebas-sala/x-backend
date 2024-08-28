@@ -15,6 +15,8 @@ import { Profile } from '@/src/profiles/entities/profile.entity';
 import ProfileFactory from '../utils/factories/profile.factory';
 
 import { ValidationPipe } from '@nestjs/common';
+import { Follow } from '@/src/follows/entities/follow.entity';
+import FollowFactory from '../utils/factories/follow.factory';
 
 describe('Users API (e2e)', () => {
   let app: NestFastifyApplication;
@@ -28,9 +30,10 @@ describe('Users API (e2e)', () => {
         TypeOrmModule.forRoot({
           type: 'sqlite',
           database: ':memory:',
-          entities: [User, Profile],
+          autoLoadEntities: true,
           synchronize: true,
         }),
+        TypeOrmModule.forFeature([User, Follow]),
       ],
     }).compile();
 
@@ -329,6 +332,92 @@ describe('Users API (e2e)', () => {
         message: 'Payload cannot be empty',
         error: 'Bad Request',
       });
+    });
+  });
+
+  describe(`GET /users/:id/followers`, () => {
+    it(`should return an array of followers`, async () => {
+      const userFactory = new UserFactory(dataSource);
+      const followFactory = new FollowFactory(dataSource);
+
+      const user = await userFactory.createUserEntity();
+      const followers = await Promise.all(
+        Array.from({ length: 3 }, async () => {
+          const follower = await userFactory.createUserEntity();
+          await followFactory.createFollow({
+            followingId: user.id,
+            followerId: follower.id,
+          });
+          return follower;
+        }),
+      );
+
+      const result = await app.inject({
+        method: 'GET',
+        url: `/users/${user.id}/followers`,
+      });
+
+      const payload = JSON.parse(result.payload);
+
+      expect(result.statusCode).toEqual(200);
+      expect(payload.map((f: { id: string }) => f.id)).toEqual(
+        expect.arrayContaining(followers.map((f) => f.id)),
+      );
+    });
+
+    it(`should return an empty array if the user does not exists`, async () => {
+      const result = await app.inject({
+        method: 'GET',
+        url: '/users/2/followers',
+      });
+
+      const payload = JSON.parse(result.payload);
+
+      expect(result.statusCode).toEqual(200);
+      expect(payload).toEqual([]);
+    });
+  });
+
+  describe(`GET /users/:id/following`, () => {
+    it(`should return an array of following`, async () => {
+      const userFactory = new UserFactory(dataSource);
+      const followFactory = new FollowFactory(dataSource);
+
+      const user = await userFactory.createUserEntity();
+      const following = await Promise.all(
+        Array.from({ length: 3 }, async () => {
+          const followed = await userFactory.createUserEntity();
+          await followFactory.createFollow({
+            followingId: followed.id,
+            followerId: user.id,
+          });
+          return followed;
+        }),
+      );
+
+      const result = await app.inject({
+        method: 'GET',
+        url: `/users/${user.id}/following`,
+      });
+
+      const payload = JSON.parse(result.payload);
+
+      expect(result.statusCode).toEqual(200);
+      expect(payload.map((f: { id: string }) => f.id)).toEqual(
+        expect.arrayContaining(following.map((f) => f.id)),
+      );
+    });
+
+    it(`should return an empty array if the user does not exists`, async () => {
+      const result = await app.inject({
+        method: 'GET',
+        url: '/users/2/following',
+      });
+
+      const payload = JSON.parse(result.payload);
+
+      expect(result.statusCode).toEqual(200);
+      expect(payload).toEqual([]);
     });
   });
 });
