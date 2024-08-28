@@ -17,16 +17,26 @@ import ProfileFactory from '../utils/factories/profile.factory';
 import { ValidationPipe } from '@nestjs/common';
 import { Follow } from '@/src/follows/entities/follow.entity';
 import FollowFactory from '../utils/factories/follow.factory';
+import { AuthModule } from '@/src/auth/auth.module';
+import { JwtModule, JwtService } from '@nestjs/jwt';
+import { AuthService } from '@/src/auth/auth.service';
+import { JwtStrategy } from '@/src/auth/jwt.strategy';
+import BlockedUserFactory from '../utils/factories/blocked-user.factory';
 
 describe('Users API (e2e)', () => {
   let app: NestFastifyApplication;
 
   let dataSource: DataSource;
+  let jwtService: JwtService;
+  let token: string;
+
+  let currentUser: User;
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
       imports: [
         UsersModule,
+        AuthModule,
         TypeOrmModule.forRoot({
           type: 'sqlite',
           database: ':memory:',
@@ -34,7 +44,12 @@ describe('Users API (e2e)', () => {
           synchronize: true,
         }),
         TypeOrmModule.forFeature([User, Follow]),
+        JwtModule.register({
+          secret: process.env.JWT_SECRET || 'secret',
+          signOptions: { expiresIn: '60m' },
+        }),
       ],
+      providers: [AuthService, JwtStrategy],
     }).compile();
 
     app = moduleRef.createNestApplication<NestFastifyApplication>(
@@ -46,6 +61,7 @@ describe('Users API (e2e)', () => {
     await app.getHttpAdapter().getInstance().ready();
 
     dataSource = moduleRef.get<DataSource>(DataSource);
+    jwtService = moduleRef.get<JwtService>(JwtService);
   });
 
   afterAll(async () => {
@@ -54,6 +70,12 @@ describe('Users API (e2e)', () => {
 
   beforeEach(async () => {
     await dataSource.synchronize(true);
+
+    currentUser = await dataSource
+      .getRepository(User)
+      .save(UserFactory.createUserDto());
+
+    token = jwtService.sign({ sub: currentUser.id });
   });
 
   describe('GET /users', () => {
@@ -77,6 +99,8 @@ describe('Users API (e2e)', () => {
     });
 
     it('should return an empty array if there are no users', async () => {
+      await dataSource.synchronize(true);
+
       const result = await app.inject({
         method: 'GET',
         url: '/users',
@@ -412,6 +436,57 @@ describe('Users API (e2e)', () => {
       const result = await app.inject({
         method: 'GET',
         url: '/users/2/following',
+      });
+
+      const payload = JSON.parse(result.payload);
+
+      expect(result.statusCode).toEqual(200);
+      expect(payload).toEqual([]);
+    });
+  });
+
+  describe(`GET /users/blocked`, () => {
+    it(`should return an array of blocked users`, async () => {
+      const userFactory = new UserFactory(dataSource);
+      const blockedUserFactory = new BlockedUserFactory(dataSource);
+
+      const blockedUsers = await Promise.all(
+        Array.from({ length: 3 }, async () => {
+          const blockedUser = await userFactory.createUserEntity();
+
+          await blockedUserFactory.createBlockedUser({
+            blockingUserId: currentUser.id,
+            blockedUserId: blockedUser.id,
+          });
+          return blockedUser;
+        }),
+      );
+
+      const result = await app.inject({
+        method: 'GET',
+        url: `/users/blocked`,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const payload = JSON.parse(result.payload);
+
+      expect(result.statusCode).toEqual(200);
+      expect(
+        payload.map((u: { id: string; blockedUser: { id: string } }) => {
+          return u.blockedUser.id;
+        }),
+      ).toEqual(expect.arrayContaining(blockedUsers.map((u) => u.id)));
+    });
+
+    it(`should return an empty array if the user does not exists`, async () => {
+      const result = await app.inject({
+        method: 'GET',
+        url: '/users/blocked',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
 
       const payload = JSON.parse(result.payload);
