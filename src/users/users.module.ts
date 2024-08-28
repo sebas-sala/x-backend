@@ -5,14 +5,17 @@ import { User } from './entities/user.entity';
 import { UsersService } from './users.service';
 import { UsersController } from './users.controller';
 
-import { Follow } from '../follows/entities/follow.entity';
-
 import { ProfilesModule } from '@/src/profiles/profiles.module';
 
 import { QueryRunnerFactory } from '@/src/common/factories/query-runner.factory';
+import { BlockedUsersModule } from '../blocked-users/blocked-users.module';
 
 @Module({
-  imports: [ProfilesModule, TypeOrmModule.forFeature([User])],
+  imports: [
+    ProfilesModule,
+    BlockedUsersModule,
+    TypeOrmModule.forFeature([User]),
+  ],
   controllers: [UsersController],
   providers: [UsersService, QueryRunnerFactory],
   exports: [UsersService, TypeOrmModule],

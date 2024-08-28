@@ -13,6 +13,7 @@ import {
 import { Profile } from '@/src/profiles/entities/profile.entity';
 import { ApiHideProperty } from '@nestjs/swagger';
 import { Follow } from '@/src/follows/entities/follow.entity';
+import { BlockedUser } from '@/src/blocked-users/entities/blocked-user.entity';
 
 @Entity()
 export class User {
@@ -48,6 +49,14 @@ export class User {
   @OneToOne(() => Profile, (profile) => profile.user, { cascade: true })
   @JoinColumn({ name: 'profileId' })
   profile: Profile;
+
+  @Expose({ groups: ['profile', 'admin'] })
+  @OneToMany(() => BlockedUser, (blockedUser) => blockedUser.blockingUser)
+  blockedUsers: BlockedUser[];
+
+  @Expose({ groups: ['profile', 'admin'] })
+  @OneToMany(() => BlockedUser, (blockedUser) => blockedUser.blockedUser)
+  blockedBy: BlockedUser[];
 
   // @ApiHideProperty()
   // @OneToMany(() => Post, (post) => post.user)
