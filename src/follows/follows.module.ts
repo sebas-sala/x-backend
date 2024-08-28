@@ -5,7 +5,6 @@ import { Follow } from './entities/follow.entity';
 import { FollowService } from './follows.service';
 import { FollowController } from './follows.controller';
 
-import { User } from '../users/entities/user.entity';
 import { UsersModule } from '@/src/users/users.module';
 
 @Module({
