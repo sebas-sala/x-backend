@@ -135,7 +135,7 @@ export class UsersController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Delete(':id/block')
+  @Delete(':id/unblock')
   async unblockUser(
     @Param('id') id: string,
     @CurrentUser() currentUser: string,

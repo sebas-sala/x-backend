@@ -495,4 +495,126 @@ describe('Users API (e2e)', () => {
       expect(payload).toEqual([]);
     });
   });
+
+  describe(`POST /users/:id/block`, () => {
+    it(`should block a user`, async () => {
+      const userFactory = new UserFactory(dataSource);
+
+      const user = await userFactory.createUserEntity();
+
+      const result = await app.inject({
+        method: 'POST',
+        url: `/users/${user.id}/block`,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const payload = JSON.parse(result.payload);
+
+      expect(result.statusCode).toEqual(201);
+      expect(payload).toMatchObject({
+        blockedUser: {
+          id: user.id,
+        },
+        blockingUser: {
+          id: currentUser.id,
+        },
+      });
+    });
+
+    it(`should return 404 if the user does not exists`, async () => {
+      const result = await app.inject({
+        method: 'POST',
+        url: '/users/2/block',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const payload = JSON.parse(result.payload);
+
+      expect(result.statusCode).toEqual(404);
+      expect(payload).toMatchObject({
+        statusCode: 404,
+        message: `Blocked user with ID ${2} not found`,
+        error: 'Not Found',
+      });
+    });
+
+    it(`should return 409 if the user is already blocked`, async () => {
+      const userFactory = new UserFactory(dataSource);
+      const blockedUserFactory = new BlockedUserFactory(dataSource);
+
+      const user = await userFactory.createUserEntity();
+
+      await blockedUserFactory.createBlockedUser({
+        blockingUserId: currentUser.id,
+        blockedUserId: user.id,
+      });
+
+      const result = await app.inject({
+        method: 'POST',
+        url: `/users/${user.id}/block`,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const payload = JSON.parse(result.payload);
+
+      expect(result.statusCode).toEqual(409);
+      expect(payload).toMatchObject({
+        statusCode: 409,
+        message: 'User already blocked',
+        error: 'Conflict',
+      });
+    });
+  });
+
+  describe(`DELETE /users/:id/unblock`, () => {
+    it(`should unblock a user`, async () => {
+      const userFactory = new UserFactory(dataSource);
+      const blockedUserFactory = new BlockedUserFactory(dataSource);
+
+      const user = await userFactory.createUserEntity();
+
+      await blockedUserFactory.createBlockedUser({
+        blockingUserId: currentUser.id,
+        blockedUserId: user.id,
+      });
+
+      const result = await app.inject({
+        method: 'DELETE',
+        url: `/users/${user.id}/unblock`,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const payload = JSON.parse(result.payload);
+
+      expect(result.statusCode).toEqual(200);
+      expect(payload).toBe(1);
+    });
+
+    it(`should return 404 if the user does not exists`, async () => {
+      const result = await app.inject({
+        method: 'DELETE',
+        url: '/users/2/unblock',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const payload = JSON.parse(result.payload);
+
+      expect(result.statusCode).toEqual(404);
+      expect(payload).toMatchObject({
+        statusCode: 404,
+        message: `Blocked user with ID ${2} not found`,
+        error: 'Not Found',
+      });
+    });
+  });
 });
