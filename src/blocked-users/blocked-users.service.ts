@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { BlockedUser } from './entities/blocked-user.entity';
-import { EntityManager, Repository, Transaction } from 'typeorm';
+import { EntityManager, Repository } from 'typeorm';
 import { User } from '../users/entities/user.entity';
 import { QueryRunnerFactory } from '../common/factories/query-runner.factory';
 
@@ -31,7 +31,7 @@ export class BlockedUsersService {
     const manager = queryRunner.manager;
 
     try {
-      await this.validateUsersExist(blockingUserId, blockedUserId, manager);
+      await this.validateBlockedUserExists(blockedUserId, manager);
       await this.validateBlockDoesNotExist(
         blockingUserId,
         blockedUserId,
@@ -56,14 +56,18 @@ export class BlockedUsersService {
     blockingUserId: string,
     blockedUserId: string,
   ): Promise<number | null | undefined> {
-    await this.validateUsersExist(blockingUserId, blockedUserId);
+    try {
+      await this.validateBlockedUserExists(blockedUserId);
 
-    const result = await this.blockedUsersRepository.delete({
-      blockingUser: { id: blockingUserId },
-      blockedUser: { id: blockedUserId },
-    });
+      const result = await this.blockedUsersRepository.delete({
+        blockingUser: { id: blockingUserId },
+        blockedUser: { id: blockedUserId },
+      });
 
-    return result.affected;
+      return result.affected;
+    } catch (error) {
+      throw error;
+    }
   }
 
   async getBlockedUsers(userId: string): Promise<BlockedUser[]> {
@@ -77,21 +81,11 @@ export class BlockedUsersService {
     return blockedUsers;
   }
 
-  private async validateUsersExist(
-    blockingUserId: string,
+  private async validateBlockedUserExists(
     blockedUserId: string,
     manager?: EntityManager,
   ): Promise<void> {
-    const [blockingUser, blockedUser] = await Promise.all([
-      this.findUserById(blockingUserId, manager),
-      this.findUserById(blockedUserId, manager),
-    ]);
-
-    if (!blockingUser) {
-      throw new NotFoundException(
-        `Blocking user with ID ${blockingUserId} not found`,
-      );
-    }
+    const blockedUser = await this.findUserById(blockedUserId, manager);
 
     if (!blockedUser) {
       throw new NotFoundException(

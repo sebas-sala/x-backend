@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { User } from './entities/user.entity';
@@ -9,9 +9,11 @@ import { ProfilesModule } from '@/src/profiles/profiles.module';
 
 import { QueryRunnerFactory } from '@/src/common/factories/query-runner.factory';
 import { BlockedUsersModule } from '../blocked-users/blocked-users.module';
+import { FollowsModule } from '../follows/follows.module';
 
 @Module({
   imports: [
+    forwardRef(() => FollowsModule),
     ProfilesModule,
     BlockedUsersModule,
     TypeOrmModule.forFeature([User]),

@@ -27,30 +27,6 @@ export class UsersService {
     return this.usersRepository.find();
   }
 
-  async getFollowers(userId: string): Promise<User[]> {
-    const followers = await this.usersRepository
-      .createQueryBuilder('user')
-      .innerJoin('user.followers', 'follow', 'follow.followingId = :userId', {
-        userId,
-      })
-      .leftJoinAndSelect('user.profile', 'profile')
-      .getMany();
-
-    return followers;
-  }
-
-  async getFollowing(userId: string): Promise<User[]> {
-    const following = await this.usersRepository
-      .createQueryBuilder('user')
-      .innerJoin('user.following', 'follow', 'follow.followerId = :userId', {
-        userId,
-      })
-      .leftJoinAndSelect('user.profile', 'profile')
-      .getMany();
-
-    return following;
-  }
-
   async findOneById(id: string): Promise<User> {
     return await this.findOneBy({
       options: { id },

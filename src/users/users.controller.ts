@@ -15,7 +15,8 @@ import {
   Patch,
   UseGuards,
   Delete,
-  Req,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 
 import { User } from './entities/user.entity';
@@ -30,15 +31,25 @@ import { NonEmptyPayloadGuard } from '../common/guards/non-empty-payload.guard';
 import { BlockedUsersService } from '../blocked-users/blocked-users.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { FollowService } from '../follows/follows.service';
+import { ModuleRef } from '@nestjs/core';
 
 @ApiTags('users')
 @Controller('users')
 export class UsersController {
+  private followsService: FollowService;
+
   constructor(
     private readonly usersService: UsersService,
     private readonly profilesService: ProfilesService,
     private readonly blockedUsersService: BlockedUsersService,
-  ) {}
+
+    private readonly moduleRef: ModuleRef,
+  ) {
+    this.followsService = this.moduleRef.get(FollowService, {
+      strict: false,
+    });
+  }
 
   @ApiOperation({ summary: 'Get all users' })
   @ApiResponse({
@@ -108,7 +119,7 @@ export class UsersController {
   })
   @Get(':id/followers')
   async getFollowers(@Param('id') id: string) {
-    return await this.usersService.getFollowers(id);
+    return await this.followsService.getFollowers(id);
   }
 
   @ApiOperation({ summary: 'Get user following' })
@@ -119,21 +130,39 @@ export class UsersController {
   })
   @Get(':id/following')
   async getFollowing(@Param('id') id: string) {
-    return await this.usersService.getFollowing(id);
+    return await this.followsService.getFollowing(id);
   }
 
+  @ApiOperation({ summary: 'Blocked users' })
+  @ApiResponse({
+    status: 200,
+    type: User,
+    description: 'Return followed user',
+  })
   @UseGuards(JwtAuthGuard)
   @Get('blocked')
   async getBlockedUsers(@CurrentUser() currentUser: string) {
     return await this.blockedUsersService.getBlockedUsers(currentUser);
   }
 
+  @ApiOperation({ summary: 'Block user' })
+  @ApiResponse({
+    status: 200,
+    type: User,
+    description: 'Return blocked user',
+  })
   @UseGuards(JwtAuthGuard)
   @Post(':id/block')
   async blockUser(@Param('id') id: string, @CurrentUser() currentUser: string) {
     return await this.blockedUsersService.blockUser(currentUser, id);
   }
 
+  @ApiOperation({ summary: 'Unblock user' })
+  @ApiResponse({
+    status: 200,
+    type: User,
+    description: 'Return unblocked user',
+  })
   @UseGuards(JwtAuthGuard)
   @Delete(':id/unblock')
   async unblockUser(
@@ -142,11 +171,4 @@ export class UsersController {
   ) {
     return await this.blockedUsersService.unblockUser(currentUser, id);
   }
-
-  // @Roles('user')
-  // @UseGuards(JwtAuthGuard)
-  // @Get('profile')
-  // getProfile(@Request() req) {
-  //   return req.user;
-  // }
 }

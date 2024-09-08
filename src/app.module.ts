@@ -9,7 +9,7 @@ import { AppController } from './app.controller';
 
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
-import { FollowModule } from './follows/follows.module';
+import { FollowsModule } from './follows/follows.module';
 import { ProfilesModule } from './profiles/profiles.module';
 
 import configuration from './config/configuration';
@@ -36,7 +36,7 @@ import { BlockedUsersModule } from './blocked-users/blocked-users.module';
     }),
     AuthModule,
     UsersModule,
-    FollowModule,
+    FollowsModule,
     ProfilesModule,
     BlockedUsersModule,
   ],
