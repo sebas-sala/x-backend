@@ -1,13 +1,13 @@
-import { IsNotEmpty, IsUUID } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
 
 export class CreateFollowDto {
   @IsNotEmpty()
   @IsUUID()
-  followerId: string;
-
-  @IsNotEmpty()
-  @IsUUID()
   followingId: string;
+
+  @IsOptional()
+  @IsUUID()
+  followerId: string;
 
   constructor(partial?: Partial<CreateFollowDto>) {
     Object.assign(this, partial);

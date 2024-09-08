@@ -1,5 +1,7 @@
 import {
   ConflictException,
+  forwardRef,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -11,6 +13,8 @@ import { CreateFollowDto } from './dto/create-follow.dto';
 import { DeleteFollowDto } from './dto/delete-follow.dto';
 
 import { UsersService } from '@/src/users/users.service';
+import { User } from '../users/entities/user.entity';
+import { ModuleRef } from '@nestjs/core';
 
 @Injectable()
 export class FollowService {
@@ -20,39 +24,74 @@ export class FollowService {
     FOLLOW_ALREADY_EXISTS: 'Follow already exists',
   };
 
+  private readonly usersService: UsersService;
+
   constructor(
     @InjectRepository(Follow)
     private readonly followRepository: Repository<Follow>,
+    @InjectRepository(User)
+    private readonly usersRepository: Repository<User>,
 
-    private readonly usersService: UsersService,
-  ) {}
-
-  async create(createFollowDto: CreateFollowDto) {
-    const { followerId, followingId } = createFollowDto;
-
-    const { follower, following } = await this.findUsers(
-      followerId,
-      followingId,
-    );
-
-    await this.validateFollowDoesNotExist(followerId, followingId);
-
-    const follow = this.followRepository.create({
-      follower,
-      following,
-    });
-
-    return await this.followRepository.save(follow);
+    private readonly moduleRef: ModuleRef,
+  ) {
+    this.usersService = this.moduleRef.get(UsersService, { strict: false });
   }
 
-  async remove(deleteFollowDto: DeleteFollowDto) {
-    const { followerId, followingId } = deleteFollowDto;
+  async getFollowing(userId: string): Promise<User[]> {
+    const following = await this.usersRepository
+      .createQueryBuilder('user')
+      .innerJoin('user.following', 'follow', 'follow.followerId = :userId', {
+        userId,
+      })
+      .leftJoinAndSelect('user.profile', 'profile')
+      .getMany();
 
-    await this.validateFollowExists(followerId, followingId);
+    return following;
+  }
 
-    const result = await this.deleteFollow(followerId, followingId);
+  async getFollowers(userId: string): Promise<User[]> {
+    const followers = await this.usersRepository
+      .createQueryBuilder('user')
+      .innerJoin('user.followers', 'follow', 'follow.followingId = :userId', {
+        userId,
+      })
+      .leftJoinAndSelect('user.profile', 'profile')
+      .getMany();
 
-    return result;
+    return followers;
+  }
+
+  async create(createFollowDto: CreateFollowDto, currentUser: string) {
+    const { followingId } = createFollowDto;
+
+    if (followingId === currentUser) {
+      throw new ConflictException('You cannot follow yourself');
+    }
+
+    try {
+      const following = await this.validateFollowingExists(followingId);
+      await this.validateFollowDoesNotExist(currentUser, followingId);
+
+      const follow = this.followRepository.create({
+        follower: { id: currentUser },
+        following,
+      });
+      return await this.followRepository.save(follow);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async remove(deleteFollowDto: DeleteFollowDto, currentUser: string) {
+    const { followingId } = deleteFollowDto;
+
+    try {
+      await this.validateFollowExists(currentUser, followingId);
+
+      return await this.deleteFollow(currentUser, followingId);
+    } catch (error) {
+      throw error;
+    }
   }
 
   private async deleteFollow(followerId: string, followingId: string) {
@@ -91,26 +130,18 @@ export class FollowService {
     }
   }
 
-  private async findUsers(followerId: string, followingId: string) {
-    const [follower, following] = await Promise.all([
-      this.usersService.findOneBy({
-        options: { id: followerId },
-        error: this.ERROR_MESSAGES.FOLLOWER_NOT_FOUND,
-      }),
-      this.usersService.findOneBy({
-        options: { id: followingId },
-        error: this.ERROR_MESSAGES.FOLLOWING_NOT_FOUND,
-      }),
-    ]);
-
-    return { follower, following };
+  private async validateFollowingExists(followingId: string): Promise<User> {
+    return await this.usersService.findOneBy({
+      options: { id: followingId },
+      error: this.ERROR_MESSAGES.FOLLOWING_NOT_FOUND,
+    });
   }
 
   private async findFollow(
     followerId: string,
     followingId: string,
   ): Promise<Follow | null> {
-    return this.followRepository
+    return await this.followRepository
       .createQueryBuilder()
       .where('followerId = :followerId AND followingId = :followingId', {
         followerId,
