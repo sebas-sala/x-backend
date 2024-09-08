@@ -96,8 +96,6 @@ describe('Users API (e2e)', () => {
         },
       });
 
-      console.log(result.payload);
-
       expect(result.statusCode).toEqual(201);
     });
 

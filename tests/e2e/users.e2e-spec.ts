@@ -22,6 +22,8 @@ import { JwtModule, JwtService } from '@nestjs/jwt';
 import { AuthService } from '@/src/auth/auth.service';
 import { JwtStrategy } from '@/src/auth/jwt.strategy';
 import BlockedUserFactory from '../utils/factories/blocked-user.factory';
+import { BlockedUser } from '@/src/blocked-users/entities/blocked-user.entity';
+import { Post } from '@/src/posts/entities/post.entity';
 
 describe('Users API (e2e)', () => {
   let app: NestFastifyApplication;
@@ -43,7 +45,8 @@ describe('Users API (e2e)', () => {
           autoLoadEntities: true,
           synchronize: true,
         }),
-        TypeOrmModule.forFeature([User, Follow]),
+        TypeOrmModule.forFeature([User, Follow, Profile, BlockedUser, Post]),
+
         JwtModule.register({
           secret: process.env.JWT_SECRET || 'secret',
           signOptions: { expiresIn: '60m' },
@@ -65,7 +68,12 @@ describe('Users API (e2e)', () => {
   });
 
   afterAll(async () => {
+    await dataSource.synchronize(true);
     await app.close();
+  });
+
+  beforeAll(async () => {
+    await dataSource.query('PRAGMA foreign_keys = ON');
   });
 
   beforeEach(async () => {
@@ -524,6 +532,8 @@ describe('Users API (e2e)', () => {
     });
 
     it(`should return 404 if the user does not exists`, async () => {
+      console.log('HOLAA');
+
       const result = await app.inject({
         method: 'POST',
         url: '/users/2/block',
@@ -531,6 +541,8 @@ describe('Users API (e2e)', () => {
           Authorization: `Bearer ${token}`,
         },
       });
+
+      console.log('SUIU');
 
       const payload = JSON.parse(result.payload);
 

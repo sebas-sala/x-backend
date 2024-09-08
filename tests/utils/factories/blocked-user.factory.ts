@@ -50,6 +50,8 @@ export default class BlockedUserFactory {
 
       return await blockedUsersRepository.save(createBlockedUserDto);
     } catch (error) {
+      console.log('ERRROr');
+      console.log(error);
       throw error;
     }
   }
