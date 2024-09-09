@@ -25,8 +25,10 @@ import { BlockedUser } from '@/src/blocked-users/entities/blocked-user.entity';
 import PostFactory from '../utils/factories/post.factory';
 import { Post } from '@/src/posts/entities/post.entity';
 import { PostsModule } from '@/src/posts/posts.module';
+import { Comment } from '@/src/comments/entities/comment.entity';
+import CommentFactory from '../utils/factories/comment.factory';
 
-describe('Users API (e2e)', () => {
+describe('Posts API (e2e)', () => {
   let app: NestFastifyApplication;
 
   let dataSource: DataSource;
@@ -37,6 +39,7 @@ describe('Users API (e2e)', () => {
 
   let userFactory: UserFactory;
   let postFactory: PostFactory;
+  let commentFactory: CommentFactory;
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
@@ -50,7 +53,14 @@ describe('Users API (e2e)', () => {
           autoLoadEntities: true,
           synchronize: true,
         }),
-        TypeOrmModule.forFeature([User, Follow, Profile, BlockedUser, Post]),
+        TypeOrmModule.forFeature([
+          User,
+          Follow,
+          Profile,
+          BlockedUser,
+          Post,
+          Comment,
+        ]),
 
         JwtModule.register({
           secret: process.env.JWT_SECRET || 'secret',
@@ -73,6 +83,7 @@ describe('Users API (e2e)', () => {
 
     userFactory = new UserFactory(dataSource);
     postFactory = new PostFactory(dataSource);
+    commentFactory = new CommentFactory(dataSource);
   });
 
   afterAll(async () => {
@@ -96,13 +107,13 @@ describe('Users API (e2e)', () => {
   describe('GET /posts', () => {
     it('should return a list of posts', async () => {
       const posts = await Promise.all([
-        postFactory.createPost({
+        postFactory.createPostEntity({
           userId: currentUser.id,
         }),
-        postFactory.createPost({
+        postFactory.createPostEntity({
           userId: currentUser.id,
         }),
-        postFactory.createPost({
+        postFactory.createPostEntity({
           userId: currentUser.id,
         }),
       ]);
@@ -130,7 +141,7 @@ describe('Users API (e2e)', () => {
         .getRepository(BlockedUser)
         .save({ blockingUser, blockedUser: currentUser });
 
-      await postFactory.createPost({
+      await postFactory.createPostEntity({
         userId: blockingUser.id,
       });
 
@@ -153,7 +164,7 @@ describe('Users API (e2e)', () => {
         .getRepository(BlockedUser)
         .save({ blockingUser, blockedUser: currentUser });
 
-      await postFactory.createPost({
+      await postFactory.createPostEntity({
         userId: blockingUser.id,
       });
 
@@ -164,6 +175,221 @@ describe('Users API (e2e)', () => {
 
       expect(response.statusCode).toBe(200);
       expect(JSON.parse(response.payload).length).toBe(1);
+    });
+  });
+
+  describe('POST /posts', () => {
+    it('should create a post', async () => {
+      const post = PostFactory.createPostDto();
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/posts',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        payload: post,
+      });
+
+      expect(response.statusCode).toBe(201);
+      expect(JSON.parse(response.payload)).toMatchObject(post);
+    });
+  });
+
+  describe('GET /posts/:id', () => {
+    it('should return a post', async () => {
+      const post = await postFactory.createPostEntity({
+        userId: currentUser.id,
+      });
+
+      const response = await app.inject({
+        method: 'GET',
+        url: `/posts/${post.id}`,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(JSON.parse(response.payload)).toMatchObject({
+        content: post.content,
+      });
+    });
+
+    it('should return a 404 if the post does not exist', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/posts/1',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      expect(response.statusCode).toBe(404);
+      expect(JSON.parse(response.payload)).toMatchObject({
+        message: 'Post not found',
+        error: 'Not Found',
+        statusCode: 404,
+      });
+    });
+  });
+
+  describe('PATCH /posts/:id', () => {
+    it('should update a post', async () => {
+      const post = await postFactory.createPostEntity({
+        userId: currentUser.id,
+      });
+
+      const updatedPost = PostFactory.createPostDto();
+
+      const response = await app.inject({
+        method: 'PATCH',
+        url: `/posts/${post.id}`,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        payload: updatedPost,
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(JSON.parse(response.payload)).toMatchObject(updatedPost);
+    });
+
+    it('should return a 404 if the post does not exist', async () => {
+      const response = await app.inject({
+        method: 'PATCH',
+        url: '/posts/1',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        payload: PostFactory.createPostDto(),
+      });
+
+      expect(response.statusCode).toBe(404);
+      expect(JSON.parse(response.payload)).toMatchObject({
+        message: 'Post not found',
+        error: 'Not Found',
+        statusCode: 404,
+      });
+    });
+  });
+
+  describe('POST /posts/:id/comments', () => {
+    it('should create a comment', async () => {
+      const post = await postFactory.createPostEntity({
+        userId: currentUser.id,
+      });
+
+      const comment = CommentFactory.createCommentDto();
+
+      const response = await app.inject({
+        method: 'POST',
+        url: `/posts/${post.id}/comments`,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        payload: comment,
+      });
+
+      expect(response.statusCode).toBe(201);
+      expect(JSON.parse(response.payload)).toMatchObject(comment);
+    });
+
+    it('should return 401 if the user is not authenticated', async () => {
+      const post = await postFactory.createPostEntity({
+        userId: currentUser.id,
+      });
+
+      const comment = {
+        content: 'This is a comment',
+      };
+
+      const response = await app.inject({
+        method: 'POST',
+        url: `/posts/${post.id}/comments`,
+        payload: comment,
+      });
+
+      expect(response.statusCode).toBe(401);
+      expect(JSON.parse(response.payload)).toMatchObject({
+        message: 'Unauthorized',
+        statusCode: 401,
+      });
+    });
+
+    it('should return a 404 if the post does not exist', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/posts/1/comments',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        payload: {
+          content: 'This is a comment',
+        },
+      });
+
+      expect(response.statusCode).toBe(404);
+      expect(JSON.parse(response.payload)).toMatchObject({
+        message: 'Post not found',
+        error: 'Not Found',
+        statusCode: 404,
+      });
+    });
+  });
+
+  describe('GET /posts/:id/comments', () => {
+    it('should return a list of comments', async () => {
+      const post = await postFactory.createPostEntity({
+        userId: currentUser.id,
+      });
+
+      const comments = await Promise.all([
+        commentFactory.createComment({
+          postId: post.id,
+          userId: currentUser.id,
+        }),
+        commentFactory.createComment({
+          postId: post.id,
+          userId: currentUser.id,
+        }),
+        commentFactory.createComment({
+          postId: post.id,
+          userId: currentUser.id,
+        }),
+      ]);
+
+      const response = await app.inject({
+        method: 'GET',
+        url: `/posts/${post.id}/comments`,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(
+        JSON.parse(response.payload)
+          .map((comment: Comment) => comment.id)
+          .sort(),
+      ).toEqual(comments.map((comment) => comment.id).sort());
+    });
+
+    it('should return a 404 if the post does not exist', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/posts/1/comments',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      expect(response.statusCode).toBe(404);
+      expect(JSON.parse(response.payload)).toMatchObject({
+        message: 'Post not found',
+        error: 'Not Found',
+        statusCode: 404,
+      });
     });
   });
 });

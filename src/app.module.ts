@@ -16,6 +16,8 @@ import configuration from './config/configuration';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { BlockedUsersModule } from './blocked-users/blocked-users.module';
 import { PostsModule } from './posts/posts.module';
+import { CommentsService } from './comments/comments.service';
+import { CommentsModule } from './comments/comments.module';
 
 @Module({
   imports: [
@@ -41,6 +43,7 @@ import { PostsModule } from './posts/posts.module';
     FollowsModule,
     ProfilesModule,
     BlockedUsersModule,
+    CommentsModule,
   ],
   controllers: [AppController],
   providers: [
@@ -53,6 +56,7 @@ import { PostsModule } from './posts/posts.module';
       provide: APP_GUARD,
       useClass: ThrottlerModule,
     },
+    CommentsService,
   ],
 })
 export class AppModule {}

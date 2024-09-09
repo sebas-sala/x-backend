@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -13,8 +13,9 @@ export class PostsService {
     private readonly postRepository: Repository<Post>,
   ) {}
 
-  create(createPostDto: CreatePostDto) {
-    return 'This action adds a new post';
+  async create(createPostDto: CreatePostDto) {
+    const post = this.postRepository.create(createPostDto);
+    return await this.postRepository.save(post);
   }
 
   async findAll(currentUser?: string) {
@@ -27,27 +28,85 @@ export class PostsService {
       query.where((qb) => {
         const subQuery = qb
           .subQuery()
+          .select('1')
           .select('blockedUser.blockingUserId')
           .from(BlockedUser, 'blockedUser')
           .where('blockedUser.blockedUserId = :userId', { userId: currentUser })
+          .andWhere('blockedUser.blockingUserId = user.id')
           .getQuery();
 
-        return 'user.id NOT IN ' + subQuery;
+        return `NOT EXISTS ${subQuery}`;
       });
     }
 
     return await query.getMany();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} post`;
+  async findOne(id: string): Promise<Post> {
+    try {
+      const post = await this.postRepository.findOne({
+        where: { id },
+        relations: ['user', 'user.profile'],
+      });
+
+      if (!post) {
+        throw new NotFoundException('Post not found');
+      }
+
+      return post;
+    } catch (error) {
+      throw error;
+    }
   }
 
-  update(id: number, updatePostDto: UpdatePostDto) {
-    return `This action updates a #${id} post`;
+  async getComments(id: string) {
+    return `This action returns comments for a #${id} post`;
+  }
+
+  async update(id: string, updatePostDto: UpdatePostDto) {
+    try {
+      // THIS CODE ONLY WORKS WITH POSTGRES
+      // const result = await this.postRepository
+      //   .createQueryBuilder()
+      //   .update(Post)
+      //   .set({ ...updatePostDto })
+      //   .where('id = :id', { id })
+      //   .execute();
+      // const updatedPost = result.raw[0];
+      // if (!updatedPost) {
+      //   throw new NotFoundException('Post not found');
+      // }
+      // return updatedPost;
+
+      await this.findPostById(id);
+      await this.postRepository.update(id, updatePostDto);
+      return await this.findPostById(id);
+    } catch (error) {
+      throw error;
+    }
   }
 
   remove(id: number) {
     return `This action removes a #${id} post`;
+  }
+
+  private async findPostById(
+    id: string,
+    relations: string[] = [],
+  ): Promise<Post> {
+    try {
+      const post = await this.postRepository.findOne({
+        where: { id },
+        relations,
+      });
+
+      if (!post) {
+        throw new NotFoundException('Post not found');
+      }
+
+      return post;
+    } catch (error) {
+      throw error;
+    }
   }
 }

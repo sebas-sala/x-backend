@@ -22,7 +22,7 @@ export default class PostFactory {
     return createPostDto;
   }
 
-  async createPost({
+  async createPostEntity({
     content,
     userId,
   }: Partial<CreatePost> = {}): Promise<Post> {

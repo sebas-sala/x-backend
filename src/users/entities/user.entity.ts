@@ -15,6 +15,7 @@ import { ApiHideProperty } from '@nestjs/swagger';
 import { Follow } from '@/src/follows/entities/follow.entity';
 import { BlockedUser } from '@/src/blocked-users/entities/blocked-user.entity';
 import { Post } from '@/src/posts/entities/post.entity';
+import { Comment } from '@/src/comments/entities/comment.entity';
 
 @Entity()
 export class User {
@@ -59,18 +60,11 @@ export class User {
   @OneToMany(() => BlockedUser, (blockedUser) => blockedUser.blockedUser)
   blockedBy: BlockedUser[];
 
-  // @ApiHideProperty()
-  // @OneToMany(() => Post, (post) => post.user)
-  // posts: Post[];
-
   // @OneToMany(() => Bookmark, (bookmark) => bookmark.user)
   // bookmarks: Bookmark[];
 
   // @OneToMany(() => Like, (like) => like.user)
   // likes: Like[];
-
-  // @OneToMany(() => Comment, (comment) => comment.user)
-  // comments: Comment[];
 
   @ApiHideProperty()
   @OneToMany(() => Follow, (follow) => follow.follower, { cascade: true })
@@ -83,6 +77,9 @@ export class User {
   @ApiHideProperty()
   @OneToMany(() => Follow, (follow) => follow.follower)
   posts: Post[];
+
+  @OneToMany(() => Comment, (comment) => comment.user)
+  comments: Comment[];
 
   constructor(partial: Partial<User>) {
     Object.assign(this, partial);
