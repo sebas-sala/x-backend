@@ -17,6 +17,7 @@ import { JwtAuthPublicGuard } from '../common/guards/jwt-auth-public.guard';
 import { CommentsService } from '../comments/comments.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { CreateCommentDto } from '../comments/dto/create-comment.dto';
+import { LikesService } from '../likes/likes.service';
 
 @ApiTags('posts')
 @Controller('posts')
@@ -24,6 +25,7 @@ export class PostsController {
   constructor(
     private readonly postsService: PostsService,
     private readonly commentsService: CommentsService,
+    private readonly likesService: LikesService,
   ) {}
 
   @Post()
@@ -69,5 +71,16 @@ export class PostsController {
       createCommentDto,
       currentUser,
     );
+  }
+
+  @Get(':id/likes')
+  getPostLikes(@Param('id') id: string) {
+    return this.likesService.getPostLikes(id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post(':id/likes')
+  likePost(@Param('id') id: string, @CurrentUser() currentUser: string) {
+    return this.likesService.likePost(id, currentUser);
   }
 }

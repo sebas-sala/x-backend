@@ -52,6 +52,23 @@ export class CommentsService {
     }
   }
 
+  async deleteComment(id: string, currentUser: string) {
+    try {
+      const comment = await this.commentRepository.findOneBy({
+        id,
+        user: { id: currentUser },
+      });
+
+      if (!comment) {
+        throw new NotFoundException('Comment not found');
+      }
+
+      await this.commentRepository.remove(comment);
+    } catch (error) {
+      throw error;
+    }
+  }
+
   private async findPostById(id: string) {
     const post = await this.postRepository.findOneBy({
       id,

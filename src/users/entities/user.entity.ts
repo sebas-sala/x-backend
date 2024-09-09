@@ -16,6 +16,7 @@ import { Follow } from '@/src/follows/entities/follow.entity';
 import { BlockedUser } from '@/src/blocked-users/entities/blocked-user.entity';
 import { Post } from '@/src/posts/entities/post.entity';
 import { Comment } from '@/src/comments/entities/comment.entity';
+import { Like } from '@/src/likes/entities/like.entity';
 
 @Entity()
 export class User {
@@ -75,11 +76,14 @@ export class User {
   following: Follow[];
 
   @ApiHideProperty()
-  @OneToMany(() => Follow, (follow) => follow.follower)
+  @OneToMany(() => Post, (post) => post.user)
   posts: Post[];
 
   @OneToMany(() => Comment, (comment) => comment.user)
   comments: Comment[];
+
+  @OneToMany(() => Like, (like) => like.user)
+  likes: Like[];
 
   constructor(partial: Partial<User>) {
     Object.assign(this, partial);

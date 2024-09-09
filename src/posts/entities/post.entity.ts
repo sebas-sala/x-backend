@@ -10,6 +10,7 @@ import {
 
 import { User } from '@/src/users/entities/user.entity';
 import { Comment } from '@/src/comments/entities/comment.entity';
+import { Like } from '@/src/likes/entities/like.entity';
 
 @Entity()
 export class Post {
@@ -30,4 +31,7 @@ export class Post {
 
   @OneToMany(() => Comment, (comment) => comment.post)
   comments: Comment[];
+
+  @OneToMany(() => Like, (like) => like.post)
+  likes: Like[];
 }

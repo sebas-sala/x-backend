@@ -27,6 +27,9 @@ import { Post } from '@/src/posts/entities/post.entity';
 import { PostsModule } from '@/src/posts/posts.module';
 import { Comment } from '@/src/comments/entities/comment.entity';
 import CommentFactory from '../utils/factories/comment.factory';
+import { Like } from '@/src/likes/entities/like.entity';
+import { LikesModule } from '@/src/likes/likes.module';
+import LikeFactory from '../utils/factories/like.factory';
 
 describe('Posts API (e2e)', () => {
   let app: NestFastifyApplication;
@@ -40,6 +43,7 @@ describe('Posts API (e2e)', () => {
   let userFactory: UserFactory;
   let postFactory: PostFactory;
   let commentFactory: CommentFactory;
+  let likeFactory: LikeFactory;
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
@@ -47,6 +51,7 @@ describe('Posts API (e2e)', () => {
         UsersModule,
         AuthModule,
         PostsModule,
+        LikesModule,
         TypeOrmModule.forRoot({
           type: 'sqlite',
           database: ':memory:',
@@ -60,6 +65,7 @@ describe('Posts API (e2e)', () => {
           BlockedUser,
           Post,
           Comment,
+          Like,
         ]),
 
         JwtModule.register({
@@ -84,6 +90,7 @@ describe('Posts API (e2e)', () => {
     userFactory = new UserFactory(dataSource);
     postFactory = new PostFactory(dataSource);
     commentFactory = new CommentFactory(dataSource);
+    likeFactory = new LikeFactory(dataSource);
   });
 
   afterAll(async () => {
@@ -389,6 +396,97 @@ describe('Posts API (e2e)', () => {
         message: 'Post not found',
         error: 'Not Found',
         statusCode: 404,
+      });
+    });
+  });
+
+  describe('GET /posts/:id/likes', () => {
+    it('should return a list of likes', async () => {
+      const post = await postFactory.createPostEntity({
+        userId: currentUser.id,
+      });
+
+      const likes = await Promise.all([
+        likeFactory.createPostLike(post.id, currentUser.id),
+        likeFactory.createPostLike(post.id, currentUser.id),
+        likeFactory.createPostLike(post.id, currentUser.id),
+      ]);
+
+      const response = await app.inject({
+        method: 'GET',
+        url: `/posts/${post.id}/likes`,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(
+        JSON.parse(response.payload)
+          .map((like: Like) => like.id)
+          .sort(),
+      ).toEqual(likes.map((like) => like.id).sort());
+    });
+  });
+
+  describe('POST /posts/:id/likes', () => {
+    it('should like a post', async () => {
+      const post = await postFactory.createPostEntity({
+        userId: currentUser.id,
+      });
+
+      const response = await app.inject({
+        method: 'POST',
+        url: `/posts/${post.id}/likes`,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      expect(response.statusCode).toBe(201);
+      expect(JSON.parse(response.payload)).toMatchObject({
+        post: { id: post.id },
+        user: { id: currentUser.id },
+      });
+    });
+
+    it('should return a 404 if the post does not exist', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/posts/1/likes',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      expect(response.statusCode).toBe(404);
+      expect(JSON.parse(response.payload)).toMatchObject({
+        message: 'Post not found by id ' + 1,
+        error: 'Not Found',
+        statusCode: 404,
+      });
+    });
+
+    it('should return a 409 if the post is already liked', async () => {
+      const post = await postFactory.createPostEntity({
+        userId: currentUser.id,
+      });
+
+      await likeFactory.createPostLike(post.id, currentUser.id);
+
+      const response = await app.inject({
+        method: 'POST',
+        url: `/posts/${post.id}/likes`,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      expect(response.statusCode).toBe(409);
+      expect(JSON.parse(response.payload)).toMatchObject({
+        message: 'Like already exists',
+        error: 'Conflict',
+        statusCode: 409,
       });
     });
   });

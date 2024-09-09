@@ -18,6 +18,7 @@ import { BlockedUsersModule } from './blocked-users/blocked-users.module';
 import { PostsModule } from './posts/posts.module';
 import { CommentsService } from './comments/comments.service';
 import { CommentsModule } from './comments/comments.module';
+import { LikesModule } from './likes/likes.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { CommentsModule } from './comments/comments.module';
     ProfilesModule,
     BlockedUsersModule,
     CommentsModule,
+    LikesModule,
   ],
   controllers: [AppController],
   providers: [
@@ -56,7 +58,6 @@ import { CommentsModule } from './comments/comments.module';
       provide: APP_GUARD,
       useClass: ThrottlerModule,
     },
-    CommentsService,
   ],
 })
 export class AppModule {}
