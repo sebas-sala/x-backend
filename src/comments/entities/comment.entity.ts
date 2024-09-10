@@ -3,6 +3,7 @@ import {
   CreateDateColumn,
   Entity,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
@@ -24,8 +25,18 @@ export class Comment {
   @Column()
   content: string;
 
-  @ManyToOne(() => Post, (post) => post.comments)
-  post: Post;
+  @ManyToOne(() => Comment, (comment) => comment.replies, {
+    nullable: true,
+  })
+  parent: Comment;
+
+  @OneToMany(() => Comment, (comment) => comment.parent, {
+    nullable: true,
+  })
+  replies: Comment[];
+
+  @ManyToOne(() => Post, (post) => post.comments, { nullable: true })
+  post?: Post;
 
   @ManyToOne(() => User, (user) => user.comments, { eager: true })
   user: User;

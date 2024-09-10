@@ -1,4 +1,4 @@
-import { Repository } from 'typeorm';
+import { QueryFailedError, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Injectable, NotFoundException } from '@nestjs/common';
 
@@ -29,6 +29,26 @@ export class CommentsService {
         ...createCommentDto,
         post,
         user: { id: currentUser },
+      });
+
+      return await this.commentRepository.save(comment);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async createCommentReply(
+    id: string,
+    createCommentDto: CreateCommentDto,
+    currentUser: string,
+  ) {
+    try {
+      const parentComment = await this.findCommentById(id);
+
+      const comment = this.commentRepository.create({
+        ...createCommentDto,
+        user: { id: currentUser },
+        parent: parentComment,
       });
 
       return await this.commentRepository.save(comment);
@@ -79,5 +99,17 @@ export class CommentsService {
     }
 
     return post;
+  }
+
+  private async findCommentById(id: string) {
+    const comment = await this.commentRepository.findOneBy({
+      id,
+    });
+
+    if (!comment) {
+      throw new NotFoundException('Comment not found');
+    }
+
+    return comment;
   }
 }
