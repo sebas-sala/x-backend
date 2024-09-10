@@ -20,7 +20,7 @@ export default class CommentFactory {
     return createCommentDto;
   }
 
-  async createComment({
+  async createPostCommentEntity({
     content,
     postId,
     userId,
