@@ -352,15 +352,15 @@ describe('Posts API (e2e)', () => {
       });
 
       const comments = await Promise.all([
-        commentFactory.createComment({
+        commentFactory.createPostCommentEntity({
           postId: post.id,
           userId: currentUser.id,
         }),
-        commentFactory.createComment({
+        commentFactory.createPostCommentEntity({
           postId: post.id,
           userId: currentUser.id,
         }),
-        commentFactory.createComment({
+        commentFactory.createPostCommentEntity({
           postId: post.id,
           userId: currentUser.id,
         }),

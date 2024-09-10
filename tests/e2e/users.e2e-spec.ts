@@ -52,7 +52,7 @@ describe('Users API (e2e)', () => {
           signOptions: { expiresIn: '60m' },
         }),
       ],
-      providers: [AuthService, JwtStrategy],
+      providers: [AuthService, JwtService],
     }).compile();
 
     app = moduleRef.createNestApplication<NestFastifyApplication>(
@@ -532,8 +532,6 @@ describe('Users API (e2e)', () => {
     });
 
     it(`should return 404 if the user does not exists`, async () => {
-      console.log('HOLAA');
-
       const result = await app.inject({
         method: 'POST',
         url: '/users/2/block',
@@ -541,8 +539,6 @@ describe('Users API (e2e)', () => {
           Authorization: `Bearer ${token}`,
         },
       });
-
-      console.log('SUIU');
 
       const payload = JSON.parse(result.payload);
 
