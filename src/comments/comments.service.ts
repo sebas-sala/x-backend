@@ -1,4 +1,4 @@
-import { QueryFailedError, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Injectable, NotFoundException } from '@nestjs/common';
 
@@ -6,6 +6,7 @@ import { Post } from '../posts/entities/post.entity';
 
 import { Comment } from './entities/comment.entity';
 import { CreateCommentDto } from './dto/create-comment.dto';
+import { UpdateCommentDto } from './dto/update-comment.dto';
 
 @Injectable()
 export class CommentsService {
@@ -52,6 +53,29 @@ export class CommentsService {
       });
 
       return await this.commentRepository.save(comment);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async updateComment(
+    id: string,
+    updateCommentDto: UpdateCommentDto,
+    currentUser: string,
+  ) {
+    try {
+      const comment = await this.commentRepository.findOneBy({
+        id,
+        user: { id: currentUser },
+      });
+
+      if (!comment) {
+        throw new NotFoundException('Comment not found');
+      }
+
+      await this.commentRepository.update(comment.id, updateCommentDto);
+
+      return await this.commentRepository.findOneBy({ id: comment.id });
     } catch (error) {
       throw error;
     }

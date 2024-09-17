@@ -168,4 +168,95 @@ describe('Comments', () => {
       expect(response.statusCode).toBe(404);
     });
   });
+
+  describe('PATCH /comments/:id', () => {
+    it('should update a comment', async () => {
+      const comment = await commentFactory.createCommentEntity({
+        userId: currentUser.id,
+      });
+
+      const response = await app.inject({
+        method: 'PATCH',
+        url: `/comments/${comment.id}`,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        payload: {
+          content: 'Updated comment content',
+        },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.json()).toEqual(
+        expect.objectContaining({
+          id: comment.id,
+          content: 'Updated comment content',
+          user: expect.objectContaining({
+            id: currentUser.id,
+          }),
+        }),
+      );
+    });
+
+    it('should return 401 if user is not authenticated', async () => {
+      const comment = await commentFactory.createCommentEntity({
+        userId: currentUser.id,
+      });
+
+      const response = await app.inject({
+        method: 'PATCH',
+        url: `/comments/${comment.id}`,
+        payload: {
+          content: 'Updated comment content',
+        },
+      });
+
+      expect(response.statusCode).toBe(401);
+    });
+
+    it('should return 404 if comment does not exist', async () => {
+      const response = await app.inject({
+        method: 'PATCH',
+        url: '/comments/1',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        payload: {
+          content: 'Updated comment content',
+        },
+      });
+
+      expect(response.statusCode).toBe(404);
+      expect(response.json()).toEqual({
+        statusCode: 404,
+        error: 'Not Found',
+        message: 'Comment not found',
+      });
+    });
+
+    it('should return 404 if comment does not belong to user', async () => {
+      const mockUser = await userFactory.createUserEntity();
+      const comment = await commentFactory.createCommentEntity({
+        userId: mockUser.id,
+      });
+
+      const response = await app.inject({
+        method: 'PATCH',
+        url: `/comments/${comment.id}`,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        payload: {
+          content: 'Updated comment content',
+        },
+      });
+
+      expect(response.statusCode).toBe(404);
+      expect(response.json()).toEqual({
+        statusCode: 404,
+        error: 'Not Found',
+        message: 'Comment not found',
+      });
+    });
+  });
 });

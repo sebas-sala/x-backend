@@ -61,4 +61,37 @@ export default class CommentFactory {
       throw error;
     }
   }
+
+  async createCommentEntity({
+    content,
+    userId,
+  }: {
+    content?: string;
+    userId: string;
+  }): Promise<Comment> {
+    if (!this.dataSource) {
+      throw new Error('DataSource is required to create a Comment entity.');
+    }
+    if (!userId) {
+      throw new Error('User ID is required to create a Comment entity.');
+    }
+
+    const createCommentDto = CommentFactory.createCommentDto({ content });
+
+    try {
+      const user = await this.dataSource.getRepository(User).findOneByOrFail({
+        id: userId,
+      });
+
+      const commentsRepository = this.dataSource.getRepository(Comment);
+      const createdComment = commentsRepository.create({
+        ...createCommentDto,
+        user,
+      });
+
+      return await commentsRepository.save(createdComment);
+    } catch (error) {
+      throw error;
+    }
+  }
 }
