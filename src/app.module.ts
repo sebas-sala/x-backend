@@ -19,6 +19,7 @@ import { PostsModule } from './posts/posts.module';
 import { CommentsService } from './comments/comments.service';
 import { CommentsModule } from './comments/comments.module';
 import { LikesModule } from './likes/likes.module';
+import { MessagesModule } from './messages/messages.module';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { LikesModule } from './likes/likes.module';
     BlockedUsersModule,
     CommentsModule,
     LikesModule,
+    MessagesModule,
   ],
   controllers: [AppController],
   providers: [

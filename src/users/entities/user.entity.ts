@@ -17,6 +17,7 @@ import { BlockedUser } from '@/src/blocked-users/entities/blocked-user.entity';
 import { Post } from '@/src/posts/entities/post.entity';
 import { Comment } from '@/src/comments/entities/comment.entity';
 import { Like } from '@/src/likes/entities/like.entity';
+import { Message } from '@/src/messages/entities/message.entity';
 
 @Entity()
 export class User {
@@ -84,6 +85,12 @@ export class User {
 
   @OneToMany(() => Like, (like) => like.user)
   likes: Like[];
+
+  @OneToMany(() => Message, (message) => message.sender)
+  sentMessages: Message[];
+
+  @OneToMany(() => Message, (message) => message.receiver)
+  receivedMessages: Message[];
 
   constructor(partial: Partial<User>) {
     Object.assign(this, partial);
