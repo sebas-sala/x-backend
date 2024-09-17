@@ -339,4 +339,72 @@ describe('Comments', () => {
       });
     });
   });
+
+  describe('DELETE /comments/:id/likes', () => {
+    it('should unlike a comment', async () => {
+      const comment = await commentFactory.createCommentEntity({
+        userId: currentUser.id,
+      });
+
+      await likeFactory.createCommentLike(comment.id, currentUser.id);
+
+      const response = await app.inject({
+        method: 'DELETE',
+        url: `/comments/${comment.id}/likes`,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      expect(response.statusCode).toBe(200);
+    });
+
+    it('should return 401 if user is not authenticated', async () => {
+      const comment = await commentFactory.createCommentEntity({
+        userId: currentUser.id,
+      });
+
+      await likeFactory.createCommentLike(comment.id, currentUser.id);
+
+      const response = await app.inject({
+        method: 'DELETE',
+        url: `/comments/${comment.id}/likes`,
+      });
+
+      expect(response.statusCode).toBe(401);
+    });
+
+    it('should return 404 if comment does not exist', async () => {
+      const response = await app.inject({
+        method: 'DELETE',
+        url: '/comments/1/likes',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      expect(response.statusCode).toBe(404);
+    });
+
+    it('should return 404 if like does not exist', async () => {
+      const comment = await commentFactory.createCommentEntity({
+        userId: currentUser.id,
+      });
+
+      const response = await app.inject({
+        method: 'DELETE',
+        url: `/comments/${comment.id}/likes`,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      expect(response.statusCode).toBe(404);
+      expect(response.json()).toEqual({
+        statusCode: 404,
+        error: 'Not Found',
+        message: 'Like not found',
+      });
+    });
+  });
 });
