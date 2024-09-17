@@ -10,6 +10,7 @@ import {
 
 import { Post } from '@/src/posts/entities/post.entity';
 import { User } from '@/src/users/entities/user.entity';
+import { Like } from '@/src/likes/entities/like.entity';
 
 @Entity()
 export class Comment {
@@ -37,6 +38,9 @@ export class Comment {
 
   @ManyToOne(() => Post, (post) => post.comments, { nullable: true })
   post?: Post;
+
+  @OneToMany(() => Like, (like) => like.comment)
+  likes: Like[];
 
   @ManyToOne(() => User, (user) => user.comments, { eager: true })
   user: User;

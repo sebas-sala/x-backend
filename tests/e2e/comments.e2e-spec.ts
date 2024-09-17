@@ -22,6 +22,7 @@ import { Profile } from '@/src/profiles/entities/profile.entity';
 import { BlockedUser } from '@/src/blocked-users/entities/blocked-user.entity';
 import { JwtStrategy } from '@/src/auth/jwt.strategy';
 import { Like } from '@/src/likes/entities/like.entity';
+import LikeFactory from '../utils/factories/like.factory';
 
 describe('Comments', () => {
   let app: NestFastifyApplication;
@@ -35,6 +36,7 @@ describe('Comments', () => {
   let userFactory: UserFactory;
   let postFactory: PostFactory;
   let commentFactory: CommentFactory;
+  let likeFactory: LikeFactory;
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
@@ -79,6 +81,7 @@ describe('Comments', () => {
     userFactory = new UserFactory(dataSource);
     postFactory = new PostFactory(dataSource);
     commentFactory = new CommentFactory(dataSource);
+    likeFactory = new LikeFactory(dataSource);
 
     await dataSource.query('PRAGMA foreign_keys = ON');
   });
@@ -256,6 +259,83 @@ describe('Comments', () => {
         statusCode: 404,
         error: 'Not Found',
         message: 'Comment not found',
+      });
+    });
+  });
+
+  describe('POST /comments/:id/likes', () => {
+    it('should like a comment', async () => {
+      const comment = await commentFactory.createCommentEntity({
+        userId: currentUser.id,
+      });
+
+      const response = await app.inject({
+        method: 'POST',
+        url: `/comments/${comment.id}/likes`,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      expect(response.statusCode).toBe(201);
+      expect(response.json()).toEqual(
+        expect.objectContaining({
+          id: expect.any(String),
+          comment: expect.objectContaining({
+            id: comment.id,
+          }),
+          user: expect.objectContaining({
+            id: currentUser.id,
+          }),
+        }),
+      );
+    });
+
+    it('should return 401 if user is not authenticated', async () => {
+      const comment = await commentFactory.createCommentEntity({
+        userId: currentUser.id,
+      });
+
+      const response = await app.inject({
+        method: 'POST',
+        url: `/comments/${comment.id}/likes`,
+      });
+
+      expect(response.statusCode).toBe(401);
+    });
+
+    it('should return 404 if comment does not exist', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/comments/1/likes',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      expect(response.statusCode).toBe(404);
+    });
+
+    it('should return 409 if user already liked the comment', async () => {
+      const comment = await commentFactory.createCommentEntity({
+        userId: currentUser.id,
+      });
+
+      await likeFactory.createCommentLike(comment.id, currentUser.id);
+
+      const response = await app.inject({
+        method: 'POST',
+        url: `/comments/${comment.id}/likes`,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      expect(response.statusCode).toBe(409);
+      expect(response.json()).toEqual({
+        statusCode: 409,
+        error: 'Conflict',
+        message: 'Like already exists',
       });
     });
   });

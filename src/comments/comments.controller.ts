@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Param,
   Patch,
   Post,
@@ -12,11 +13,15 @@ import { ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
+import { LikesService } from '../likes/likes.service';
 
 @ApiTags('comments')
 @Controller('comments')
 export class CommentsController {
-  constructor(private readonly commentsService: CommentsService) {}
+  constructor(
+    private readonly commentsService: CommentsService,
+    private readonly likesService: LikesService,
+  ) {}
 
   @UseGuards(JwtAuthGuard)
   @Patch(':id')
@@ -25,7 +30,6 @@ export class CommentsController {
     @Body() updateCommentDto: UpdateCommentDto,
     @CurrentUser() currentUser: string,
   ) {
-    console.log('id', currentUser);
     return this.commentsService.updateComment(
       id,
       updateCommentDto,
@@ -45,5 +49,17 @@ export class CommentsController {
       createCommentDto,
       currentUser,
     );
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post(':id/likes')
+  likeComment(@Param('id') id: string, @CurrentUser() currentUser: string) {
+    return this.likesService.likeComment(id, currentUser);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete(':id/likes')
+  unlikeComment(@Param('id') id: string, @CurrentUser() currentUser: string) {
+    return this.likesService.unlikeComment(id, currentUser);
   }
 }
