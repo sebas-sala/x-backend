@@ -263,6 +263,37 @@ describe('Comments', () => {
     });
   });
 
+  describe('GET /comments/:id/likes', () => {
+    it('should return comment likes', async () => {
+      const comment = await commentFactory.createCommentEntity({
+        userId: currentUser.id,
+      });
+
+      await likeFactory.createCommentLike(comment.id, currentUser.id);
+
+      const response = await app.inject({
+        method: 'GET',
+        url: `/comments/${comment.id}/likes`,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      expect(response.statusCode).toBe(200);
+
+      expect(response.json()).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            id: expect.any(String),
+            user: expect.objectContaining({
+              id: currentUser.id,
+            }),
+          }),
+        ]),
+      );
+    });
+  });
+
   describe('POST /comments/:id/likes', () => {
     it('should like a comment', async () => {
       const comment = await commentFactory.createCommentEntity({

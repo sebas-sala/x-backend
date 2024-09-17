@@ -21,7 +21,15 @@ export class LikesService {
   ) {}
 
   async getPostLikes(postId: string): Promise<Like[]> {
-    return await this.likeRepository.find({ where: { post: { id: postId } } });
+    return await this.likeRepository.find({
+      where: { post: { id: postId } },
+    });
+  }
+
+  async getCommentLikes(commentId: string): Promise<Like[]> {
+    return await this.likeRepository.find({
+      where: { comment: { id: commentId } },
+    });
   }
 
   async likePost(postId: string, userId: string): Promise<Like> {

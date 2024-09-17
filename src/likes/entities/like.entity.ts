@@ -22,7 +22,7 @@ export class Like {
   @ManyToOne(() => Comment, (comment) => comment.likes)
   comment: Comment;
 
-  @ManyToOne(() => User, (user) => user.likes)
+  @ManyToOne(() => User, (user) => user.likes, { eager: true })
   user: User;
 
   @CreateDateColumn()

@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Delete,
+  Get,
   Param,
   Patch,
   Post,
@@ -49,6 +50,11 @@ export class CommentsController {
       createCommentDto,
       currentUser,
     );
+  }
+
+  @Get(':id/likes')
+  getCommentLikes(@Param('id') id: string) {
+    return this.likesService.getCommentLikes(id);
   }
 
   @UseGuards(JwtAuthGuard)
