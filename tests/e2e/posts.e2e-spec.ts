@@ -490,4 +490,62 @@ describe('Posts API (e2e)', () => {
       });
     });
   });
+
+  describe('DELETE /posts/:id/likes', () => {
+    it('should unlike a post', async () => {
+      const post = await postFactory.createPostEntity({
+        userId: currentUser.id,
+      });
+
+      const like = await likeFactory.createPostLike(post.id, currentUser.id);
+
+      const response = await app.inject({
+        method: 'DELETE',
+        url: `/posts/${post.id}/likes`,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      expect(response.statusCode).toBe(200);
+    });
+
+    it('should return a 404 if the post does not exist', async () => {
+      const response = await app.inject({
+        method: 'DELETE',
+        url: '/posts/1/likes',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      expect(response.statusCode).toBe(404);
+      expect(JSON.parse(response.payload)).toMatchObject({
+        message: 'Post not found by id ' + 1,
+        error: 'Not Found',
+        statusCode: 404,
+      });
+    });
+
+    it('should return a 404 if the like does not exist', async () => {
+      const post = await postFactory.createPostEntity({
+        userId: currentUser.id,
+      });
+
+      const response = await app.inject({
+        method: 'DELETE',
+        url: `/posts/${post.id}/likes`,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      expect(response.statusCode).toBe(404);
+      expect(JSON.parse(response.payload)).toMatchObject({
+        message: 'Like not found',
+        error: 'Not Found',
+        statusCode: 404,
+      });
+    });
+  });
 });

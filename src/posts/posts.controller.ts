@@ -83,4 +83,10 @@ export class PostsController {
   likePost(@Param('id') id: string, @CurrentUser() currentUser: string) {
     return this.likesService.likePost(id, currentUser);
   }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete(':id/likes')
+  unlikePost(@Param('id') id: string, @CurrentUser() currentUser: string) {
+    return this.likesService.unlikePost(id, currentUser);
+  }
 }

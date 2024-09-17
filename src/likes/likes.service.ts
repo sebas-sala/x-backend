@@ -37,6 +37,24 @@ export class LikesService {
     }
   }
 
+  async unlikePost(postId: string, userId: string): Promise<void> {
+    try {
+      await this.findPostById(postId);
+
+      const like = await this.likeRepository.findOne({
+        where: { post: { id: postId }, user: { id: userId } },
+      });
+
+      if (!like) {
+        throw new NotFoundException('Like not found');
+      }
+
+      await this.likeRepository.delete(like);
+    } catch (error) {
+      throw error;
+    }
+  }
+
   private async findPostById(postId: string): Promise<Post> {
     const post = await this.postRepository.findOneBy({
       id: postId,
