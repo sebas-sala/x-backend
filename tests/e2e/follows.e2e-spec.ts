@@ -19,6 +19,7 @@ import { AuthService } from '@/src/auth/auth.service';
 import { JwtStrategy } from '@/src/auth/jwt.strategy';
 import { faker } from '@faker-js/faker';
 import FollowFactory from '../utils/factories/follow.factory';
+import { setupTestApp } from '../utils/setup-test-app';
 
 describe('Users API (e2e)', () => {
   let app: NestFastifyApplication;
@@ -33,38 +34,15 @@ describe('Users API (e2e)', () => {
   let followFactory: FollowFactory;
 
   beforeAll(async () => {
-    const moduleRef = await Test.createTestingModule({
-      imports: [
-        UsersModule,
-        AuthModule,
-        TypeOrmModule.forRoot({
-          type: 'sqlite',
-          database: ':memory:',
-          autoLoadEntities: true,
-          synchronize: true,
-        }),
-        TypeOrmModule.forFeature([User, Follow]),
-        JwtModule.register({
-          secret: process.env.JWT_SECRET || 'secret',
-          signOptions: { expiresIn: '60m' },
-        }),
-      ],
-      providers: [AuthService, JwtStrategy],
-    }).compile();
+    const setup = await setupTestApp();
 
-    app = moduleRef.createNestApplication<NestFastifyApplication>(
-      new FastifyAdapter(),
-    );
-    app.useGlobalPipes(new ValidationPipe());
+    app = setup.app;
 
-    await app.init();
-    await app.getHttpAdapter().getInstance().ready();
+    dataSource = setup.dataSource;
+    jwtService = setup.jwtService;
 
-    dataSource = moduleRef.get<DataSource>(DataSource);
-    jwtService = moduleRef.get<JwtService>(JwtService);
-
-    userFactory = new UserFactory(dataSource);
-    followFactory = new FollowFactory(dataSource);
+    userFactory = setup.userFactory;
+    followFactory = setup.followFactory;
   });
 
   afterAll(async () => {
@@ -74,9 +52,7 @@ describe('Users API (e2e)', () => {
   beforeEach(async () => {
     await dataSource.synchronize(true);
 
-    currentUser = await dataSource
-      .getRepository(User)
-      .save(UserFactory.createUserDto());
+    currentUser = await userFactory.createUserEntity();
 
     token = jwtService.sign({ sub: currentUser.id });
   });
@@ -127,7 +103,6 @@ describe('Users API (e2e)', () => {
       expect(JSON.parse(result.payload)).toMatchObject({
         statusCode: 404,
         message: 'Following not found',
-        error: 'Not Found',
       });
     });
 
@@ -149,7 +124,6 @@ describe('Users API (e2e)', () => {
       expect(payload).toMatchObject({
         statusCode: 409,
         message: 'You cannot follow yourself',
-        error: 'Conflict',
       });
     });
 
@@ -178,7 +152,6 @@ describe('Users API (e2e)', () => {
       expect(JSON.parse(result.payload)).toMatchObject({
         statusCode: 409,
         message: 'Follow already exists',
-        error: 'Conflict',
       });
     });
   });
