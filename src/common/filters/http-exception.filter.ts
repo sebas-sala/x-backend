@@ -1,10 +1,9 @@
 import {
-  ExceptionFilter,
   Catch,
   ArgumentsHost,
   HttpException,
+  ExceptionFilter,
 } from '@nestjs/common';
-
 import { Request, Response } from 'express';
 
 interface ValidationErrorResponse {
@@ -32,10 +31,11 @@ export class HttpExceptionFilter implements ExceptionFilter {
     }
 
     response.status(status).send({
-      statusCode: status,
-      timestamp: new Date().toISOString(),
-      message: errorMessage,
       path: request.url,
+      statusCode: status,
+      error: exception.name,
+      message: errorMessage,
+      timestamp: new Date().toISOString(),
     });
   }
 }

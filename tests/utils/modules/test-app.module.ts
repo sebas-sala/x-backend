@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { HttpException, Module } from '@nestjs/common';
 import { JwtModule, JwtService } from '@nestjs/jwt';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -15,9 +15,8 @@ import { Comment } from '@/src/comments/entities/comment.entity';
 import { BlockedUser } from '@/src/blocked-users/entities/blocked-user.entity';
 
 import configuration from '@/src/config/configuration';
-import { HttpExceptionFilter } from '@/src/common/filters/http-exception.filter';
+
 import { AuthService } from '@/src/auth/auth.service';
-import { UsersService } from '@/src/users/users.service';
 import { AuthModule } from '@/src/auth/auth.module';
 import { PostsModule } from '@/src/posts/posts.module';
 import { UsersModule } from '@/src/users/users.module';
@@ -27,7 +26,7 @@ import { BlockedUsersModule } from '@/src/blocked-users/blocked-users.module';
 import { CommentsModule } from '@/src/comments/comments.module';
 import { LikesModule } from '@/src/likes/likes.module';
 import { MessagesModule } from '@/src/messages/messages.module';
-import { AllExceptionsFilter } from '@/src/common/filters/all-exceptions.filter';
+import { HttpExceptionFilter } from '@/src/common/filters/http-exception.filter';
 
 @Module({
   imports: [
@@ -76,7 +75,7 @@ import { AllExceptionsFilter } from '@/src/common/filters/all-exceptions.filter'
     JwtService,
     {
       provide: APP_FILTER,
-      useClass: AllExceptionsFilter,
+      useClass: HttpExceptionFilter,
     },
     {
       provide: APP_GUARD,
