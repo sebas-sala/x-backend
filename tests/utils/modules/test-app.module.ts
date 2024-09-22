@@ -27,6 +27,7 @@ import { BlockedUsersModule } from '@/src/blocked-users/blocked-users.module';
 import { CommentsModule } from '@/src/comments/comments.module';
 import { LikesModule } from '@/src/likes/likes.module';
 import { MessagesModule } from '@/src/messages/messages.module';
+import { AllExceptionsFilter } from '@/src/common/filters/all-exceptions.filter';
 
 @Module({
   imports: [
@@ -75,7 +76,7 @@ import { MessagesModule } from '@/src/messages/messages.module';
     JwtService,
     {
       provide: APP_FILTER,
-      useClass: HttpExceptionFilter,
+      useClass: AllExceptionsFilter,
     },
     {
       provide: APP_GUARD,
