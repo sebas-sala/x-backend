@@ -28,9 +28,13 @@ export class PostsController {
     private readonly likesService: LikesService,
   ) {}
 
+  @UseGuards(JwtAuthGuard)
   @Post()
-  create(@Body() createPostDto: CreatePostDto) {
-    return this.postsService.create(createPostDto);
+  create(
+    @Body() createPostDto: CreatePostDto,
+    @CurrentUser() currentUser: string,
+  ) {
+    return this.postsService.create(createPostDto, currentUser);
   }
 
   @UseGuards(JwtAuthPublicGuard)
@@ -44,14 +48,20 @@ export class PostsController {
     return this.postsService.findOne(id);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updatePostDto: UpdatePostDto) {
-    return this.postsService.update(id, updatePostDto);
+  async update(
+    @Param('id') id: string,
+    @Body() updatePostDto: UpdatePostDto,
+    @CurrentUser() currentUser: string,
+  ) {
+    return await this.postsService.update(id, updatePostDto, currentUser);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.postsService.remove(+id);
+  async remove(@Param('id') id: string, @CurrentUser() currentUser: string) {
+    return await this.postsService.remove(id, currentUser);
   }
 
   @Get(':id/comments')
