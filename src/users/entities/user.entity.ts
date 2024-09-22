@@ -62,12 +62,6 @@ export class User {
   @OneToMany(() => BlockedUser, (blockedUser) => blockedUser.blockedUser)
   blockedBy: BlockedUser[];
 
-  // @OneToMany(() => Bookmark, (bookmark) => bookmark.user)
-  // bookmarks: Bookmark[];
-
-  // @OneToMany(() => Like, (like) => like.user)
-  // likes: Like[];
-
   @ApiHideProperty()
   @OneToMany(() => Follow, (follow) => follow.follower, { cascade: true })
   followers: Follow[];
@@ -91,6 +85,9 @@ export class User {
 
   @OneToMany(() => Message, (message) => message.receiver)
   receivedMessages: Message[];
+
+  // @OneToMany(() => Bookmark, (bookmark) => bookmark.user)
+  // bookmarks: Bookmark[];
 
   constructor(partial: Partial<User>) {
     Object.assign(this, partial);
