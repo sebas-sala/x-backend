@@ -1,10 +1,12 @@
+import { Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
 import { Injectable, NotFoundException } from '@nestjs/common';
+
+import { Post } from './entities/post.entity';
+import { BlockedUser } from '../blocked-users/entities/blocked-user.entity';
+
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Post } from './entities/post.entity';
-import { Repository } from 'typeorm';
-import { BlockedUser } from '../blocked-users/entities/blocked-user.entity';
 
 @Injectable()
 export class PostsService {
@@ -13,8 +15,12 @@ export class PostsService {
     private readonly postRepository: Repository<Post>,
   ) {}
 
-  async create(createPostDto: CreatePostDto) {
-    const post = this.postRepository.create(createPostDto);
+  async create(createPostDto: CreatePostDto, currentUser: string) {
+    const post = this.postRepository.create({
+      ...createPostDto,
+      user: { id: currentUser },
+    });
+
     return await this.postRepository.save(post);
   }
 
@@ -63,31 +69,38 @@ export class PostsService {
     return `This action returns comments for a #${id} post`;
   }
 
-  async update(id: string, updatePostDto: UpdatePostDto) {
+  async update(id: string, updatePostDto: UpdatePostDto, authorId: string) {
     try {
-      // THIS CODE ONLY WORKS WITH POSTGRES
-      // const result = await this.postRepository
-      //   .createQueryBuilder()
-      //   .update(Post)
-      //   .set({ ...updatePostDto })
-      //   .where('id = :id', { id })
-      //   .execute();
-      // const updatedPost = result.raw[0];
-      // if (!updatedPost) {
-      //   throw new NotFoundException('Post not found');
-      // }
-      // return updatedPost;
+      const result = await this.postRepository.update(
+        { id, user: { id: authorId } },
+        updatePostDto,
+      );
 
-      await this.findPostById(id);
-      await this.postRepository.update(id, updatePostDto);
+      if (result.affected === 0) {
+        throw new NotFoundException('Post not found');
+      }
+
       return await this.findPostById(id);
     } catch (error) {
       throw error;
     }
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} post`;
+  async remove(id: string, authorId: string) {
+    try {
+      const result = await this.postRepository.delete({
+        id,
+        user: { id: authorId },
+      });
+
+      if (result.affected === 0) {
+        throw new NotFoundException('Post not found');
+      }
+
+      return result;
+    } catch (error) {
+      throw error;
+    }
   }
 
   private async findPostById(
