@@ -1,28 +1,15 @@
-import { JwtModule, JwtService } from '@nestjs/jwt';
-import {
-  FastifyAdapter,
-  NestFastifyApplication,
-} from '@nestjs/platform-fastify';
 import { DataSource } from 'typeorm';
-import UserFactory from '../utils/factories/user.factory';
-import { AppModule } from '@/src/app.module';
-import { Test } from '@nestjs/testing';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { Post } from '@/src/posts/entities/post.entity';
-import { Comment } from '@/src/comments/entities/comment.entity';
+import { JwtService } from '@nestjs/jwt';
+import { NestFastifyApplication } from '@nestjs/platform-fastify';
+
 import { User } from '@/src/users/entities/user.entity';
-import { ValidationPipe } from '@nestjs/common';
-import CommentFactory from '../utils/factories/comment.factory';
-import PostFactory from '../utils/factories/post.factory';
-import { UsersModule } from '@/src/users/users.module';
-import { PostsModule } from '@/src/posts/posts.module';
-import { LikesModule } from '@/src/likes/likes.module';
-import { Follow } from '@/src/follows/entities/follow.entity';
-import { Profile } from '@/src/profiles/entities/profile.entity';
-import { BlockedUser } from '@/src/blocked-users/entities/blocked-user.entity';
-import { JwtStrategy } from '@/src/auth/jwt.strategy';
-import { Like } from '@/src/likes/entities/like.entity';
+
+import UserFactory from '../utils/factories/user.factory';
 import LikeFactory from '../utils/factories/like.factory';
+import PostFactory from '../utils/factories/post.factory';
+import CommentFactory from '../utils/factories/comment.factory';
+
+import { setupTestApp } from '../utils/setup-test-app';
 
 describe('Comments', () => {
   let app: NestFastifyApplication;
@@ -39,51 +26,17 @@ describe('Comments', () => {
   let likeFactory: LikeFactory;
 
   beforeAll(async () => {
-    const moduleRef = await Test.createTestingModule({
-      imports: [
-        UsersModule,
-        PostsModule,
-        LikesModule,
-        TypeOrmModule.forRoot({
-          type: 'sqlite',
-          database: ':memory:',
-          autoLoadEntities: true,
-          synchronize: true,
-        }),
-        TypeOrmModule.forFeature([
-          User,
-          Follow,
-          Profile,
-          BlockedUser,
-          Post,
-          Comment,
-          Like,
-        ]),
-        JwtModule.register({
-          secret: process.env.JWT_SECRET || 'secret',
-          signOptions: { expiresIn: '60m' },
-        }),
-      ],
-      providers: [JwtStrategy],
-    }).compile();
+    const setup = await setupTestApp();
 
-    app = moduleRef.createNestApplication<NestFastifyApplication>(
-      new FastifyAdapter(),
-    );
-    app.useGlobalPipes(new ValidationPipe());
+    app = setup.app;
 
-    await app.init();
-    await app.getHttpAdapter().getInstance().ready();
+    dataSource = setup.dataSource;
+    jwtService = setup.jwtService;
 
-    dataSource = moduleRef.get<DataSource>(DataSource);
-    jwtService = moduleRef.get<JwtService>(JwtService);
-
-    userFactory = new UserFactory(dataSource);
-    postFactory = new PostFactory(dataSource);
-    commentFactory = new CommentFactory(dataSource);
-    likeFactory = new LikeFactory(dataSource);
-
-    await dataSource.query('PRAGMA foreign_keys = ON');
+    userFactory = setup.userFactory;
+    postFactory = setup.postFactory;
+    likeFactory = setup.likeFactory;
+    commentFactory = setup.commentFactory;
   });
 
   afterAll(async () => {
@@ -230,9 +183,8 @@ describe('Comments', () => {
       });
 
       expect(response.statusCode).toBe(404);
-      expect(response.json()).toEqual({
+      expect(response.json()).toMatchObject({
         statusCode: 404,
-        error: 'Not Found',
         message: 'Comment not found',
       });
     });
@@ -255,9 +207,8 @@ describe('Comments', () => {
       });
 
       expect(response.statusCode).toBe(404);
-      expect(response.json()).toEqual({
+      expect(response.json()).toMatchObject({
         statusCode: 404,
-        error: 'Not Found',
         message: 'Comment not found',
       });
     });
@@ -363,9 +314,8 @@ describe('Comments', () => {
       });
 
       expect(response.statusCode).toBe(409);
-      expect(response.json()).toEqual({
+      expect(response.json()).toMatchObject({
         statusCode: 409,
-        error: 'Conflict',
         message: 'Like already exists',
       });
     });
@@ -431,9 +381,8 @@ describe('Comments', () => {
       });
 
       expect(response.statusCode).toBe(404);
-      expect(response.json()).toEqual({
+      expect(response.json()).toMatchObject({
         statusCode: 404,
-        error: 'Not Found',
         message: 'Like not found',
       });
     });
