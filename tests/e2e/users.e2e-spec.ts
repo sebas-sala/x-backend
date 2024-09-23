@@ -24,64 +24,38 @@ import { JwtStrategy } from '@/src/auth/jwt.strategy';
 import BlockedUserFactory from '../utils/factories/blocked-user.factory';
 import { BlockedUser } from '@/src/blocked-users/entities/blocked-user.entity';
 import { Post } from '@/src/posts/entities/post.entity';
+import { setupTestApp } from '../utils/setup-test-app';
 
 describe('Users API (e2e)', () => {
   let app: NestFastifyApplication;
 
   let dataSource: DataSource;
   let jwtService: JwtService;
-  let token: string;
 
+  let token: string;
   let currentUser: User;
 
+  let userFactory: UserFactory;
+
   beforeAll(async () => {
-    const moduleRef = await Test.createTestingModule({
-      imports: [
-        UsersModule,
-        AuthModule,
-        TypeOrmModule.forRoot({
-          type: 'sqlite',
-          database: ':memory:',
-          autoLoadEntities: true,
-          synchronize: true,
-        }),
-        TypeOrmModule.forFeature([User, Follow, Profile, BlockedUser, Post]),
+    const setup = await setupTestApp();
 
-        JwtModule.register({
-          secret: process.env.JWT_SECRET || 'secret',
-          signOptions: { expiresIn: '60m' },
-        }),
-      ],
-      providers: [AuthService, JwtService],
-    }).compile();
+    app = setup.app;
 
-    app = moduleRef.createNestApplication<NestFastifyApplication>(
-      new FastifyAdapter(),
-    );
-    app.useGlobalPipes(new ValidationPipe());
+    dataSource = setup.dataSource;
+    jwtService = setup.jwtService;
 
-    await app.init();
-    await app.getHttpAdapter().getInstance().ready();
-
-    dataSource = moduleRef.get<DataSource>(DataSource);
-    jwtService = moduleRef.get<JwtService>(JwtService);
+    userFactory = setup.userFactory;
   });
 
   afterAll(async () => {
-    await dataSource.synchronize(true);
     await app.close();
-  });
-
-  beforeAll(async () => {
-    await dataSource.query('PRAGMA foreign_keys = ON');
   });
 
   beforeEach(async () => {
     await dataSource.synchronize(true);
 
-    currentUser = await dataSource
-      .getRepository(User)
-      .save(UserFactory.createUserDto());
+    currentUser = await userFactory.createUserEntity();
 
     token = jwtService.sign({ sub: currentUser.id });
   });
@@ -165,7 +139,6 @@ describe('Users API (e2e)', () => {
       expect(JSON.parse(result.payload)).toMatchObject({
         statusCode: 409,
         message: 'Email already exists',
-        error: 'Conflict',
       });
     });
 
@@ -187,7 +160,6 @@ describe('Users API (e2e)', () => {
       expect(JSON.parse(result.payload)).toMatchObject({
         statusCode: 409,
         message: 'Username already exists',
-        error: 'Conflict',
       });
     });
 
@@ -205,8 +177,7 @@ describe('Users API (e2e)', () => {
       expect(result.statusCode).toEqual(400);
       expect(JSON.parse(result.payload)).toMatchObject({
         statusCode: 400,
-        message: ['email must be an email'],
-        error: 'Bad Request',
+        message: 'email must be an email',
       });
     });
   });
@@ -245,7 +216,6 @@ describe('Users API (e2e)', () => {
       expect(payload).toMatchObject({
         statusCode: 404,
         message: 'User not found',
-        error: 'Not Found',
       });
     });
   });
@@ -295,7 +265,6 @@ describe('Users API (e2e)', () => {
       expect(payload).toMatchObject({
         statusCode: 404,
         message: 'User not found',
-        error: 'Not Found',
       });
     });
   });
@@ -339,7 +308,6 @@ describe('Users API (e2e)', () => {
       expect(payload).toMatchObject({
         statusCode: 404,
         message: 'Profile not found',
-        error: 'Not Found',
       });
     });
 
@@ -362,7 +330,6 @@ describe('Users API (e2e)', () => {
       expect(payload).toMatchObject({
         statusCode: 400,
         message: 'Payload cannot be empty',
-        error: 'Bad Request',
       });
     });
   });
@@ -546,7 +513,6 @@ describe('Users API (e2e)', () => {
       expect(payload).toMatchObject({
         statusCode: 404,
         message: `Blocked user with ID ${2} not found`,
-        error: 'Not Found',
       });
     });
 
@@ -575,7 +541,6 @@ describe('Users API (e2e)', () => {
       expect(payload).toMatchObject({
         statusCode: 409,
         message: 'User already blocked',
-        error: 'Conflict',
       });
     });
   });
@@ -621,7 +586,6 @@ describe('Users API (e2e)', () => {
       expect(payload).toMatchObject({
         statusCode: 404,
         message: `Blocked user with ID ${2} not found`,
-        error: 'Not Found',
       });
     });
   });
