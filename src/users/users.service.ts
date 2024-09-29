@@ -27,20 +27,62 @@ export class UsersService {
     return this.usersRepository.find();
   }
 
-  async findOneById(id: string): Promise<User> {
-    return await this.findOneBy({
-      options: { id },
-      error: 'User not found',
-      relations: ['profile'],
+  async findOneById(
+    id: string,
+    relations: string[] = [],
+  ): Promise<User | null> {
+    const user = await this.usersRepository.findOne({
+      where: { id },
+      relations,
     });
+
+    return user;
   }
 
-  async findByUsername(username: string): Promise<User> {
-    return await this.findOneBy({
-      options: { username },
-      error: 'User not found',
-      relations: ['profile'],
+  async findOneByIdOrFail(
+    id: string,
+    error?: string,
+    relations: string[] = [],
+  ): Promise<User> {
+    const user = await this.usersRepository.findOne({
+      where: { id },
+      relations,
     });
+
+    if (!user) {
+      throw new NotFoundException(error || 'User not found');
+    }
+
+    return user;
+  }
+
+  async findByUsername(
+    username: string,
+    relations: string[] = [],
+  ): Promise<User | null> {
+    const user = await this.usersRepository.findOne({
+      where: { username },
+      relations: ['profile', ...relations],
+    });
+
+    return user;
+  }
+
+  async findOneByUsernameOrFail(
+    username: string,
+    error?: string,
+    relations: string[] = [],
+  ): Promise<User> {
+    const user = await this.usersRepository.findOne({
+      where: { username },
+      relations,
+    });
+
+    if (!user) {
+      throw new NotFoundException(error || 'User not found');
+    }
+
+    return user;
   }
 
   async create(createUserDto: CreateUserDto): Promise<User | undefined> {
@@ -75,27 +117,6 @@ export class UsersService {
     } finally {
       await queryRunner.release();
     }
-  }
-
-  async findOneBy({
-    options,
-    error,
-    relations,
-  }: {
-    options: Record<string, unknown>;
-    error: string;
-    relations?: string[];
-  }): Promise<User> {
-    const user = await this.usersRepository.findOne({
-      where: options,
-      relations,
-    });
-
-    if (!user) {
-      throw new NotFoundException(error);
-    }
-
-    return user;
   }
 
   private async hashPassword(password: string): Promise<string> {
