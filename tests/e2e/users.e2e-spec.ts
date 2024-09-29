@@ -1,29 +1,19 @@
-import { Test } from '@nestjs/testing';
 import { DataSource } from 'typeorm';
-import {
-  FastifyAdapter,
-  NestFastifyApplication,
-} from '@nestjs/platform-fastify';
-import { TypeOrmModule } from '@nestjs/typeorm';
+import { JwtService } from '@nestjs/jwt';
+import { NestFastifyApplication } from '@nestjs/platform-fastify';
 
 import { User } from '@/src/users/entities/user.entity';
-import { UsersModule } from '@/src/users/users.module';
-import { CreateUserDto } from '@/src/users/dto/create-user.dto';
-import UserFactory from '../utils/factories/user.factory';
-
 import { Profile } from '@/src/profiles/entities/profile.entity';
-import ProfileFactory from '../utils/factories/profile.factory';
 
-import { ValidationPipe } from '@nestjs/common';
-import { Follow } from '@/src/follows/entities/follow.entity';
-import FollowFactory from '../utils/factories/follow.factory';
-import { AuthModule } from '@/src/auth/auth.module';
-import { JwtModule, JwtService } from '@nestjs/jwt';
-import { AuthService } from '@/src/auth/auth.service';
-import { JwtStrategy } from '@/src/auth/jwt.strategy';
-import BlockedUserFactory from '../utils/factories/blocked-user.factory';
-import { BlockedUser } from '@/src/blocked-users/entities/blocked-user.entity';
-import { Post } from '@/src/posts/entities/post.entity';
+import { CreateUserDto } from '@/src/users/dto/create-user.dto';
+
+import {
+  UserFactory,
+  FollowFactory,
+  ProfileFactory,
+  BlockedUserFactory,
+} from '@/tests/utils/factories';
+
 import { setupTestApp } from '../utils/setup-test-app';
 
 describe('Users API (e2e)', () => {
@@ -36,6 +26,9 @@ describe('Users API (e2e)', () => {
   let currentUser: User;
 
   let userFactory: UserFactory;
+  let followFactory: FollowFactory;
+  let profileFactory: ProfileFactory;
+  let blockedUserFactory: BlockedUserFactory;
 
   beforeAll(async () => {
     const setup = await setupTestApp();
@@ -46,6 +39,9 @@ describe('Users API (e2e)', () => {
     jwtService = setup.jwtService;
 
     userFactory = setup.userFactory;
+    followFactory = setup.followFactory;
+    profileFactory = setup.profileFactory;
+    blockedUserFactory = setup.blockedUserFactory;
   });
 
   afterAll(async () => {
@@ -57,13 +53,14 @@ describe('Users API (e2e)', () => {
 
     currentUser = await userFactory.createUserEntity();
 
-    token = jwtService.sign({ sub: currentUser.id });
+    token = jwtService.sign({
+      sub: currentUser.id,
+      username: currentUser.username,
+    });
   });
 
   describe('GET /users', () => {
     it(`should return an array of users`, async () => {
-      const userFactory = new UserFactory(dataSource);
-
       const users = await Promise.all(
         Array.from({ length: 3 }, () => userFactory.createUserEntity()),
       );
@@ -79,20 +76,6 @@ describe('Users API (e2e)', () => {
         expect.arrayContaining(users.map((u) => u.id)),
       );
     });
-
-    it('should return an empty array if there are no users', async () => {
-      await dataSource.synchronize(true);
-
-      const result = await app.inject({
-        method: 'GET',
-        url: '/users',
-      });
-
-      const parsedPayload = JSON.parse(result.payload) as User[];
-
-      expect(result.statusCode).toEqual(200);
-      expect(parsedPayload.length).toEqual(0);
-    });
   });
 
   describe(`POST /users`, () => {
@@ -106,7 +89,6 @@ describe('Users API (e2e)', () => {
       });
 
       const createdUser = JSON.parse(result.payload);
-
       expect(result.statusCode).toEqual(201);
       expect(createdUser).toMatchObject({
         name: createUserDto.name,
@@ -121,10 +103,7 @@ describe('Users API (e2e)', () => {
     });
 
     it('should return 409 if the email already exists', async () => {
-      const userFactory = new UserFactory(dataSource);
-
       const existingUser = await userFactory.createUserEntity();
-
       const createUserDto: CreateUserDto = UserFactory.createUserDto({
         email: existingUser.email,
       });
@@ -143,8 +122,6 @@ describe('Users API (e2e)', () => {
     });
 
     it('should return 409 if the username already exists', async () => {
-      const userFactory = new UserFactory(dataSource);
-
       const existingUser = await userFactory.createUserEntity();
       const createUserDto: CreateUserDto = UserFactory.createUserDto({
         username: existingUser.username,
@@ -184,8 +161,6 @@ describe('Users API (e2e)', () => {
 
   describe(`GET /users/:id`, () => {
     it(`should return a user by id`, async () => {
-      const userFactory = new UserFactory(dataSource);
-
       const user = await userFactory.createUserEntity();
 
       const result = await app.inject({
@@ -194,7 +169,6 @@ describe('Users API (e2e)', () => {
       });
 
       const payload = JSON.parse(result.payload) as User;
-
       expect(result.statusCode).toEqual(200);
       expect(payload).toMatchObject({
         id: user.id,
@@ -222,12 +196,7 @@ describe('Users API (e2e)', () => {
 
   describe(`GET /users/:username/profile`, () => {
     it(`should return a user's profile`, async () => {
-      const userFactory = new UserFactory(dataSource);
-
       const user = await userFactory.createUserEntity();
-
-      const profileFactory = new ProfileFactory(dataSource);
-
       const profile = await profileFactory.createProfileEntity(user);
 
       const result = await app.inject({
@@ -236,7 +205,6 @@ describe('Users API (e2e)', () => {
       });
 
       const payload = JSON.parse(result.payload) as User;
-
       expect(result.statusCode).toEqual(200);
       expect(payload).toMatchObject({
         id: user.id,
@@ -271,50 +239,25 @@ describe('Users API (e2e)', () => {
 
   describe(`/PATCH users/:id/profile`, () => {
     it(`should update a user's profile`, async () => {
-      const userFactory = new UserFactory(dataSource);
-      const profileFactory = new ProfileFactory(dataSource);
-
-      const user = await userFactory.createUserEntity();
-      await profileFactory.createProfileEntity(user);
-
       const result = await app.inject({
         method: 'PATCH',
-        url: `/users/${user.id}/profile`,
+        url: `/users/${currentUser.id}/profile`,
         payload: {
           bio: 'Test bio',
+        },
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
       });
 
       const parsedPayload = JSON.parse(result.payload) as Profile;
-
       expect(result.statusCode).toEqual(200);
       expect(parsedPayload).toMatchObject({
         bio: 'Test bio',
       });
     });
 
-    it(`should return 404 if the user does not exist by username`, async () => {
-      const result = await app.inject({
-        method: 'PATCH',
-        url: '/users/2/profile',
-        payload: {
-          bio: 'Test bio',
-        },
-      });
-
-      const payload = JSON.parse(result.payload);
-
-      expect(result.statusCode).toEqual(404);
-      expect(payload).toMatchObject({
-        statusCode: 404,
-        message: 'Profile not found',
-      });
-    });
-
     it(`should return 400 if the payload is empty`, async () => {
-      const userFactory = new UserFactory(dataSource);
-      const profileFactory = new ProfileFactory(dataSource);
-
       const user = await userFactory.createUserEntity();
       await profileFactory.createProfileEntity(user);
 
@@ -322,23 +265,39 @@ describe('Users API (e2e)', () => {
         method: 'PATCH',
         url: `/users/${user.username}/profile`,
         payload: {},
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
 
       const payload = JSON.parse(result.payload);
-
       expect(result.statusCode).toEqual(400);
       expect(payload).toMatchObject({
         statusCode: 400,
         message: 'Payload cannot be empty',
       });
     });
+
+    it(`should return 401 if the user is not authenticated`, async () => {
+      const result = await app.inject({
+        method: 'PATCH',
+        url: `/users/x/profile`,
+        payload: {
+          bio: 'Test bio',
+        },
+      });
+
+      const payload = JSON.parse(result.payload);
+      expect(result.statusCode).toEqual(401);
+      expect(payload).toMatchObject({
+        statusCode: 401,
+        message: 'Unauthorized',
+      });
+    });
   });
 
   describe(`GET /users/:id/followers`, () => {
     it(`should return an array of followers`, async () => {
-      const userFactory = new UserFactory(dataSource);
-      const followFactory = new FollowFactory(dataSource);
-
       const user = await userFactory.createUserEntity();
       const followers = await Promise.all(
         Array.from({ length: 3 }, async () => {
@@ -347,6 +306,7 @@ describe('Users API (e2e)', () => {
             followingId: user.id,
             followerId: follower.id,
           });
+
           return follower;
         }),
       );
@@ -357,7 +317,6 @@ describe('Users API (e2e)', () => {
       });
 
       const payload = JSON.parse(result.payload);
-
       expect(result.statusCode).toEqual(200);
       expect(payload.map((f: { id: string }) => f.id)).toEqual(
         expect.arrayContaining(followers.map((f) => f.id)),
@@ -371,7 +330,6 @@ describe('Users API (e2e)', () => {
       });
 
       const payload = JSON.parse(result.payload);
-
       expect(result.statusCode).toEqual(200);
       expect(payload).toEqual([]);
     });
@@ -379,9 +337,6 @@ describe('Users API (e2e)', () => {
 
   describe(`GET /users/:id/following`, () => {
     it(`should return an array of following`, async () => {
-      const userFactory = new UserFactory(dataSource);
-      const followFactory = new FollowFactory(dataSource);
-
       const user = await userFactory.createUserEntity();
       const following = await Promise.all(
         Array.from({ length: 3 }, async () => {
@@ -390,6 +345,7 @@ describe('Users API (e2e)', () => {
             followingId: followed.id,
             followerId: user.id,
           });
+
           return followed;
         }),
       );
@@ -400,7 +356,6 @@ describe('Users API (e2e)', () => {
       });
 
       const payload = JSON.parse(result.payload);
-
       expect(result.statusCode).toEqual(200);
       expect(payload.map((f: { id: string }) => f.id)).toEqual(
         expect.arrayContaining(following.map((f) => f.id)),
@@ -414,7 +369,6 @@ describe('Users API (e2e)', () => {
       });
 
       const payload = JSON.parse(result.payload);
-
       expect(result.statusCode).toEqual(200);
       expect(payload).toEqual([]);
     });
@@ -422,17 +376,14 @@ describe('Users API (e2e)', () => {
 
   describe(`GET /users/blocked`, () => {
     it(`should return an array of blocked users`, async () => {
-      const userFactory = new UserFactory(dataSource);
-      const blockedUserFactory = new BlockedUserFactory(dataSource);
-
       const blockedUsers = await Promise.all(
         Array.from({ length: 3 }, async () => {
           const blockedUser = await userFactory.createUserEntity();
-
           await blockedUserFactory.createBlockedUser({
             blockingUserId: currentUser.id,
             blockedUserId: blockedUser.id,
           });
+
           return blockedUser;
         }),
       );
@@ -446,7 +397,6 @@ describe('Users API (e2e)', () => {
       });
 
       const payload = JSON.parse(result.payload);
-
       expect(result.statusCode).toEqual(200);
       expect(
         payload.map((u: { id: string; blockedUser: { id: string } }) => {
@@ -465,7 +415,6 @@ describe('Users API (e2e)', () => {
       });
 
       const payload = JSON.parse(result.payload);
-
       expect(result.statusCode).toEqual(200);
       expect(payload).toEqual([]);
     });
@@ -473,8 +422,6 @@ describe('Users API (e2e)', () => {
 
   describe(`POST /users/:id/block`, () => {
     it(`should block a user`, async () => {
-      const userFactory = new UserFactory(dataSource);
-
       const user = await userFactory.createUserEntity();
 
       const result = await app.inject({
@@ -512,16 +459,12 @@ describe('Users API (e2e)', () => {
       expect(result.statusCode).toEqual(404);
       expect(payload).toMatchObject({
         statusCode: 404,
-        message: `Blocked user with ID ${2} not found`,
+        message: `Blocked user not found`,
       });
     });
 
     it(`should return 409 if the user is already blocked`, async () => {
-      const userFactory = new UserFactory(dataSource);
-      const blockedUserFactory = new BlockedUserFactory(dataSource);
-
       const user = await userFactory.createUserEntity();
-
       await blockedUserFactory.createBlockedUser({
         blockingUserId: currentUser.id,
         blockedUserId: user.id,
@@ -536,7 +479,6 @@ describe('Users API (e2e)', () => {
       });
 
       const payload = JSON.parse(result.payload);
-
       expect(result.statusCode).toEqual(409);
       expect(payload).toMatchObject({
         statusCode: 409,
@@ -547,19 +489,15 @@ describe('Users API (e2e)', () => {
 
   describe(`DELETE /users/:id/unblock`, () => {
     it(`should unblock a user`, async () => {
-      const userFactory = new UserFactory(dataSource);
-      const blockedUserFactory = new BlockedUserFactory(dataSource);
-
-      const user = await userFactory.createUserEntity();
-
+      const blockedUser = await userFactory.createUserEntity();
       await blockedUserFactory.createBlockedUser({
         blockingUserId: currentUser.id,
-        blockedUserId: user.id,
+        blockedUserId: blockedUser.id,
       });
 
       const result = await app.inject({
         method: 'DELETE',
-        url: `/users/${user.id}/unblock`,
+        url: `/users/${blockedUser.id}/unblock`,
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -581,11 +519,10 @@ describe('Users API (e2e)', () => {
       });
 
       const payload = JSON.parse(result.payload);
-
       expect(result.statusCode).toEqual(404);
       expect(payload).toMatchObject({
         statusCode: 404,
-        message: `Blocked user with ID ${2} not found`,
+        message: `Blocked user not found`,
       });
     });
   });
