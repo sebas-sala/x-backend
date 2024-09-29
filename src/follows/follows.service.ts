@@ -25,10 +25,10 @@ export class FollowService {
   private readonly usersService: UsersService;
 
   constructor(
-    @InjectRepository(Follow)
-    private readonly followRepository: Repository<Follow>,
     @InjectRepository(User)
     private readonly usersRepository: Repository<User>,
+    @InjectRepository(Follow)
+    private readonly followRepository: Repository<Follow>,
 
     private readonly moduleRef: ModuleRef,
   ) {
@@ -66,18 +66,14 @@ export class FollowService {
       throw new ConflictException('You cannot follow yourself');
     }
 
-    try {
-      const following = await this.validateFollowingExists(followingId);
-      await this.validateFollowDoesNotExist(currentUser, followingId);
+    const following = await this.validateFollowingExists(followingId);
+    await this.validateFollowDoesNotExist(currentUser, followingId);
 
-      const follow = this.followRepository.create({
-        follower: { id: currentUser },
-        following,
-      });
-      return await this.followRepository.save(follow);
-    } catch (error) {
-      throw error;
-    }
+    const follow = this.followRepository.create({
+      follower: { id: currentUser },
+      following,
+    });
+    return await this.followRepository.save(follow);
   }
 
   async remove(deleteFollowDto: DeleteFollowDto, currentUser: string) {
@@ -129,10 +125,10 @@ export class FollowService {
   }
 
   private async validateFollowingExists(followingId: string): Promise<User> {
-    return await this.usersService.findOneBy({
-      options: { id: followingId },
-      error: this.ERROR_MESSAGES.FOLLOWING_NOT_FOUND,
-    });
+    return await this.usersService.findOneByIdOrFail(
+      followingId,
+      this.ERROR_MESSAGES.FOLLOWING_NOT_FOUND,
+    );
   }
 
   private async findFollow(
