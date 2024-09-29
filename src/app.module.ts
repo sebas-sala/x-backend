@@ -12,14 +12,17 @@ import { UsersModule } from './users/users.module';
 import { FollowsModule } from './follows/follows.module';
 import { ProfilesModule } from './profiles/profiles.module';
 
-import configuration from './config/configuration';
-import { HttpExceptionFilter } from './common/filters/http-exception.filter';
-import { BlockedUsersModule } from './blocked-users/blocked-users.module';
 import { PostsModule } from './posts/posts.module';
-import { CommentsService } from './comments/comments.service';
-import { CommentsModule } from './comments/comments.module';
 import { LikesModule } from './likes/likes.module';
+import { CommentsModule } from './comments/comments.module';
 import { MessagesModule } from './messages/messages.module';
+import { BlockedUsersModule } from './blocked-users/blocked-users.module';
+import { NotificationsModule } from './notifications/notifications.module';
+
+import { WsExceptionFilter } from './common/filters/ws-exception.filter';
+import { HttpExceptionFilter } from './common/filters/http-exception.filter';
+
+import configuration from './config/configuration';
 
 @Module({
   imports: [
@@ -42,12 +45,13 @@ import { MessagesModule } from './messages/messages.module';
     AuthModule,
     PostsModule,
     UsersModule,
+    LikesModule,
     FollowsModule,
     ProfilesModule,
-    BlockedUsersModule,
     CommentsModule,
-    LikesModule,
     MessagesModule,
+    BlockedUsersModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [
@@ -55,6 +59,10 @@ import { MessagesModule } from './messages/messages.module';
     {
       provide: APP_FILTER,
       useClass: HttpExceptionFilter,
+    },
+    {
+      provide: APP_FILTER,
+      useClass: WsExceptionFilter,
     },
     {
       provide: APP_GUARD,
