@@ -9,15 +9,16 @@ import {
   PrimaryGeneratedColumn,
   OneToMany,
 } from 'typeorm';
-
-import { Profile } from '@/src/profiles/entities/profile.entity';
 import { ApiHideProperty } from '@nestjs/swagger';
-import { Follow } from '@/src/follows/entities/follow.entity';
-import { BlockedUser } from '@/src/blocked-users/entities/blocked-user.entity';
+
 import { Post } from '@/src/posts/entities/post.entity';
-import { Comment } from '@/src/comments/entities/comment.entity';
 import { Like } from '@/src/likes/entities/like.entity';
+import { Follow } from '@/src/follows/entities/follow.entity';
+import { Profile } from '@/src/profiles/entities/profile.entity';
+import { Comment } from '@/src/comments/entities/comment.entity';
 import { Message } from '@/src/messages/entities/message.entity';
+import { BlockedUser } from '@/src/blocked-users/entities/blocked-user.entity';
+import { Notification } from '@/src/notifications/entities/notification.entity';
 
 @Entity()
 export class User {
@@ -85,6 +86,9 @@ export class User {
 
   @OneToMany(() => Message, (message) => message.receiver)
   receivedMessages: Message[];
+
+  @OneToMany(() => Notification, (notification) => notification.user)
+  notifications: Notification[];
 
   // @OneToMany(() => Bookmark, (bookmark) => bookmark.user)
   // bookmarks: Bookmark[];
