@@ -1,79 +1,54 @@
-import {
-  ConflictException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { BlockedUser } from './entities/blocked-user.entity';
-import { EntityManager, Repository } from 'typeorm';
+import { Injectable, ConflictException } from '@nestjs/common';
+
 import { User } from '../users/entities/user.entity';
-import { QueryRunnerFactory } from '../common/factories/query-runner.factory';
+import { BlockedUser } from './entities/blocked-user.entity';
+
+import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class BlockedUsersService {
   constructor(
     @InjectRepository(BlockedUser)
     private readonly blockedUsersRepository: Repository<BlockedUser>,
-    @InjectRepository(User)
-    private readonly usersRepository: Repository<User>,
-    private readonly queryRunnerFactory: QueryRunnerFactory,
+
+    private readonly usersService: UsersService,
   ) {}
 
   async blockUser(
-    blockingUserId: string,
     blockedUserId: string,
+    blockingUser: User,
   ): Promise<BlockedUser> {
-    const queryRunner = this.queryRunnerFactory.createQueryRunner();
+    await this.validateBlockedUserExists(blockedUserId);
+    await this.validateBlockDoesNotExist(blockingUser.id, blockedUserId);
 
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
+    const blockedUser = this.blockedUsersRepository.create({
+      blockingUser,
+      blockedUser: { id: blockedUserId },
+    });
 
-    const manager = queryRunner.manager;
-
-    try {
-      await this.validateBlockedUserExists(blockedUserId, manager);
-      await this.validateBlockDoesNotExist(
-        blockingUserId,
-        blockedUserId,
-        manager,
-      );
-
-      const blockedUser = this.blockedUsersRepository.create({
-        blockingUser: { id: blockingUserId },
-        blockedUser: { id: blockedUserId },
-      });
-
-      return await this.blockedUsersRepository.save(blockedUser);
-    } catch (error) {
-      await queryRunner.rollbackTransaction();
-      throw error;
-    } finally {
-      await queryRunner.release();
-    }
+    return await this.blockedUsersRepository.save(blockedUser);
   }
 
   async unblockUser(
-    blockingUserId: string,
     blockedUserId: string,
+    blockingUser: User,
   ): Promise<number | null | undefined> {
-    try {
-      await this.validateBlockedUserExists(blockedUserId);
+    await this.validateBlockedUserExists(blockedUserId);
 
-      const result = await this.blockedUsersRepository.delete({
-        blockingUser: { id: blockingUserId },
-        blockedUser: { id: blockedUserId },
-      });
+    const result = await this.blockedUsersRepository.delete({
+      blockingUser,
+      blockedUser: { id: blockedUserId },
+    });
 
-      return result.affected;
-    } catch (error) {
-      throw error;
-    }
+    return result.affected;
   }
 
-  async getBlockedUsers(userId: string): Promise<BlockedUser[]> {
+  async getBlockedUsers(user: User): Promise<BlockedUser[]> {
     const blockedUsers = await this.blockedUsersRepository.find({
       where: {
-        blockingUser: { id: userId },
+        blockingUser: { id: user.id },
       },
       relations: ['blockedUser', 'blockedUser.profile'],
     });
@@ -83,38 +58,22 @@ export class BlockedUsersService {
 
   private async validateBlockedUserExists(
     blockedUserId: string,
-    manager?: EntityManager,
   ): Promise<void> {
-    const blockedUser = await this.findUserById(blockedUserId, manager);
-
-    if (!blockedUser) {
-      throw new NotFoundException(
-        `Blocked user with ID ${blockedUserId} not found`,
-      );
-    }
-  }
-
-  private async findUserById(
-    userId: string,
-    manager?: EntityManager,
-  ): Promise<User | null> {
-    const userRepo = this.getUserRepository(manager);
-
-    return await userRepo.findOne({ where: { id: userId } });
+    await this.usersService.findOneByIdOrFail(
+      blockedUserId,
+      `Blocked user not found`,
+    );
   }
 
   private async validateBlockDoesNotExist(
     blockingUserId: string,
     blockedUserId: string,
-    manager?: EntityManager,
   ): Promise<void> {
     if (blockingUserId === blockedUserId) {
       throw new ConflictException('User cannot block themselves');
     }
 
-    const blockRepository = this.getBlockedUserRepository(manager);
-
-    const block = await blockRepository.findOne({
+    const block = await this.blockedUsersRepository.findOne({
       where: {
         blockingUser: { id: blockingUserId },
         blockedUser: { id: blockedUserId },
@@ -124,17 +83,5 @@ export class BlockedUsersService {
     if (block) {
       throw new ConflictException('User already blocked');
     }
-  }
-
-  private getUserRepository(manager?: EntityManager): Repository<User> {
-    return manager ? manager.getRepository(User) : this.usersRepository;
-  }
-
-  private getBlockedUserRepository(
-    manager?: EntityManager,
-  ): Repository<BlockedUser> {
-    return manager
-      ? manager.getRepository(BlockedUser)
-      : this.blockedUsersRepository;
   }
 }
