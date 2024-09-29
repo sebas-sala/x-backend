@@ -74,20 +74,24 @@ export class PostsService {
     return result;
   }
 
-  private async findPostByIdOrFail(id: string, relations: string[] = []) {
+  async findPostByIdOrFail(
+    id: string,
+    relations: string[] = [],
+    error?: string,
+  ) {
     const post = await this.postRepository.findOne({
       where: { id },
       relations,
     });
 
     if (!post) {
-      throw new NotFoundException('Post not found');
+      throw new NotFoundException(error || 'Post not found');
     }
 
     return post;
   }
 
-  private async findPostById(
+  async findPostById(
     id: string,
     relations: string[] = [],
   ): Promise<Post | null> {
