@@ -1,38 +1,67 @@
 import {
+  MessageBody,
+  WebSocketServer,
   WebSocketGateway,
   SubscribeMessage,
-  MessageBody,
 } from '@nestjs/websockets';
-import { MessagesService } from './messages.service';
-import { CreateMessageDto } from './dto/create-message.dto';
-import { UpdateMessageDto } from './dto/update-message.dto';
+import { Server } from 'socket.io';
+import { UseGuards } from '@nestjs/common';
 
-@WebSocketGateway()
+import { User } from '../users/entities/user.entity';
+
+import { MessagesService } from './messages.service';
+
+import { CreateMessageDto } from './dto/create-message.dto';
+
+import { WsJwtAuthGuard } from '../common/guards/ws-jwt-auth.guard';
+import { WsCurrentUser } from '../common/decorators/ws-current-user.decorator';
+
+@WebSocketGateway({
+  cors: {
+    origin: '*',
+  },
+  namespace: 'messages',
+  transports: ['websocket'],
+})
 export class MessagesGateway {
+  @WebSocketServer()
+  server: Server;
+
   constructor(private readonly messagesService: MessagesService) {}
 
+  @UseGuards(WsJwtAuthGuard)
   @SubscribeMessage('createMessage')
-  create(@MessageBody() createMessageDto: CreateMessageDto) {
-    return this.messagesService.create(createMessageDto);
+  async create(
+    @MessageBody() createMessageDto: CreateMessageDto,
+    @WsCurrentUser() user: User,
+  ): Promise<any> {
+    try {
+      const message = await this.messagesService.create(createMessageDto, user);
+      return message;
+
+      this.server.emit('newMessage', message);
+    } catch (error) {
+      return error;
+    }
   }
 
-  @SubscribeMessage('findAllMessages')
-  findAll() {
-    return this.messagesService.findAll();
-  }
+  // @SubscribeMessage('findAllMessages')
+  // findAll() {
+  //   return this.messagesService.findAll();
+  // }
 
-  @SubscribeMessage('findOneMessage')
-  findOne(@MessageBody() id: number) {
-    return this.messagesService.findOne(id);
-  }
+  // @SubscribeMessage('findOneMessage')
+  // findOne(@MessageBody() id: number) {
+  //   // return this.messagesService.findOne(id);
+  // }
 
-  @SubscribeMessage('updateMessage')
-  update(@MessageBody() updateMessageDto: UpdateMessageDto) {
-    return this.messagesService.update(updateMessageDto.id, updateMessageDto);
-  }
+  // @SubscribeMessage('updateMessage')
+  // update(@MessageBody() updateMessageDto: UpdateMessageDto) {
+  //   return this.messagesService.update(updateMessageDto.id, updateMessageDto);
+  // }
 
-  @SubscribeMessage('removeMessage')
-  remove(@MessageBody() id: number) {
-    return this.messagesService.remove(id);
-  }
+  // @SubscribeMessage('removeMessage')
+  // remove(@MessageBody() id: number) {
+  //   // return this.messagesService.remove(id);
+  // }
 }

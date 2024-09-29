@@ -1,22 +1,29 @@
-import { User } from '@/src/users/entities/user.entity';
 import {
   Column,
-  CreateDateColumn,
   Entity,
   ManyToOne,
-  PrimaryGeneratedColumn,
   UpdateDateColumn,
+  CreateDateColumn,
+  PrimaryGeneratedColumn,
 } from 'typeorm';
+
+import { User } from '@/src/users/entities/user.entity';
 
 @Entity()
 export class Message {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ManyToOne(() => User, (user) => user.sentMessages, { eager: true })
+  @ManyToOne(() => User, (user) => user.sentMessages, {
+    eager: true,
+    nullable: true,
+  })
   sender: User;
 
-  @ManyToOne(() => User, (user) => user.receivedMessages, { eager: true })
+  @ManyToOne(() => User, (user) => user.receivedMessages, {
+    eager: true,
+    nullable: true,
+  })
   receiver: User;
 
   @Column({ type: 'text' })
