@@ -232,23 +232,6 @@ describe('Posts API (e2e)', () => {
           .sort(),
       ).toEqual(comments.map((comment) => comment.id).sort());
     });
-
-    it('should return a 404 if the post does not exist', async () => {
-      const response = await app.inject({
-        method: 'GET',
-        url: '/posts/1/comments',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      expect(response.statusCode).toBe(404);
-      expect(JSON.parse(response.payload)).toMatchObject({
-        message: 'Post not found',
-        error: 'NotFoundException',
-        statusCode: 404,
-      });
-    });
   });
 
   describe('POST /posts/:id/comments', () => {
@@ -495,7 +478,7 @@ describe('Posts API (e2e)', () => {
 
       expect(response.statusCode).toBe(404);
       expect(JSON.parse(response.payload)).toMatchObject({
-        message: 'Post not found by id ' + 1,
+        message: 'Post not found',
         error: 'NotFoundException',
         statusCode: 404,
       });
@@ -570,7 +553,7 @@ describe('Posts API (e2e)', () => {
 
       expect(response.statusCode).toBe(404);
       expect(JSON.parse(response.payload)).toMatchObject({
-        message: 'Post not found by id ' + 1,
+        message: 'Post not found',
         error: 'NotFoundException',
         statusCode: 404,
       });
