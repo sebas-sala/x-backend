@@ -1,20 +1,27 @@
 import {
-  Body,
-  Controller,
-  Delete,
   Get,
+  Body,
+  Post,
   Param,
   Patch,
-  Post,
+  Delete,
   UseGuards,
+  Controller,
 } from '@nestjs/common';
-import { CommentsService } from './comments.service';
-import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { ApiTags } from '@nestjs/swagger';
-import { CurrentUser } from '../common/decorators/current-user.decorator';
+
+import { User } from '../users/entities/user.entity';
+import { Like } from '../likes/entities/like.entity';
+import { Comment } from './entities/comment.entity';
+
+import { LikesService } from '../likes/likes.service';
+import { CommentsService } from './comments.service';
+
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
-import { LikesService } from '../likes/likes.service';
+
+import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
 
 @ApiTags('comments')
 @Controller('comments')
@@ -29,8 +36,8 @@ export class CommentsController {
   updateComment(
     @Param('id') id: string,
     @Body() updateCommentDto: UpdateCommentDto,
-    @CurrentUser() currentUser: string,
-  ) {
+    @CurrentUser() currentUser: User,
+  ): Promise<Comment | null> {
     return this.commentsService.updateComment(
       id,
       updateCommentDto,
@@ -43,8 +50,8 @@ export class CommentsController {
   createReply(
     @Param('id') id: string,
     @Body() createCommentDto: CreateCommentDto,
-    @CurrentUser() currentUser: string,
-  ) {
+    @CurrentUser() currentUser: User,
+  ): Promise<Comment> {
     return this.commentsService.createCommentReply(
       id,
       createCommentDto,
@@ -53,19 +60,25 @@ export class CommentsController {
   }
 
   @Get(':id/likes')
-  getCommentLikes(@Param('id') id: string) {
+  getCommentLikes(@Param('id') id: string): Promise<Like[]> {
     return this.likesService.getCommentLikes(id);
   }
 
   @UseGuards(JwtAuthGuard)
   @Post(':id/likes')
-  likeComment(@Param('id') id: string, @CurrentUser() currentUser: string) {
+  likeComment(
+    @Param('id') id: string,
+    @CurrentUser() currentUser: User,
+  ): Promise<Like> {
     return this.likesService.likeComment(id, currentUser);
   }
 
   @UseGuards(JwtAuthGuard)
   @Delete(':id/likes')
-  unlikeComment(@Param('id') id: string, @CurrentUser() currentUser: string) {
+  unlikeComment(
+    @Param('id') id: string,
+    @CurrentUser() currentUser: User,
+  ): Promise<void> {
     return this.likesService.unlikeComment(id, currentUser);
   }
 }
