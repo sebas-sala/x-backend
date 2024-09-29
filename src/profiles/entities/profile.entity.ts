@@ -32,7 +32,7 @@ export class Profile {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @OneToOne(() => User, (user) => user.profile)
+  @OneToOne(() => User, (user) => user.profile, { eager: true })
   @JoinColumn({ name: 'userId' })
   user: User;
 
