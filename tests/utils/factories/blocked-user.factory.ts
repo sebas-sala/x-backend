@@ -44,8 +44,8 @@ export default class BlockedUserFactory {
       }
 
       const createBlockedUserDto = blockedUsersRepository.create({
-        blockingUser: blockingUser,
-        blockedUser: blockedUser,
+        blockingUser: { id: blockingUserId },
+        blockedUser: { id: blockedUserId },
       });
 
       return await blockedUsersRepository.save(createBlockedUserDto);
