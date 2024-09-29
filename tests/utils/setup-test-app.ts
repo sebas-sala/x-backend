@@ -8,7 +8,7 @@ import { NestFastifyApplication } from '@nestjs/platform-fastify';
 import { TestAppModule } from './modules/test-app.module';
 import { initializeFactories } from './initialize-factories';
 
-export async function setupTestApp(port = 3000) {
+export async function setupTestApp(port = 0) {
   const moduleRef = await Test.createTestingModule({
     imports: [TestAppModule],
   }).compile();
