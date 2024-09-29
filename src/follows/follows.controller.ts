@@ -5,6 +5,7 @@ import { DeleteFollowDto } from './dto/delete-follow.dto';
 import { ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { User } from '../users/entities/user.entity';
 
 @ApiTags('follows')
 @Controller('follows')
@@ -15,7 +16,7 @@ export class FollowController {
   @Post()
   async create(
     @Body() createFollowDto: CreateFollowDto,
-    @CurrentUser() currentUser: string,
+    @CurrentUser() currentUser: User,
   ) {
     return await this.followService.create(createFollowDto, currentUser);
   }
@@ -24,7 +25,7 @@ export class FollowController {
   @Delete()
   async remove(
     @Body() deleteFollowDto: DeleteFollowDto,
-    @CurrentUser() currentUser: string,
+    @CurrentUser() currentUser: User,
   ) {
     return await this.followService.remove(deleteFollowDto, currentUser);
   }

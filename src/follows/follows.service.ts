@@ -7,12 +7,12 @@ import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 
 import { Follow } from './entities/follow.entity';
+import { User } from '../users/entities/user.entity';
+
 import { CreateFollowDto } from './dto/create-follow.dto';
 import { DeleteFollowDto } from './dto/delete-follow.dto';
 
 import { UsersService } from '@/src/users/users.service';
-import { User } from '../users/entities/user.entity';
-import { ModuleRef } from '@nestjs/core';
 
 @Injectable()
 export class FollowService {
@@ -22,18 +22,14 @@ export class FollowService {
     FOLLOW_ALREADY_EXISTS: 'Follow already exists',
   };
 
-  private readonly usersService: UsersService;
-
   constructor(
     @InjectRepository(User)
     private readonly usersRepository: Repository<User>,
     @InjectRepository(Follow)
     private readonly followRepository: Repository<Follow>,
 
-    private readonly moduleRef: ModuleRef,
-  ) {
-    this.usersService = this.moduleRef.get(UsersService, { strict: false });
-  }
+    private readonly usersService: UsersService,
+  ) {}
 
   async getFollowing(userId: string): Promise<User[]> {
     const following = await this.usersRepository
@@ -59,33 +55,29 @@ export class FollowService {
     return followers;
   }
 
-  async create(createFollowDto: CreateFollowDto, currentUser: string) {
+  async create(createFollowDto: CreateFollowDto, currentUser: User) {
     const { followingId } = createFollowDto;
 
-    if (followingId === currentUser) {
+    if (followingId === currentUser.id) {
       throw new ConflictException('You cannot follow yourself');
     }
 
     const following = await this.validateFollowingExists(followingId);
-    await this.validateFollowDoesNotExist(currentUser, followingId);
+    await this.validateFollowDoesNotExist(currentUser.id, followingId);
 
     const follow = this.followRepository.create({
-      follower: { id: currentUser },
+      follower: { id: currentUser.id },
       following,
     });
     return await this.followRepository.save(follow);
   }
 
-  async remove(deleteFollowDto: DeleteFollowDto, currentUser: string) {
+  async remove(deleteFollowDto: DeleteFollowDto, currentUser: User) {
     const { followingId } = deleteFollowDto;
 
-    try {
-      await this.validateFollowExists(currentUser, followingId);
+    await this.validateFollowExists(currentUser.id, followingId);
 
-      return await this.deleteFollow(currentUser, followingId);
-    } catch (error) {
-      throw error;
-    }
+    return await this.deleteFollow(currentUser.id, followingId);
   }
 
   private async deleteFollow(followerId: string, followingId: string) {
@@ -106,7 +98,10 @@ export class FollowService {
     followerId: string,
     followingId: string,
   ): Promise<void> {
-    const existingFollow = await this.findFollow(followerId, followingId);
+    const existingFollow = await this.existsFollowByUsers(
+      followerId,
+      followingId,
+    );
 
     if (existingFollow) {
       throw new ConflictException(this.ERROR_MESSAGES.FOLLOW_ALREADY_EXISTS);
@@ -117,7 +112,10 @@ export class FollowService {
     followerId: string,
     followingId: string,
   ): Promise<void> {
-    const existingFollow = await this.findFollow(followerId, followingId);
+    const existingFollow = await this.existsFollowByUsers(
+      followerId,
+      followingId,
+    );
 
     if (!existingFollow) {
       throw new NotFoundException('Follow not found');
@@ -131,16 +129,10 @@ export class FollowService {
     );
   }
 
-  private async findFollow(
-    followerId: string,
-    followingId: string,
-  ): Promise<Follow | null> {
-    return await this.followRepository
-      .createQueryBuilder()
-      .where('followerId = :followerId AND followingId = :followingId', {
-        followerId,
-        followingId,
-      })
-      .getOne();
+  private async existsFollowByUsers(followerId: string, followingId: string) {
+    return await this.followRepository.existsBy({
+      follower: { id: followerId },
+      following: { id: followingId },
+    });
   }
 }

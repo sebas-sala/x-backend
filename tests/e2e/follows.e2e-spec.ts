@@ -1,24 +1,12 @@
-import { Test } from '@nestjs/testing';
 import { DataSource } from 'typeorm';
-import {
-  FastifyAdapter,
-  NestFastifyApplication,
-} from '@nestjs/platform-fastify';
-import { TypeOrmModule } from '@nestjs/typeorm';
+import { faker } from '@faker-js/faker';
+import { JwtService } from '@nestjs/jwt';
+import { NestFastifyApplication } from '@nestjs/platform-fastify';
 
 import { User } from '@/src/users/entities/user.entity';
-import { UsersModule } from '@/src/users/users.module';
-import UserFactory from '../utils/factories/user.factory';
-
-import { ValidationPipe } from '@nestjs/common';
 import { Follow } from '@/src/follows/entities/follow.entity';
 
-import { AuthModule } from '@/src/auth/auth.module';
-import { JwtModule, JwtService } from '@nestjs/jwt';
-import { AuthService } from '@/src/auth/auth.service';
-import { JwtStrategy } from '@/src/auth/jwt.strategy';
-import { faker } from '@faker-js/faker';
-import FollowFactory from '../utils/factories/follow.factory';
+import { UserFactory } from '@/tests/utils/factories';
 import { setupTestApp } from '../utils/setup-test-app';
 
 describe('Users API (e2e)', () => {
@@ -31,7 +19,6 @@ describe('Users API (e2e)', () => {
   let currentUser: User;
 
   let userFactory: UserFactory;
-  let followFactory: FollowFactory;
 
   beforeAll(async () => {
     const setup = await setupTestApp();
@@ -42,7 +29,6 @@ describe('Users API (e2e)', () => {
     jwtService = setup.jwtService;
 
     userFactory = setup.userFactory;
-    followFactory = setup.followFactory;
   });
 
   afterAll(async () => {
