@@ -8,7 +8,6 @@ import { Post } from '../posts/entities/post.entity';
 import { Comment } from './entities/comment.entity';
 
 import { CommentsService } from './comments.service';
-
 import { CommentsController } from './comments.controller';
 
 @Module({
