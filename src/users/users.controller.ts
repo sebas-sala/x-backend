@@ -1,38 +1,37 @@
 import {
+  Get,
+  Post,
+  Body,
+  Param,
+  Patch,
+  Delete,
+  UseGuards,
+  Controller,
+} from '@nestjs/common';
+import {
   ApiBody,
   ApiCreatedResponse,
   ApiOperation,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { ModuleRef } from '@nestjs/core';
 import { instanceToPlain } from 'class-transformer';
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Param,
-  Patch,
-  UseGuards,
-  Delete,
-  Inject,
-  forwardRef,
-} from '@nestjs/common';
+
+import { UsersService } from './users.service';
+import { FollowService } from '../follows/follows.service';
+import { ProfilesService } from '@/src/profiles/profiles.service';
+import { BlockedUsersService } from '../blocked-users/blocked-users.service';
 
 import { User } from './entities/user.entity';
-import { UsersService } from './users.service';
-import { CreateUserDto } from './dto/create-user.dto';
-
 import { Profile } from '@/src/profiles/entities/profile.entity';
-import { ProfilesService } from '@/src/profiles/profiles.service';
+
+import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateProfileDto } from '@/src/profiles/dto/update-profile.dto';
 
-import { NonEmptyPayloadGuard } from '../common/guards/non-empty-payload.guard';
-import { BlockedUsersService } from '../blocked-users/blocked-users.service';
-import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
-import { FollowService } from '../follows/follows.service';
-import { ModuleRef } from '@nestjs/core';
+import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { NonEmptyPayloadGuard } from '../common/guards/non-empty-payload.guard';
 
 @ApiTags('users')
 @Controller('users')
@@ -71,7 +70,7 @@ export class UsersController {
   })
   @Get(':id')
   async findOne(@Param('id') id: string) {
-    const user = await this.usersService.findOneById(id);
+    const user = await this.usersService.findOneByIdOrFail(id);
     return instanceToPlain(user, { groups: ['private'] });
   }
 
@@ -83,19 +82,21 @@ export class UsersController {
   })
   @Get(':username/profile')
   async getProfile(@Param('username') username: string) {
-    const user = await this.usersService.findByUsername(username);
+    const user = await this.usersService.findOneByUsernameOrFail(username);
 
     return instanceToPlain(user, { groups: ['profile'] });
   }
 
   @ApiOperation({ summary: 'Update user profile by id' })
   @UseGuards(NonEmptyPayloadGuard)
+  @UseGuards(JwtAuthGuard)
   @Patch(':id/profile')
   async updateProfile(
     @Param('id') id: string,
-    @Body() profile: UpdateProfileDto,
+    @Body() updateProfileDto: UpdateProfileDto,
+    @CurrentUser() currentUser: User,
   ): Promise<Profile> {
-    return await this.profilesService.update(id, profile);
+    return await this.profilesService.update(id, updateProfileDto, currentUser);
   }
 
   @ApiOperation({ summary: 'Create user' })
@@ -141,7 +142,7 @@ export class UsersController {
   })
   @UseGuards(JwtAuthGuard)
   @Get('blocked')
-  async getBlockedUsers(@CurrentUser() currentUser: string) {
+  async getBlockedUsers(@CurrentUser() currentUser: User) {
     return await this.blockedUsersService.getBlockedUsers(currentUser);
   }
 
@@ -153,8 +154,8 @@ export class UsersController {
   })
   @UseGuards(JwtAuthGuard)
   @Post(':id/block')
-  async blockUser(@Param('id') id: string, @CurrentUser() currentUser: string) {
-    return await this.blockedUsersService.blockUser(currentUser, id);
+  async blockUser(@Param('id') id: string, @CurrentUser() currentUser: User) {
+    return await this.blockedUsersService.blockUser(id, currentUser);
   }
 
   @ApiOperation({ summary: 'Unblock user' })
@@ -165,10 +166,7 @@ export class UsersController {
   })
   @UseGuards(JwtAuthGuard)
   @Delete(':id/unblock')
-  async unblockUser(
-    @Param('id') id: string,
-    @CurrentUser() currentUser: string,
-  ) {
-    return await this.blockedUsersService.unblockUser(currentUser, id);
+  async unblockUser(@Param('id') id: string, @CurrentUser() currentUser: User) {
+    return await this.blockedUsersService.unblockUser(id, currentUser);
   }
 }
