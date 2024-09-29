@@ -1,5 +1,4 @@
 import {
-  Controller,
   Get,
   Post,
   Body,
@@ -7,17 +6,23 @@ import {
   Param,
   Delete,
   UseGuards,
+  Controller,
 } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
+
+import { User } from '../users/entities/user.entity';
+
 import { PostsService } from './posts.service';
+import { LikesService } from '../likes/likes.service';
+import { CommentsService } from '../comments/comments.service';
+
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
-import { ApiTags } from '@nestjs/swagger';
-import { CurrentUser } from '../common/decorators/current-user.decorator';
-import { JwtAuthPublicGuard } from '../common/guards/jwt-auth-public.guard';
-import { CommentsService } from '../comments/comments.service';
-import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { CreateCommentDto } from '../comments/dto/create-comment.dto';
-import { LikesService } from '../likes/likes.service';
+
+import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { JwtAuthPublicGuard } from '../common/guards/jwt-auth-public.guard';
 
 @ApiTags('posts')
 @Controller('posts')
@@ -32,14 +37,14 @@ export class PostsController {
   @Post()
   create(
     @Body() createPostDto: CreatePostDto,
-    @CurrentUser() currentUser: string,
+    @CurrentUser() currentUser: User,
   ) {
     return this.postsService.create(createPostDto, currentUser);
   }
 
   @UseGuards(JwtAuthPublicGuard)
   @Get()
-  findAll(@CurrentUser() currentUser: string) {
+  findAll(@CurrentUser() currentUser: User) {
     return this.postsService.findAll(currentUser);
   }
 
@@ -53,14 +58,14 @@ export class PostsController {
   async update(
     @Param('id') id: string,
     @Body() updatePostDto: UpdatePostDto,
-    @CurrentUser() currentUser: string,
+    @CurrentUser() currentUser: User,
   ) {
     return await this.postsService.update(id, updatePostDto, currentUser);
   }
 
   @UseGuards(JwtAuthGuard)
   @Delete(':id')
-  async remove(@Param('id') id: string, @CurrentUser() currentUser: string) {
+  async remove(@Param('id') id: string, @CurrentUser() currentUser: User) {
     return await this.postsService.remove(id, currentUser);
   }
 
@@ -74,7 +79,7 @@ export class PostsController {
   createComment(
     @Param('id') id: string,
     @Body() createCommentDto: CreateCommentDto,
-    @CurrentUser() currentUser: string,
+    @CurrentUser() currentUser: User,
   ) {
     return this.commentsService.createPostComment(
       id,
@@ -90,13 +95,13 @@ export class PostsController {
 
   @UseGuards(JwtAuthGuard)
   @Post(':id/likes')
-  likePost(@Param('id') id: string, @CurrentUser() currentUser: string) {
+  likePost(@Param('id') id: string, @CurrentUser() currentUser: User) {
     return this.likesService.likePost(id, currentUser);
   }
 
   @UseGuards(JwtAuthGuard)
   @Delete(':id/likes')
-  unlikePost(@Param('id') id: string, @CurrentUser() currentUser: string) {
+  unlikePost(@Param('id') id: string, @CurrentUser() currentUser: User) {
     return this.likesService.unlikePost(id, currentUser);
   }
 }
