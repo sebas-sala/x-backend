@@ -29,8 +29,8 @@ import { JwtAuthPublicGuard } from '../common/guards/jwt-auth-public.guard';
 export class PostsController {
   constructor(
     private readonly postsService: PostsService,
-    private readonly commentsService: CommentsService,
     private readonly likesService: LikesService,
+    private readonly commentsService: CommentsService,
   ) {}
 
   @UseGuards(JwtAuthGuard)
@@ -55,23 +55,23 @@ export class PostsController {
 
   @UseGuards(JwtAuthGuard)
   @Patch(':id')
-  async update(
+  update(
     @Param('id') id: string,
     @Body() updatePostDto: UpdatePostDto,
     @CurrentUser() currentUser: User,
   ) {
-    return await this.postsService.update(id, updatePostDto, currentUser);
+    return this.postsService.update(id, updatePostDto, currentUser);
   }
 
   @UseGuards(JwtAuthGuard)
   @Delete(':id')
-  async remove(@Param('id') id: string, @CurrentUser() currentUser: User) {
-    return await this.postsService.remove(id, currentUser);
+  remove(@Param('id') id: string, @CurrentUser() currentUser: User) {
+    return this.postsService.remove(id, currentUser);
   }
 
   @Get(':id/comments')
   getComments(@Param('id') id: string) {
-    return this.commentsService.findAllPostComments(id);
+    return this.commentsService.findAll(id, 'post');
   }
 
   @UseGuards(JwtAuthGuard)
