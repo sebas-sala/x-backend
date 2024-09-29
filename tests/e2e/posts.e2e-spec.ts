@@ -1,17 +1,19 @@
 import { DataSource } from 'typeorm';
-import { NestFastifyApplication } from '@nestjs/platform-fastify';
 import { JwtService } from '@nestjs/jwt';
+import { NestFastifyApplication } from '@nestjs/platform-fastify';
 
 import { User } from '@/src/users/entities/user.entity';
 import { Like } from '@/src/likes/entities/like.entity';
 import { Post } from '@/src/posts/entities/post.entity';
 import { Comment } from '@/src/comments/entities/comment.entity';
-import { BlockedUser } from '@/src/blocked-users/entities/blocked-user.entity';
 
-import UserFactory from '../utils/factories/user.factory';
-import PostFactory from '../utils/factories/post.factory';
-import LikeFactory from '../utils/factories/like.factory';
-import CommentFactory from '../utils/factories/comment.factory';
+import {
+  UserFactory,
+  PostFactory,
+  LikeFactory,
+  CommentFactory,
+  BlockedUserFactory,
+} from '../utils/factories';
 
 import { setupTestApp } from '../utils/setup-test-app';
 
@@ -28,6 +30,7 @@ describe('Posts API (e2e)', () => {
   let postFactory: PostFactory;
   let likeFactory: LikeFactory;
   let commentFactory: CommentFactory;
+  let blockedUserFactory: BlockedUserFactory;
 
   beforeAll(async () => {
     const setup = await setupTestApp();
@@ -40,6 +43,7 @@ describe('Posts API (e2e)', () => {
     postFactory = setup.postFactory;
     likeFactory = setup.likeFactory;
     commentFactory = setup.commentFactory;
+    blockedUserFactory = setup.blockedUserFactory;
   });
 
   afterAll(async () => {
@@ -56,17 +60,15 @@ describe('Posts API (e2e)', () => {
 
   describe('GET /posts', () => {
     it('should return a list of posts', async () => {
-      const posts = await Promise.all([
-        postFactory.createPostEntity({
-          userId: currentUser.id,
-        }),
-        postFactory.createPostEntity({
-          userId: currentUser.id,
-        }),
-        postFactory.createPostEntity({
-          userId: currentUser.id,
-        }),
-      ]);
+      const posts = await Promise.all(
+        Array.from(
+          { length: 3 },
+          async () =>
+            await postFactory.createPostEntity({
+              userId: currentUser.id,
+            }),
+        ),
+      );
 
       const response = await app.inject({
         method: 'GET',
@@ -87,10 +89,10 @@ describe('Posts API (e2e)', () => {
     it('should return not return posts from blocked users', async () => {
       const blockingUser = await userFactory.createUserEntity();
 
-      await dataSource
-        .getRepository(BlockedUser)
-        .save({ blockingUser, blockedUser: currentUser });
-
+      await blockedUserFactory.createBlockedUser({
+        blockingUserId: blockingUser.id,
+        blockedUserId: currentUser.id,
+      });
       await postFactory.createPostEntity({
         userId: blockingUser.id,
       });
@@ -109,11 +111,10 @@ describe('Posts API (e2e)', () => {
 
     it('should return return posts from blocked users if youre not authenticated', async () => {
       const blockingUser = await userFactory.createUserEntity();
-
-      await dataSource
-        .getRepository(BlockedUser)
-        .save({ blockingUser, blockedUser: currentUser });
-
+      await blockedUserFactory.createBlockedUser({
+        blockingUserId: blockingUser.id,
+        blockedUserId: currentUser.id,
+      });
       await postFactory.createPostEntity({
         userId: blockingUser.id,
       });
@@ -207,21 +208,14 @@ describe('Posts API (e2e)', () => {
       const post = await postFactory.createPostEntity({
         userId: currentUser.id,
       });
-
-      const comments = await Promise.all([
-        commentFactory.createPostCommentEntity({
-          postId: post.id,
-          userId: currentUser.id,
+      const comments = await Promise.all(
+        Array.from({ length: 3 }, async () => {
+          return await commentFactory.createPostCommentEntity({
+            postId: post.id,
+            userId: currentUser.id,
+          });
         }),
-        commentFactory.createPostCommentEntity({
-          postId: post.id,
-          userId: currentUser.id,
-        }),
-        commentFactory.createPostCommentEntity({
-          postId: post.id,
-          userId: currentUser.id,
-        }),
-      ]);
+      );
 
       const response = await app.inject({
         method: 'GET',
@@ -262,7 +256,6 @@ describe('Posts API (e2e)', () => {
       const post = await postFactory.createPostEntity({
         userId: currentUser.id,
       });
-
       const comment = CommentFactory.createCommentDto();
 
       const response = await app.inject({
@@ -282,7 +275,6 @@ describe('Posts API (e2e)', () => {
       const post = await postFactory.createPostEntity({
         userId: currentUser.id,
       });
-
       const comment = {
         content: 'This is a comment',
       };
@@ -326,7 +318,6 @@ describe('Posts API (e2e)', () => {
       const post = await postFactory.createPostEntity({
         userId: currentUser.id,
       });
-
       const updatedPost = PostFactory.createPostDto();
 
       const response = await app.inject({
@@ -377,56 +368,56 @@ describe('Posts API (e2e)', () => {
         statusCode: 404,
       });
     });
+  });
 
-    describe('DELETE /posts/:id', () => {
-      it('should delete a post', async () => {
-        const post = await postFactory.createPostEntity({
-          userId: currentUser.id,
-        });
-
-        const response = await app.inject({
-          method: 'DELETE',
-          url: `/posts/${post.id}`,
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        expect(response.statusCode).toBe(200);
+  describe('DELETE /posts/:id', () => {
+    it('should delete a post', async () => {
+      const post = await postFactory.createPostEntity({
+        userId: currentUser.id,
       });
 
-      it('should return a 401 if the user is not authenticated', async () => {
-        const post = await postFactory.createPostEntity({
-          userId: currentUser.id,
-        });
-
-        const response = await app.inject({
-          method: 'DELETE',
-          url: `/posts/${post.id}`,
-        });
-
-        expect(response.statusCode).toBe(401);
-        expect(JSON.parse(response.payload)).toMatchObject({
-          message: 'Unauthorized',
-          statusCode: 401,
-        });
+      const response = await app.inject({
+        method: 'DELETE',
+        url: `/posts/${post.id}`,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
 
-      it('should return a 404 if the post does not exist', async () => {
-        const response = await app.inject({
-          method: 'DELETE',
-          url: '/posts/1',
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+      expect(response.statusCode).toBe(200);
+    });
 
-        expect(response.statusCode).toBe(404);
-        expect(JSON.parse(response.payload)).toMatchObject({
-          message: 'Post not found',
-          error: 'NotFoundException',
-          statusCode: 404,
-        });
+    it('should return a 401 if the user is not authenticated', async () => {
+      const post = await postFactory.createPostEntity({
+        userId: currentUser.id,
+      });
+
+      const response = await app.inject({
+        method: 'DELETE',
+        url: `/posts/${post.id}`,
+      });
+
+      expect(response.statusCode).toBe(401);
+      expect(JSON.parse(response.payload)).toMatchObject({
+        message: 'Unauthorized',
+        statusCode: 401,
+      });
+    });
+
+    it('should return a 404 if the post does not exist', async () => {
+      const response = await app.inject({
+        method: 'DELETE',
+        url: '/posts/1',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      expect(response.statusCode).toBe(404);
+      expect(JSON.parse(response.payload)).toMatchObject({
+        message: 'Post not found',
+        error: 'NotFoundException',
+        statusCode: 404,
       });
     });
   });
@@ -436,7 +427,6 @@ describe('Posts API (e2e)', () => {
       const post = await postFactory.createPostEntity({
         userId: currentUser.id,
       });
-
       const likes = await likeFactory.createPostLike(post.id, currentUser.id);
 
       const response = await app.inject({
@@ -515,7 +505,6 @@ describe('Posts API (e2e)', () => {
       const post = await postFactory.createPostEntity({
         userId: currentUser.id,
       });
-
       await likeFactory.createPostLike(post.id, currentUser.id);
 
       const response = await app.inject({
@@ -540,7 +529,6 @@ describe('Posts API (e2e)', () => {
       const post = await postFactory.createPostEntity({
         userId: currentUser.id,
       });
-
       await likeFactory.createPostLike(post.id, currentUser.id);
 
       const response = await app.inject({
