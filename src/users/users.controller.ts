@@ -82,7 +82,11 @@ export class UsersController {
   })
   @Get(':username/profile')
   async getProfile(@Param('username') username: string) {
-    const user = await this.usersService.findOneByUsernameOrFail(username);
+    const user = await this.usersService.findOneByUsernameOrFail(
+      username,
+      undefined,
+      ['profile'],
+    );
 
     return instanceToPlain(user, { groups: ['profile'] });
   }
