@@ -36,7 +36,7 @@ export class WsJwtAuthGuard extends AuthGuard('jwt') implements CanActivate {
         process.env.JWT_SECRET || 'secret',
       ) as any;
 
-      const user = await this.userRepository.findOneBy({
+      const user = await this.userRepository.findOneByOrFail({
         id: decoded.id,
       });
 
