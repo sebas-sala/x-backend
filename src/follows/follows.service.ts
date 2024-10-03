@@ -3,7 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 
 import { Follow } from './entities/follow.entity';
@@ -13,6 +13,8 @@ import { CreateFollowDto } from './dto/create-follow.dto';
 import { DeleteFollowDto } from './dto/delete-follow.dto';
 
 import { UsersService } from '@/src/users/users.service';
+import { NotificationsService } from '../notifications/notifications.service';
+import { CreateNotificationDto } from '../notifications/dto/create-notification.dto';
 
 @Injectable()
 export class FollowService {
@@ -29,6 +31,8 @@ export class FollowService {
     private readonly followRepository: Repository<Follow>,
 
     private readonly usersService: UsersService,
+    private readonly notificationsService: NotificationsService,
+    private readonly dataSource: DataSource,
   ) {}
 
   async getFollowing(userId: string): Promise<User[]> {
@@ -55,7 +59,10 @@ export class FollowService {
     return followers;
   }
 
-  async create(createFollowDto: CreateFollowDto, currentUser: User) {
+  async create(
+    createFollowDto: CreateFollowDto,
+    currentUser: User,
+  ): Promise<Follow> {
     const { followingId } = createFollowDto;
 
     if (followingId === currentUser.id) {
@@ -65,11 +72,27 @@ export class FollowService {
     const following = await this.validateFollowingExists(followingId);
     await this.validateFollowDoesNotExist(currentUser.id, followingId);
 
-    const follow = this.followRepository.create({
-      follower: { id: currentUser.id },
-      following,
+    return await this.dataSource.transaction(async (manager) => {
+      const follow = manager.create(Follow, {
+        follower: currentUser,
+        following,
+      });
+      const savedFollow = await manager.save(follow);
+
+      try {
+        const notificationDto = this.setNotificationDto({
+          title: 'New follower',
+          message: `${currentUser.username} started following you`,
+          receiver: followingId,
+          sender: currentUser.id,
+        });
+        await this.notificationsService.create(notificationDto);
+      } catch (error) {
+        console.error(error);
+      }
+
+      return savedFollow;
     });
-    return await this.followRepository.save(follow);
   }
 
   async remove(deleteFollowDto: DeleteFollowDto, currentUser: User) {
@@ -78,6 +101,22 @@ export class FollowService {
     await this.validateFollowExists(currentUser.id, followingId);
 
     return await this.deleteFollow(currentUser.id, followingId);
+  }
+
+  private setNotificationDto({
+    title,
+    message,
+    receiver,
+    sender,
+  }: NotificationDto): CreateNotificationDto {
+    return {
+      title,
+      message,
+      type: 'follow',
+      priority: 'low',
+      receiver,
+      sender,
+    };
   }
 
   private async deleteFollow(followerId: string, followingId: string) {

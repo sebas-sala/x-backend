@@ -8,9 +8,12 @@ import { Follow } from '@/src/follows/entities/follow.entity';
 
 import { UserFactory } from '@/tests/utils/factories';
 import { setupTestApp } from '../utils/setup-test-app';
+import { Notification } from '@/src/notifications/entities/notification.entity';
+import { io, Socket } from 'socket.io-client';
 
 describe('Users API (e2e)', () => {
   let app: NestFastifyApplication;
+  let socket: Socket;
 
   let dataSource: DataSource;
   let jwtService: JwtService;
@@ -20,10 +23,13 @@ describe('Users API (e2e)', () => {
 
   let userFactory: UserFactory;
 
+  let port: number;
+
   beforeAll(async () => {
     const setup = await setupTestApp();
 
     app = setup.app;
+    port = setup.currentPort;
 
     dataSource = setup.dataSource;
     jwtService = setup.jwtService;
@@ -35,12 +41,28 @@ describe('Users API (e2e)', () => {
     await app.close();
   });
 
+  afterEach(() => {
+    socket.disconnect();
+  });
+
   beforeEach(async () => {
     await dataSource.synchronize(true);
 
     currentUser = await userFactory.createUserEntity();
 
     token = jwtService.sign({ sub: currentUser.id });
+
+    socket = io(`http://localhost:${port}/notifications`, {
+      reconnection: false,
+      extraHeaders: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    await new Promise((resolve, reject) => {
+      socket.on('connect', () => resolve(true));
+      socket.on('error', reject);
+    });
   });
 
   describe('POST /follows', () => {
@@ -59,6 +81,9 @@ describe('Users API (e2e)', () => {
       });
 
       expect(result.statusCode).toEqual(201);
+      expect(dataSource.getRepository(Notification).count()).resolves.toEqual(
+        1,
+      );
     });
 
     it(`should return a 401 if the user is not authenticated`, async () => {

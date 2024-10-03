@@ -7,9 +7,11 @@ import { FollowController } from './follows.controller';
 
 import { User } from '../users/entities/user.entity';
 import { UsersModule } from '../users/users.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
+    NotificationsModule,
     forwardRef(() => UsersModule),
     TypeOrmModule.forFeature([Follow, User]),
   ],
