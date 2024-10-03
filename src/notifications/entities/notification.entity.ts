@@ -37,7 +37,7 @@ export class Notification {
   @Column()
   title: string;
 
-  @Column()
+  @Column({ default: false })
   isRead: boolean;
 
   @Column({ nullable: true, type: 'text' })
@@ -62,9 +62,12 @@ export class Notification {
   })
   priority: NotificationPriority;
 
-  @Column()
-  link: string;
+  @Column({ nullable: true })
+  link?: string;
 
   @ManyToOne(() => User, (user) => user.notifications)
-  user: User;
+  receiver: User;
+
+  @ManyToOne(() => User, { nullable: true })
+  sender: User | null;
 }
