@@ -25,6 +25,9 @@ export async function setupTestApp(port = 0) {
   const dataSource = moduleRef.get<DataSource>(DataSource);
   const jwtService = moduleRef.get<JwtService>(JwtService);
 
+  const server = app.getHttpServer();
+  const currentPort = (server.address() as any).port;
+
   // const authFactory = new AuthFactory(dataSource);
   const factories = await initializeFactories(dataSource);
 
@@ -34,6 +37,7 @@ export async function setupTestApp(port = 0) {
 
   return {
     app,
+    currentPort,
     dataSource,
     jwtService,
     closeApp,
