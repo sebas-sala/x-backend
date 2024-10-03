@@ -10,6 +10,7 @@ import { CommentsModule } from '../comments/comments.module';
 
 import { LikesService } from './likes.service';
 import { LikesController } from './likes.controller';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   controllers: [LikesController],
@@ -18,6 +19,7 @@ import { LikesController } from './likes.controller';
     TypeOrmModule.forFeature([Like, Post, Comment]),
     forwardRef(() => PostsModule),
     forwardRef(() => CommentsModule),
+    NotificationsModule,
   ],
   exports: [LikesService],
 })

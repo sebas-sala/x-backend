@@ -16,6 +16,7 @@ import {
 } from '../utils/factories';
 
 import { setupTestApp } from '../utils/setup-test-app';
+import { Notification } from '@/src/notifications/entities/notification.entity';
 
 describe('Posts API (e2e)', () => {
   let app: NestFastifyApplication;
@@ -448,6 +449,9 @@ describe('Posts API (e2e)', () => {
         post: { id: post.id },
         user: { id: currentUser.id },
       });
+      expect(
+        dataSource.getRepository(Notification).find(),
+      ).resolves.toHaveLength(1);
     });
 
     it('should return a 401 if the user is not authenticated', async () => {

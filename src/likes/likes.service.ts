@@ -3,7 +3,7 @@ import {
   ConflictException,
   NotFoundException,
 } from '@nestjs/common';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 
 import { Like } from './entities/like.entity';
@@ -11,6 +11,8 @@ import { User } from '../users/entities/user.entity';
 
 import { PostsService } from '../posts/posts.service';
 import { CommentsService } from '../comments/comments.service';
+import { NotificationsService } from '../notifications/notifications.service';
+import { CreateNotificationDto } from '../notifications/dto/create-notification.dto';
 
 @Injectable()
 export class LikesService {
@@ -20,6 +22,8 @@ export class LikesService {
 
     private readonly postService: PostsService,
     private readonly commentService: CommentsService,
+    private readonly notificationsService: NotificationsService,
+    private readonly dataSource: DataSource,
   ) {}
 
   async getPostLikes(postId: string): Promise<Like[]> {
@@ -35,14 +39,31 @@ export class LikesService {
   }
 
   async likePost(postId: string, currentUser: User): Promise<Like> {
-    await this.postService.findPostByIdOrFail(postId);
+    const post = await this.postService.findPostByIdOrFail(postId);
     await this.validateLikeDoesNotExists('post', postId, currentUser.id);
 
-    const like = this.likeRepository.create({
-      post: { id: postId },
-      user: { id: currentUser.id },
+    return await this.dataSource.transaction(async (manager) => {
+      const like = manager.create(Like, {
+        post: { id: postId },
+        user: { id: currentUser.id },
+      });
+
+      const savedLike = await manager.save(like);
+
+      try {
+        const notificationDto = this.setNotificationDto({
+          message: `${currentUser.username} liked your post`,
+          sender: currentUser.id,
+          receiver: post.user.id,
+          title: 'New like',
+        });
+        await this.notificationsService.create(notificationDto);
+      } catch (error) {
+        console.log(error);
+      }
+
+      return savedLike;
     });
-    return await this.likeRepository.save(like);
   }
 
   async unlikePost(postId: string, currentUser: User): Promise<void> {
@@ -103,6 +124,22 @@ export class LikesService {
     }
 
     return like;
+  }
+
+  private setNotificationDto({
+    title,
+    message,
+    receiver,
+    sender,
+  }: NotificationDto): CreateNotificationDto {
+    return {
+      title,
+      message,
+      type: 'like',
+      priority: 'low',
+      receiver,
+      sender,
+    };
   }
 
   private async validateLikeDoesNotExists(
