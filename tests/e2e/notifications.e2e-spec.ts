@@ -57,9 +57,9 @@ describe('Users API (e2e)', () => {
 
     socket = io(`http://localhost:${port}/notifications`, {
       reconnection: false,
-      // extraHeaders: {
-      //   Authorization: `Bearer ${token}`,
-      // },
+      extraHeaders: {
+        Authorization: `Bearer ${token}`,
+      },
     });
 
     await new Promise((resolve, reject) => {
