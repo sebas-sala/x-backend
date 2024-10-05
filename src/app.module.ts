@@ -23,9 +23,11 @@ import { WsExceptionFilter } from './common/filters/ws-exception.filter';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 
 import configuration from './config/configuration';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
     ConfigModule.forRoot({
       isGlobal: true,
       load: [configuration],

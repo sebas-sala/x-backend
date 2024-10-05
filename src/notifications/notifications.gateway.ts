@@ -1,19 +1,18 @@
 import {
+  OnGatewayConnection,
   WebSocketGateway,
   SubscribeMessage,
-  MessageBody,
   WebSocketServer,
-  OnGatewayConnection,
   OnGatewayDisconnect,
 } from '@nestjs/websockets';
 import { Server } from 'socket.io';
-import { forwardRef, Inject, UseInterceptors } from '@nestjs/common';
+import { forwardRef, Inject } from '@nestjs/common';
 
-import { Notification } from './entities/notification.entity';
-import { NotificationsService } from './notifications.service';
-import { UpdateNotificationDto } from './dto/update-notification.dto';
 import { User } from '../users/entities/user.entity';
-import { WsJwtInterceptor } from '../common/interceptors/ws-jwt.interceptor';
+import { Notification } from './entities/notification.entity';
+
+import { NotificationsService } from './notifications.service';
+
 import { WsAuthMiddleware } from '../common/middlewares/ws-jwt.middleware';
 
 @WebSocketGateway({
@@ -58,28 +57,5 @@ export class NotificationsGateway
       console.log('Sending notification to user', userId);
       this.server.to(userId).emit('sendNotification', notification);
     }
-  }
-
-  @SubscribeMessage('findAllNotifications')
-  findAll() {
-    return this.notificationsService.findAll();
-  }
-
-  @SubscribeMessage('findOneNotification')
-  findOne(@MessageBody() id: number) {
-    return this.notificationsService.findOne(id);
-  }
-
-  @SubscribeMessage('updateNotification')
-  update(@MessageBody() updateNotificationDto: UpdateNotificationDto) {
-    return this.notificationsService.update(
-      updateNotificationDto.id,
-      updateNotificationDto,
-    );
-  }
-
-  @SubscribeMessage('removeNotification')
-  remove(@MessageBody() id: number) {
-    return this.notificationsService.remove(id);
   }
 }
