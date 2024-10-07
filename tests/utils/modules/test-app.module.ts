@@ -9,6 +9,7 @@ import { AuthModule } from '@/src/auth/auth.module';
 import { PostsModule } from '@/src/posts/posts.module';
 import { UsersModule } from '@/src/users/users.module';
 import { LikesModule } from '@/src/likes/likes.module';
+import { ChatsModule } from '@/src/chats/chats.module';
 import { FollowsModule } from '@/src/follows/follows.module';
 import { MessagesModule } from '@/src/messages/messages.module';
 import { CommentsModule } from '@/src/comments/comments.module';
@@ -26,6 +27,7 @@ import { HttpExceptionFilter } from '@/src/common/filters/http-exception.filter'
     PostsModule,
     UsersModule,
     LikesModule,
+    ChatsModule,
     FollowsModule,
     ProfilesModule,
     CommentsModule,
