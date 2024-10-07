@@ -48,7 +48,7 @@ export class NotificationsService {
 
     for (const { receiverId, count } of groupedNotifications) {
       if (count > 5) {
-        const notification = this.createNotification({
+        const notification = this.setNotificationToSend({
           message: `You have ${count} new followers`,
           receiver: receiverId,
           title: 'New followers',
@@ -88,7 +88,7 @@ export class NotificationsService {
 
     for (const { receiverId, count } of groupedNotifications) {
       if (count > 5) {
-        const notification = this.createNotification({
+        const notification = this.setNotificationToSend({
           message: `You have ${count} new likes`,
           receiver: receiverId,
           title: 'New likes',
@@ -110,7 +110,7 @@ export class NotificationsService {
     }
   }
 
-  private createNotification({
+  private setNotificationToSend({
     message,
     receiver,
     title,

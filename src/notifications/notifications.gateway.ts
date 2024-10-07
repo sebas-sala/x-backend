@@ -51,10 +51,7 @@ export class NotificationsGateway
 
   @SubscribeMessage('sendNotification')
   sendNotification(userId: string, notification: Notification) {
-    console.log('Sending notification to user', userId);
-    console.log(this.connectedUsers);
     if (this.connectedUsers.has(userId)) {
-      console.log('Sending notification to user', userId);
       this.server.to(userId).emit('sendNotification', notification);
     }
   }
