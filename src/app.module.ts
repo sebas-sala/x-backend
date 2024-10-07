@@ -24,6 +24,7 @@ import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 
 import configuration from './config/configuration';
 import { ScheduleModule } from '@nestjs/schedule';
+import { ChatsModule } from './chats/chats.module';
 
 @Module({
   imports: [
@@ -54,6 +55,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     MessagesModule,
     BlockedUsersModule,
     NotificationsModule,
+    ChatsModule,
   ],
   controllers: [AppController],
   providers: [
