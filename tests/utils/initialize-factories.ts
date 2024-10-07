@@ -10,9 +10,10 @@ import {
   ProfileFactory,
   CommentFactory,
   BlockedUserFactory,
+  ChatFactory,
 } from './factories';
 
-export async function initializeFactories(dataSource: DataSource) {
+export async function initializeFactories(dataSource?: DataSource) {
   // const authFactory = new AuthFactory(dataSource);
   const userFactory = new UserFactory(dataSource);
   const postFactory = new PostFactory(dataSource);
@@ -22,11 +23,13 @@ export async function initializeFactories(dataSource: DataSource) {
   const profileFactory = new ProfileFactory(dataSource);
   const commentFactory = new CommentFactory(dataSource);
   const blockedUserFactory = new BlockedUserFactory(dataSource);
+  const chatFactory = new ChatFactory(dataSource);
 
   return {
     userFactory,
     postFactory,
     likeFactory,
+    chatFactory,
     followFactory,
     messageFactory,
     profileFactory,

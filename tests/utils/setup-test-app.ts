@@ -41,6 +41,7 @@ export async function setupTestApp(port = 0) {
     dataSource,
     jwtService,
     closeApp,
+    moduleRef,
     ...factories,
   };
 }
