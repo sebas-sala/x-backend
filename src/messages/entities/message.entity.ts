@@ -8,23 +8,12 @@ import {
 } from 'typeorm';
 
 import { User } from '@/src/users/entities/user.entity';
+import { Chat } from '@/src/chats/entities/chat.entity';
 
 @Entity()
 export class Message {
   @PrimaryGeneratedColumn('uuid')
   id: string;
-
-  @ManyToOne(() => User, (user) => user.sentMessages, {
-    eager: true,
-    nullable: true,
-  })
-  sender: User;
-
-  @ManyToOne(() => User, (user) => user.receivedMessages, {
-    eager: true,
-    nullable: true,
-  })
-  receiver: User;
 
   @Column({ type: 'text' })
   content: string;
@@ -34,4 +23,16 @@ export class Message {
 
   @UpdateDateColumn()
   updatedAt: Date;
+
+  @ManyToOne(() => User, (user) => user.messages, {
+    eager: true,
+    nullable: true,
+  })
+  user: User;
+
+  @ManyToOne(() => Chat, (chat) => chat.messages, {
+    eager: true,
+    nullable: true,
+  })
+  chat: Chat;
 }
