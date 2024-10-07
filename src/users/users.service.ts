@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { EntityManager, Repository } from 'typeorm';
+import { EntityManager, In, Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 
 import { User } from './entities/user.entity';
@@ -66,6 +66,18 @@ export class UsersService {
     });
 
     return user;
+  }
+
+  async findByIds(ids: string[]): Promise<User[]> {
+    const users = await this.usersRepository.findBy({
+      id: In(ids),
+    });
+
+    if (!users) {
+      throw new NotFoundException('Users not found');
+    }
+
+    return users;
   }
 
   async findOneByUsernameOrFail(
