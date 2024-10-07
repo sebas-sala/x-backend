@@ -1,5 +1,5 @@
-import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
+import { EntityManager, Repository } from 'typeorm';
 import { Injectable, NotFoundException } from '@nestjs/common';
 
 import { User } from '../users/entities/user.entity';
@@ -17,16 +17,22 @@ export class MessagesService {
     private readonly userRepository: Repository<User>,
   ) {}
 
-  async create(createMessageDto: CreateMessageDto, sender: User) {
-    const receiver = await this.findUserById(createMessageDto.receiver);
+  async create(
+    createMessageDto: CreateMessageDto,
+    sender: User,
+    manager?: EntityManager,
+  ) {
+    const messageRepository = this.setMessageRepository(manager);
 
-    const message = this.messageRepository.create({
+    const message = messageRepository.create({
       ...createMessageDto,
-      receiver,
-      sender,
+      user: sender,
     });
+    return await messageRepository.save(message);
+  }
 
-    return await this.messageRepository.save(message);
+  private setMessageRepository(manager?: EntityManager) {
+    return manager ? manager.getRepository(Message) : this.messageRepository;
   }
 
   private async findUserById(id: string) {

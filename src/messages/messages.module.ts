@@ -10,5 +10,6 @@ import { User } from '../users/entities/user.entity';
 @Module({
   providers: [MessagesGateway, MessagesService],
   imports: [TypeOrmModule.forFeature([Message, User])],
+  exports: [MessagesService],
 })
 export class MessagesModule {}

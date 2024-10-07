@@ -6,12 +6,8 @@ import { CreateMessageDto } from '@/src/messages/dto/create-message.dto';
 export default class MessageFactory {
   constructor(private readonly dataSource?: DataSource) {}
 
-  static createMessageDto(
-    receiver: string,
-    content?: string,
-  ): CreateMessageDto {
+  static createMessageDto(content?: string): CreateMessageDto {
     return {
-      receiver,
       content: content ?? faker.lorem.sentence(),
     };
   }
