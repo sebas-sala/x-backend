@@ -9,6 +9,7 @@ import { setupTestApp } from '../utils/setup-test-app';
 import { Notification } from '@/src/notifications/entities/notification.entity';
 import { io, Socket } from 'socket.io-client';
 import ChatFactory from '../utils/factories/chat.factory';
+import { Message } from '@/src/messages/entities/message.entity';
 
 describe('Chats API (e2e)', () => {
   let app: NestFastifyApplication;
@@ -78,6 +79,7 @@ describe('Chats API (e2e)', () => {
         },
         payload: {
           users: [user.id],
+          message: 'Hello',
         },
       });
 
@@ -87,6 +89,7 @@ describe('Chats API (e2e)', () => {
           expect.objectContaining({ id: user.id }),
         ]),
       });
+      expect(await dataSource.getRepository(Message).count()).toEqual(1);
     });
 
     it(`should create a chat group`, async () => {
