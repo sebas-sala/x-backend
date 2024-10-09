@@ -1,11 +1,18 @@
-import { ConflictException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { ConflictException, Injectable } from '@nestjs/common';
+import { DataSource, EntityManager, Repository } from 'typeorm';
+
 import { Chat } from './entities/chat.entity';
-import { DataSource, In, Repository } from 'typeorm';
-import { CreateChatDto } from './dto/create-chat.dto';
-import { UsersService } from '../users/users.service';
 import { User } from '../users/entities/user.entity';
+
+import { UsersService } from '../users/users.service';
 import { MessagesService } from '../messages/messages.service';
+
+import { CreateChatDto } from './dto/create-chat.dto';
+
+import { CreateChat } from './types/create-chat';
+import { SetChatUsers } from './types/set-chat-users';
+import { CreateChatMessage } from './types/create-chat-message';
 
 @Injectable()
 export class ChatsService {
@@ -19,29 +26,75 @@ export class ChatsService {
   ) {}
 
   async create(createChatDto: CreateChatDto, currentUser: User) {
-    const users = await this.usersService.findByIds(createChatDto.users);
-    users.push(currentUser);
+    const users = await this.setChatUsers({
+      usersIds: createChatDto.users,
+      currentUser,
+    });
 
     await this.validateChatDoesNotExist(users, createChatDto.isChatGroup);
 
-    const { isChatGroup, message, name } = createChatDto;
+    const { isChatGroup, message: content, name } = createChatDto;
 
     return await this.dataSource.transaction(async (manager) => {
-      // if (message) {
-      //   await this.messagesService.create(
-      //     { content: message },
-      //     currentUser,
-      //     manager,
-      //   );
-      // }
-
-      const chat = manager.create(Chat, {
+      const chat = await this.createChat({
         name,
         users,
         isChatGroup,
+        manager,
       });
-      return await manager.save(chat);
+
+      await this.createChatMessage({
+        chatId: chat.id,
+        content: content,
+        sender: currentUser,
+        manager,
+      });
+
+      return chat;
     });
+  }
+
+  private async createChat({ users, name, isChatGroup, manager }: CreateChat) {
+    const chatRepository = this.setChatRepository(manager);
+
+    const chat = chatRepository.create({
+      name,
+      users,
+      isChatGroup,
+    });
+    return await chatRepository.save(chat);
+  }
+
+  private async createChatMessage({
+    chatId,
+    content,
+    sender,
+    manager,
+  }: CreateChatMessage) {
+    if (!content) return;
+
+    return await this.messagesService.create(
+      {
+        chatId,
+        content,
+      },
+      sender,
+      manager,
+    );
+  }
+
+  private async setChatUsers({ usersIds, currentUser }: SetChatUsers) {
+    const users = await this.usersService.findByIds(usersIds);
+
+    if (!users.some((user) => user.id === currentUser.id)) {
+      users.push(currentUser);
+    }
+
+    return users;
+  }
+
+  private setChatRepository(manager?: EntityManager) {
+    return manager ? manager.getRepository(Chat) : this.chatRepository;
   }
 
   private async validateChatDoesNotExist(users: User[], isChatGroup = false) {
