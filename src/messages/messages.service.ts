@@ -26,6 +26,7 @@ export class MessagesService {
 
     const message = messageRepository.create({
       ...createMessageDto,
+      chat: { id: createMessageDto.chatId },
       user: sender,
     });
     return await messageRepository.save(message);
