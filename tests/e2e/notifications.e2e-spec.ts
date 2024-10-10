@@ -7,9 +7,14 @@ import { NestFastifyApplication } from '@nestjs/platform-fastify';
 import { User } from '@/src/users/entities/user.entity';
 
 import { setupTestApp } from '../utils/setup-test-app';
-import { UserFactory } from '@/tests/utils/factories';
+import {
+  ChatFactory,
+  MessageFactory,
+  UserFactory,
+} from '@/tests/utils/factories';
+import { Chat } from '@/src/chats/entities/chat.entity';
 
-describe('Users API (e2e)', () => {
+describe('Notifications API (e2e)', () => {
   let app: NestFastifyApplication;
   let socket: Socket;
 
@@ -20,6 +25,7 @@ describe('Users API (e2e)', () => {
   let currentUser: User;
 
   let userFactory: UserFactory;
+  let chatFactory: ChatFactory;
 
   let port: number;
 
@@ -35,6 +41,7 @@ describe('Users API (e2e)', () => {
     jwtService = setup.jwtService;
 
     userFactory = setup.userFactory;
+    chatFactory = setup.chatFactory;
   });
 
   afterAll(async () => {
@@ -86,5 +93,52 @@ describe('Users API (e2e)', () => {
       socket.disconnect();
       expect(socket.connected).toBeFalsy();
     });
+  });
+
+  describe('message', () => {
+    it('should send a message to the server', (done) => {
+      (async () => {
+        const mockUser = await userFactory.createUserEntity();
+        const chat = await chatFactory.createChatEntity({
+          name: 'Test chat',
+          users: [currentUser.id, mockUser.id],
+        });
+        const messageDto = MessageFactory.createMessageDto({
+          chatId: chat.id,
+          content: 'Hello, world!',
+        });
+
+        socket.emit('message', { ...messageDto }, async (res: any) => {
+          expect(res).toMatchObject({
+            user: {
+              id: currentUser.id,
+            },
+            content: 'Hello, world!',
+            chat: {
+              id: chat.id,
+            },
+          });
+          done();
+        });
+      })();
+    });
+
+    //   it('should throw 404 error if receiver does not exist', async () => {
+    //     const messageDto = MessageFactory.createMessageDto('invalid-id');
+
+    //     await new Promise((resolve, reject) => {
+    //       socket.emit('createMessage', { ...messageDto }, (res: any) => {
+    //         try {
+    //           expect(res).toMatchObject({
+    //             status: 404,
+    //             message: 'User with id invalid-id not found',
+    //           });
+    //           resolve(true);
+    //         } catch (error) {
+    //           reject(error);
+    //         }
+    //       });
+    //     });
+    //   });
   });
 });
