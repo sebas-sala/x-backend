@@ -1,6 +1,6 @@
 interface NotificationDto {
   title: string;
   message: string;
-  receiver: string;
+  receivers: string[];
   sender?: string;
 }

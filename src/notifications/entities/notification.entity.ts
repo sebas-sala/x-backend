@@ -80,9 +80,9 @@ export class Notification {
   @Column({ nullable: true })
   link?: string;
 
-  @ManyToMany(() => User, (user) => user.notifications)
+  @ManyToMany(() => User, (user) => user.notifications, { cascade: true })
   @JoinTable()
-  receiver: User;
+  receivers: User[];
 
   @ManyToOne(() => User, { nullable: true })
   sender?: User | null;

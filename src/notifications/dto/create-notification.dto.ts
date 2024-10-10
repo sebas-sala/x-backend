@@ -1,4 +1,10 @@
-import { IsIn, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import {
+  IsArray,
+  IsIn,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 
 import {
   NotificationType,
@@ -25,9 +31,10 @@ export class CreateNotificationDto {
   @IsIn(NotificationPriorities)
   priority: NotificationPriority;
 
-  @IsString()
+  @IsString({ each: true })
+  @IsArray()
   @IsNotEmpty()
-  receiver: string;
+  receivers: string[];
 
   @IsString()
   @IsOptional()

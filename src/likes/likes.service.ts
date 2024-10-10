@@ -54,7 +54,7 @@ export class LikesService {
         const notificationDto = this.setNotificationDto({
           message: `${currentUser.username} liked your post`,
           sender: currentUser.id,
-          receiver: post.user.id,
+          receivers: [post.user.id],
           title: 'New like',
         });
         await this.notificationsService.create(notificationDto);
@@ -129,7 +129,7 @@ export class LikesService {
   private setNotificationDto({
     title,
     message,
-    receiver,
+    receivers,
     sender,
   }: NotificationDto): CreateNotificationDto {
     return {
@@ -137,7 +137,7 @@ export class LikesService {
       message,
       type: 'like',
       priority: 'low',
-      receiver,
+      receivers,
       sender,
     };
   }

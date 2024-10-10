@@ -83,7 +83,7 @@ export class FollowService {
         const notificationDto = this.setNotificationDto({
           title: 'New follower',
           message: `${currentUser.username} started following you`,
-          receiver: followingId,
+          receivers: [followingId],
           sender: currentUser.id,
         });
         await this.notificationsService.create(notificationDto);
@@ -106,7 +106,7 @@ export class FollowService {
   private setNotificationDto({
     title,
     message,
-    receiver,
+    receivers,
     sender,
   }: NotificationDto): CreateNotificationDto {
     return {
@@ -114,7 +114,7 @@ export class FollowService {
       message,
       type: 'follow',
       priority: 'low',
-      receiver,
+      receivers,
       sender,
     };
   }

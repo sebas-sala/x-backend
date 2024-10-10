@@ -6,6 +6,8 @@ import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { Notification } from './entities/notification.entity';
 import { NotificationsGateway } from './notifications.gateway';
 
+import { UsersService } from '../users/users.service';
+
 import { CreateNotificationDto } from './dto/create-notification.dto';
 
 @Injectable()
@@ -15,17 +17,21 @@ export class NotificationsService {
     private readonly notificationRepository: Repository<Notification>,
     @Inject(forwardRef(() => NotificationsGateway))
     private notificationGateway: NotificationsGateway,
+
+    private readonly usersService: UsersService,
   ) {}
 
   async create(
     createNotificationDto: CreateNotificationDto,
   ): Promise<Notification> {
-    const { sender, receiver } = createNotificationDto;
+    const users = await this.usersService.findByIds(
+      createNotificationDto.receivers,
+    );
 
     const notification = this.notificationRepository.create({
       ...createNotificationDto,
-      sender: { id: sender },
-      receiver: { id: receiver },
+      sender: { id: createNotificationDto.sender },
+      receivers: users,
     });
     return await this.notificationRepository.save(notification);
   }
@@ -44,20 +50,23 @@ export class NotificationsService {
       .limit(batch)
       .getRawMany();
 
-    const groupedNotifications = await query;
+    const groupedNotifications = (await query) as {
+      receiverId: string;
+      count: number;
+    }[];
 
     for (const { receiverId, count } of groupedNotifications) {
       if (count > 5) {
         const notification = this.setNotificationToSend({
           message: `You have ${count} new followers`,
-          receiver: receiverId,
+          receivers: [receiverId],
           title: 'New followers',
         });
         this.notificationGateway.sendNotification(receiverId, notification);
       } else {
         const notifications = await this.notificationRepository.find({
           where: {
-            receiver: { id: receiverId },
+            receivers: { id: receiverId },
             isRead: false,
             type: 'follow',
           },
@@ -84,20 +93,23 @@ export class NotificationsService {
       .limit(batch)
       .getRawMany();
 
-    const groupedNotifications = await query;
+    const groupedNotifications = (await query) as {
+      receiverId: string;
+      count: number;
+    }[];
 
     for (const { receiverId, count } of groupedNotifications) {
       if (count > 5) {
         const notification = this.setNotificationToSend({
           message: `You have ${count} new likes`,
-          receiver: receiverId,
+          receivers: [receiverId],
           title: 'New likes',
         });
         this.notificationGateway.sendNotification(receiverId, notification);
       } else {
         const notifications = await this.notificationRepository.find({
           where: {
-            receiver: { id: receiverId },
+            receivers: { id: receiverId },
             isRead: false,
             type: 'like',
           },
@@ -112,13 +124,13 @@ export class NotificationsService {
 
   private setNotificationToSend({
     message,
-    receiver,
+    receivers,
     title,
     sender = 'system',
   }: NotificationDto) {
     return this.notificationRepository.create({
       message,
-      receiver: { id: receiver },
+      receivers: receivers.map((id) => ({ id })),
       title,
       sender: { id: sender },
     });

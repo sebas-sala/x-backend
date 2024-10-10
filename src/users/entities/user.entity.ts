@@ -83,7 +83,7 @@ export class User {
   @OneToMany(() => Like, (like) => like.user)
   likes: Like[];
 
-  @ManyToMany(() => Notification, (notification) => notification.receiver)
+  @ManyToMany(() => Notification, (notification) => notification.receivers)
   notifications: Notification[];
 
   @ManyToMany(() => Chat, (chat) => chat.users)
