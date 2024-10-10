@@ -1,8 +1,8 @@
 import {
-  OnGatewayConnection,
+  WebSocketServer,
   WebSocketGateway,
   SubscribeMessage,
-  WebSocketServer,
+  OnGatewayConnection,
   OnGatewayDisconnect,
 } from '@nestjs/websockets';
 import { Server } from 'socket.io';
