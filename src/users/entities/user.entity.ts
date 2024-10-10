@@ -3,25 +3,24 @@ import {
   Column,
   Entity,
   OneToOne,
+  OneToMany,
+  ManyToMany,
   JoinColumn,
   UpdateDateColumn,
   CreateDateColumn,
   PrimaryGeneratedColumn,
-  OneToMany,
-  ManyToMany,
-  JoinTable,
 } from 'typeorm';
 import { ApiHideProperty } from '@nestjs/swagger';
 
 import { Post } from '@/src/posts/entities/post.entity';
 import { Like } from '@/src/likes/entities/like.entity';
+import { Chat } from '@/src/chats/entities/chat.entity';
 import { Follow } from '@/src/follows/entities/follow.entity';
 import { Profile } from '@/src/profiles/entities/profile.entity';
 import { Comment } from '@/src/comments/entities/comment.entity';
 import { Message } from '@/src/messages/entities/message.entity';
 import { BlockedUser } from '@/src/blocked-users/entities/blocked-user.entity';
 import { Notification } from '@/src/notifications/entities/notification.entity';
-import { Chat } from '@/src/chats/entities/chat.entity';
 
 @Entity()
 export class User {
@@ -84,7 +83,7 @@ export class User {
   @OneToMany(() => Like, (like) => like.user)
   likes: Like[];
 
-  @OneToMany(() => Notification, (notification) => notification.receiver)
+  @ManyToMany(() => Notification, (notification) => notification.receiver)
   notifications: Notification[];
 
   @ManyToMany(() => Chat, (chat) => chat.users)

@@ -6,6 +6,8 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   PrimaryGeneratedColumn,
+  JoinTable,
+  ManyToMany,
 } from 'typeorm';
 
 export const NotificationTypes = [
@@ -19,6 +21,9 @@ export type NotificationType = (typeof NotificationTypes)[number];
 
 export const NotificationPriorities = ['low', 'medium', 'high'] as const;
 export type NotificationPriority = (typeof NotificationPriorities)[number];
+
+export const EntityTypes = ['post', 'message', 'comment', 'like'] as const;
+export type EntityType = (typeof EntityTypes)[number];
 
 @Entity()
 export class Notification {
@@ -49,6 +54,16 @@ export class Notification {
   @Column({ nullable: true, type: 'text' })
   deletedAt: Date | null;
 
+  @Column({ nullable: true })
+  entityId?: string;
+
+  @Column({
+    type: 'text',
+    enum: EntityTypes,
+    nullable: true,
+  })
+  entityType?: EntityType;
+
   @Column({
     type: 'text',
     enum: NotificationTypes,
@@ -65,9 +80,10 @@ export class Notification {
   @Column({ nullable: true })
   link?: string;
 
-  @ManyToOne(() => User, (user) => user.notifications)
+  @ManyToMany(() => User, (user) => user.notifications)
+  @JoinTable()
   receiver: User;
 
   @ManyToOne(() => User, { nullable: true })
-  sender: User | null;
+  sender?: User | null;
 }
