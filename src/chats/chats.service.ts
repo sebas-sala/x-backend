@@ -1,5 +1,11 @@
 import { InjectRepository } from '@nestjs/typeorm';
-import { ConflictException, Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  NotFoundException,
+  Inject,
+  forwardRef,
+} from '@nestjs/common';
 import { DataSource, EntityManager, Repository } from 'typeorm';
 
 import { Chat } from './entities/chat.entity';
@@ -20,8 +26,10 @@ export class ChatsService {
     @InjectRepository(Chat)
     private readonly chatRepository: Repository<Chat>,
 
-    private readonly usersService: UsersService,
+    @Inject(forwardRef(() => MessagesService))
     private readonly messagesService: MessagesService,
+    private readonly usersService: UsersService,
+
     private readonly dataSource: DataSource,
   ) {}
 
@@ -52,6 +60,16 @@ export class ChatsService {
 
       return chat;
     });
+  }
+
+  async findByIdOrFail(id: string) {
+    const chat = await this.chatRepository.findOneBy({ id });
+
+    if (!chat) {
+      throw new NotFoundException('Chat not found');
+    }
+
+    return chat;
   }
 
   private async createChat({ users, name, isChatGroup, manager }: CreateChat) {

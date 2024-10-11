@@ -10,11 +10,12 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 
 @Module({
   imports: [
+    TypeOrmModule.forFeature([Chat]),
     forwardRef(() => UsersModule),
     forwardRef(() => MessagesModule),
-    TypeOrmModule.forFeature([Chat]),
   ],
   controllers: [ChatsController],
   providers: [ChatsService],
+  exports: [ChatsService],
 })
 export class ChatsModule {}
