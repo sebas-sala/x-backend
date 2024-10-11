@@ -8,13 +8,11 @@ import {
   ConnectedSocket,
 } from '@nestjs/websockets';
 import { Server } from 'socket.io';
-import { forwardRef, Inject, UseGuards } from '@nestjs/common';
+import { UseGuards } from '@nestjs/common';
 
 import { User } from '../users/entities/user.entity';
-import { Notification } from './entities/notification.entity';
 
 import { MessagesService } from '../messages/messages.service';
-import { NotificationsService } from './notifications.service';
 
 import { WsJwtAuthGuard } from '../common/guards/ws-jwt-auth.guard';
 import { WsAuthMiddleware } from '../common/middlewares/ws-jwt.middleware';
@@ -22,6 +20,7 @@ import { WsCurrentUser } from '../common/decorators/ws-current-user.decorator';
 
 import { CreateMessageDto } from '../messages/dto/create-message.dto';
 import { Socket } from 'socket.io-client';
+import { NotificationDto } from './interfaces/notification-dto';
 
 @WebSocketGateway({
   namespace: 'notifications',
@@ -38,8 +37,6 @@ export class NotificationsGateway
   private connectedUsers: Set<string> = new Set();
 
   constructor(
-    @Inject(forwardRef(() => NotificationsService))
-    private readonly notificationsService: NotificationsService,
     private readonly messagesService: MessagesService,
     private wsAuthMiddleware: WsAuthMiddleware,
   ) {}
@@ -59,7 +56,7 @@ export class NotificationsGateway
   }
 
   @SubscribeMessage('sendNotification')
-  sendNotification(userId: string, notification: Notification) {
+  sendNotification(userId: string, notification: NotificationDto) {
     if (this.connectedUsers.has(userId)) {
       this.server.to(userId).emit('sendNotification', notification);
     }
@@ -77,7 +74,6 @@ export class NotificationsGateway
         createMessageDto,
         sender,
       );
-
       return message;
     } catch (error) {
       this.emitError(client, error);
