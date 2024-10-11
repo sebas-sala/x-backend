@@ -14,7 +14,6 @@ import { DeleteFollowDto } from './dto/delete-follow.dto';
 
 import { UsersService } from '@/src/users/users.service';
 import { NotificationsService } from '../notifications/notifications.service';
-import { CreateNotificationDto } from '../notifications/dto/create-notification.dto';
 
 @Injectable()
 export class FollowService {
@@ -72,27 +71,25 @@ export class FollowService {
     const following = await this.validateFollowingExists(followingId);
     await this.validateFollowDoesNotExist(currentUser.id, followingId);
 
-    return await this.dataSource.transaction(async (manager) => {
-      const follow = manager.create(Follow, {
-        follower: currentUser,
-        following,
-      });
-      const savedFollow = await manager.save(follow);
-
-      try {
-        const notificationDto = this.setNotificationDto({
-          title: 'New follower',
-          message: `${currentUser.username} started following you`,
-          receivers: [followingId],
-          sender: currentUser.id,
-        });
-        await this.notificationsService.create(notificationDto);
-      } catch (error) {
-        console.error(error);
-      }
-
-      return savedFollow;
+    const follow = this.followRepository.create({
+      follower: currentUser,
+      following,
     });
+    const savedFollow = await this.followRepository.save(follow);
+
+    try {
+      await this.notificationsService.create({
+        type: 'follow',
+        title: 'New follower',
+        sender: currentUser.id,
+        receivers: [followingId],
+        message: `${currentUser.username} started following you`,
+      });
+    } catch (error) {
+      console.error(error);
+    }
+
+    return savedFollow;
   }
 
   async remove(deleteFollowDto: DeleteFollowDto, currentUser: User) {
@@ -101,22 +98,6 @@ export class FollowService {
     await this.validateFollowExists(currentUser.id, followingId);
 
     return await this.deleteFollow(currentUser.id, followingId);
-  }
-
-  private setNotificationDto({
-    title,
-    message,
-    receivers,
-    sender,
-  }: NotificationDto): CreateNotificationDto {
-    return {
-      title,
-      message,
-      type: 'follow',
-      priority: 'low',
-      receivers,
-      sender,
-    };
   }
 
   private async deleteFollow(followerId: string, followingId: string) {

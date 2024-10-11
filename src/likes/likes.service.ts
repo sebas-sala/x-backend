@@ -12,7 +12,6 @@ import { User } from '../users/entities/user.entity';
 import { PostsService } from '../posts/posts.service';
 import { CommentsService } from '../comments/comments.service';
 import { NotificationsService } from '../notifications/notifications.service';
-import { CreateNotificationDto } from '../notifications/dto/create-notification.dto';
 
 @Injectable()
 export class LikesService {
@@ -42,28 +41,26 @@ export class LikesService {
     const post = await this.postService.findPostByIdOrFail(postId);
     await this.validateLikeDoesNotExists('post', postId, currentUser.id);
 
-    return await this.dataSource.transaction(async (manager) => {
-      const like = manager.create(Like, {
-        post: { id: postId },
-        user: { id: currentUser.id },
-      });
-
-      const savedLike = await manager.save(like);
-
-      try {
-        const notificationDto = this.setNotificationDto({
-          message: `${currentUser.username} liked your post`,
-          sender: currentUser.id,
-          receivers: [post.user.id],
-          title: 'New like',
-        });
-        await this.notificationsService.create(notificationDto);
-      } catch (error) {
-        console.log(error);
-      }
-
-      return savedLike;
+    const like = this.likeRepository.create({
+      post: { id: postId },
+      user: { id: currentUser.id },
     });
+
+    const savedLike = await this.likeRepository.save(like);
+
+    try {
+      await this.notificationsService.create({
+        type: 'like',
+        title: 'New like',
+        sender: currentUser.id,
+        receivers: [post.user.id],
+        message: `${currentUser.username} liked your post`,
+      });
+    } catch (error) {
+      console.log(error);
+    }
+
+    return savedLike;
   }
 
   async unlikePost(postId: string, currentUser: User): Promise<void> {
@@ -124,22 +121,6 @@ export class LikesService {
     }
 
     return like;
-  }
-
-  private setNotificationDto({
-    title,
-    message,
-    receivers,
-    sender,
-  }: NotificationDto): CreateNotificationDto {
-    return {
-      title,
-      message,
-      type: 'like',
-      priority: 'low',
-      receivers,
-      sender,
-    };
   }
 
   private async validateLikeDoesNotExists(
