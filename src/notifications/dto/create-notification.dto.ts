@@ -7,11 +7,13 @@ import {
 } from 'class-validator';
 
 import {
-  NotificationType,
   NotificationTypes,
-  NotificationPriority,
   NotificationPriorities,
 } from '../entities/notification.entity';
+import {
+  NotificationPriority,
+  NotificationType,
+} from '../interfaces/notification-dto';
 
 export class CreateNotificationDto {
   @IsString()
@@ -20,7 +22,16 @@ export class CreateNotificationDto {
 
   @IsString()
   @IsNotEmpty()
+  sender: string;
+
+  @IsString()
+  @IsNotEmpty()
   message: string;
+
+  @IsArray()
+  @IsNotEmpty()
+  @IsString({ each: true })
+  receivers: string[];
 
   @IsString()
   @IsNotEmpty()
@@ -28,17 +39,9 @@ export class CreateNotificationDto {
   type: NotificationType;
 
   @IsString()
-  @IsIn(NotificationPriorities)
-  priority: NotificationPriority;
-
-  @IsString({ each: true })
-  @IsArray()
-  @IsNotEmpty()
-  receivers: string[];
-
-  @IsString()
   @IsOptional()
-  sender?: string;
+  @IsIn(NotificationPriorities)
+  priority?: NotificationPriority;
 
   @IsString()
   @IsOptional()

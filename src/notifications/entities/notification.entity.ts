@@ -10,6 +10,12 @@ import {
   ManyToMany,
 } from 'typeorm';
 
+import {
+  EntityType,
+  NotificationType,
+  NotificationPriority,
+} from '../interfaces/notification-dto';
+
 export const NotificationTypes = [
   'like',
   'comment',
@@ -17,13 +23,8 @@ export const NotificationTypes = [
   'message',
   'mention',
 ] as const;
-export type NotificationType = (typeof NotificationTypes)[number];
-
 export const NotificationPriorities = ['low', 'medium', 'high'] as const;
-export type NotificationPriority = (typeof NotificationPriorities)[number];
-
 export const EntityTypes = ['post', 'message', 'comment', 'like'] as const;
-export type EntityType = (typeof EntityTypes)[number];
 
 @Entity()
 export class Notification {
