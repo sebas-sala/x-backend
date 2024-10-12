@@ -6,12 +6,18 @@ import { NotificationsService } from './notifications.service';
 import { NotificationsGateway } from './notifications.gateway';
 
 import { UsersModule } from '../users/users.module';
-
-import { WsAuthMiddleware } from '../common/middlewares/ws-jwt.middleware';
 import { MessagesModule } from '../messages/messages.module';
 
+import { WsAuthMiddleware } from '../common/middlewares/ws-jwt.middleware';
+import { ResponseService } from '../common/services/response.service';
+
 @Module({
-  providers: [NotificationsGateway, NotificationsService, WsAuthMiddleware],
+  providers: [
+    NotificationsGateway,
+    NotificationsService,
+    WsAuthMiddleware,
+    ResponseService,
+  ],
   imports: [
     TypeOrmModule.forFeature([Notification]),
     forwardRef(() => MessagesModule),
