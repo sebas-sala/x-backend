@@ -13,7 +13,7 @@ import { FollowsModule } from '../follows/follows.module';
 
 @Module({
   imports: [
-    forwardRef(() => FollowsModule),
+    FollowsModule,
     ProfilesModule,
     BlockedUsersModule,
     TypeOrmModule.forFeature([User]),

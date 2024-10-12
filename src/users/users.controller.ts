@@ -36,19 +36,12 @@ import { NonEmptyPayloadGuard } from '../common/guards/non-empty-payload.guard';
 @ApiTags('users')
 @Controller('users')
 export class UsersController {
-  private followsService: FollowService;
-
   constructor(
+    private followsService: FollowService,
     private readonly usersService: UsersService,
     private readonly profilesService: ProfilesService,
     private readonly blockedUsersService: BlockedUsersService,
-
-    private readonly moduleRef: ModuleRef,
-  ) {
-    this.followsService = this.moduleRef.get(FollowService, {
-      strict: false,
-    });
-  }
+  ) {}
 
   @ApiOperation({ summary: 'Get all users' })
   @ApiResponse({

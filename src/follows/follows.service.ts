@@ -3,7 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { DataSource, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 
 import { Follow } from './entities/follow.entity';
@@ -31,7 +31,6 @@ export class FollowService {
 
     private readonly usersService: UsersService,
     private readonly notificationsService: NotificationsService,
-    private readonly dataSource: DataSource,
   ) {}
 
   async getFollowing(userId: string): Promise<User[]> {
