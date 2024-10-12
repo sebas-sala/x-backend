@@ -9,8 +9,10 @@ import {
 import {
   NotificationTypes,
   NotificationPriorities,
+  EntityTypes,
 } from '../entities/notification.entity';
 import {
+  EntityType,
   NotificationPriority,
   NotificationType,
 } from '../interfaces/notification-dto';
@@ -46,6 +48,15 @@ export class CreateNotificationDto {
   @IsString()
   @IsOptional()
   link?: string;
+
+  @IsString()
+  @IsOptional()
+  entityId?: string;
+
+  @IsString()
+  @IsOptional()
+  @IsIn(EntityTypes)
+  entityType?: EntityType;
 
   constructor(partial: Partial<CreateNotificationDto>) {
     Object.assign(this, partial);

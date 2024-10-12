@@ -155,6 +155,9 @@ export class NotificationsService {
     message,
     priority,
     receivers,
+    link,
+    entityId,
+    entityType,
   }: CreateNotificationDto): NotificationDto {
     return {
       type,
@@ -163,6 +166,9 @@ export class NotificationsService {
       message,
       receivers,
       priority: priority || this.priorities[type],
+      link,
+      entityId,
+      entityType,
     };
   }
 }

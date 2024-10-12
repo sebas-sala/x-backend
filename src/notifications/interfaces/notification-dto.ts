@@ -15,4 +15,7 @@ export interface NotificationDto {
   receivers: string[];
   type: NotificationType;
   priority: NotificationPriority;
+  link?: string;
+  entityId?: string;
+  entityType?: EntityType;
 }
