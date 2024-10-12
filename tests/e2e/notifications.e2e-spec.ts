@@ -5,6 +5,7 @@ import { io, Socket } from 'socket.io-client';
 import { NestFastifyApplication } from '@nestjs/platform-fastify';
 
 import { User } from '@/src/users/entities/user.entity';
+import { Notification } from '@/src/notifications/entities/notification.entity';
 
 import { setupTestApp } from '../utils/setup-test-app';
 import {
@@ -12,7 +13,6 @@ import {
   MessageFactory,
   UserFactory,
 } from '@/tests/utils/factories';
-import { Chat } from '@/src/chats/entities/chat.entity';
 
 describe('Notifications API (e2e)', () => {
   let app: NestFastifyApplication;
@@ -109,7 +109,9 @@ describe('Notifications API (e2e)', () => {
         });
 
         socket.emit('message', { ...messageDto }, async (res: any) => {
-          expect(res).toMatchObject({
+          expect(res.success).toBeTruthy();
+
+          expect(res.data).toMatchObject({
             user: {
               id: currentUser.id,
             },
@@ -117,6 +119,48 @@ describe('Notifications API (e2e)', () => {
             chat: {
               id: chat.id,
             },
+          });
+          done();
+        });
+      })();
+    });
+
+    it('should not create notification if chat does not have users', (done) => {
+      (async () => {
+        const chat = await chatFactory.createChatEntity({
+          name: 'Test chat',
+          users: [],
+        });
+        const messageDto = MessageFactory.createMessageDto({
+          chatId: chat.id,
+          content: 'Hello, world!',
+        });
+
+        socket.emit('message', { ...messageDto }, async (res: any) => {
+          expect(res.success).toBeTruthy();
+
+          expect(await dataSource.getRepository(Notification).find()).toEqual(
+            [],
+          );
+          done();
+        });
+      })();
+    });
+
+    it('should throw 404 error if chat does not exist', (done) => {
+      (async () => {
+        const messageDto = MessageFactory.createMessageDto({
+          chatId: 'invalid-id',
+          content: 'Hello, world!',
+        });
+
+        socket.emit('message', { ...messageDto });
+
+        socket.on('error', (error) => {
+          expect(error.success).toBeFalsy();
+          expect(error.data).toMatchObject({
+            statusCode: 404,
+            message: 'Chat not found',
           });
           done();
         });
