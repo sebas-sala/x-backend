@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ScheduleModule } from '@nestjs/schedule';
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { ThrottlerModule, seconds } from '@nestjs/throttler';
 
@@ -14,17 +15,15 @@ import { ProfilesModule } from './profiles/profiles.module';
 
 import { PostsModule } from './posts/posts.module';
 import { LikesModule } from './likes/likes.module';
+import { ChatsModule } from './chats/chats.module';
 import { CommentsModule } from './comments/comments.module';
 import { MessagesModule } from './messages/messages.module';
 import { BlockedUsersModule } from './blocked-users/blocked-users.module';
 import { NotificationsModule } from './notifications/notifications.module';
 
-import { WsExceptionFilter } from './common/filters/ws-exception.filter';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 
 import configuration from './config/configuration';
-import { ScheduleModule } from '@nestjs/schedule';
-import { ChatsModule } from './chats/chats.module';
 
 @Module({
   imports: [
@@ -63,10 +62,6 @@ import { ChatsModule } from './chats/chats.module';
     {
       provide: APP_FILTER,
       useClass: HttpExceptionFilter,
-    },
-    {
-      provide: APP_FILTER,
-      useClass: WsExceptionFilter,
     },
     {
       provide: APP_GUARD,
