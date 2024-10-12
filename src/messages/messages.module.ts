@@ -6,9 +6,12 @@ import { MessagesService } from './messages.service';
 
 import { ChatsModule } from '../chats/chats.module';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { MessagesController } from './messages.controller';
+import { ResponseService } from '../common/services/response.service';
 
 @Module({
-  providers: [MessagesService],
+  controllers: [MessagesController],
+  providers: [MessagesService, ResponseService],
   imports: [
     TypeOrmModule.forFeature([Message]),
     forwardRef(() => ChatsModule),

@@ -29,23 +29,20 @@ export class MessagesService {
     sender: User,
     manager?: EntityManager,
   ) {
-    try {
-      const chat = await this.chatsService.findByIdOrFail(
-        createMessageDto.chatId,
-      );
-      const message = await this.createMessage(
-        createMessageDto,
-        sender,
-        chat,
-        manager,
-      );
+    const chat = await this.chatsService.findByIdOrFail(
+      createMessageDto.chatId,
+    );
 
-      await this.createMessageNotification(message, chat, sender);
+    const message = await this.createMessage(
+      createMessageDto,
+      sender,
+      chat,
+      manager,
+    );
 
-      return message;
-    } catch (error) {
-      throw new WsException(error.response);
-    }
+    await this.createMessageNotification(message, chat, sender);
+
+    return message;
   }
 
   private async createMessage(
