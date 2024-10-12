@@ -1,25 +1,28 @@
 import {
+  MessageBody,
   WebSocketServer,
   WebSocketGateway,
   SubscribeMessage,
   OnGatewayConnection,
   OnGatewayDisconnect,
-  MessageBody,
   ConnectedSocket,
 } from '@nestjs/websockets';
 import { Server } from 'socket.io';
-import { UseGuards } from '@nestjs/common';
+import { Socket } from 'socket.io-client';
+import { UseFilters, UseGuards } from '@nestjs/common';
 
 import { User } from '../users/entities/user.entity';
 
 import { MessagesService } from '../messages/messages.service';
 
-import { WsJwtAuthGuard } from '../common/guards/ws-jwt-auth.guard';
-import { WsAuthMiddleware } from '../common/middlewares/ws-jwt.middleware';
 import { WsCurrentUser } from '../common/decorators/ws-current-user.decorator';
+import { WsJwtAuthGuard } from '../common/guards/ws-jwt-auth.guard';
+import { ResponseService } from '../common/services/response.service';
+import { WsAuthMiddleware } from '../common/middlewares/ws-jwt.middleware';
+import { WsExceptionFilter } from '../common/filters/ws-exception.filter';
 
 import { CreateMessageDto } from '../messages/dto/create-message.dto';
-import { Socket } from 'socket.io-client';
+
 import { NotificationDto } from './interfaces/notification-dto';
 
 @WebSocketGateway({
@@ -39,6 +42,8 @@ export class NotificationsGateway
   constructor(
     private readonly messagesService: MessagesService,
     private wsAuthMiddleware: WsAuthMiddleware,
+
+    private readonly responseService: ResponseService,
   ) {}
 
   afterInit(server: Server) {
@@ -63,29 +68,17 @@ export class NotificationsGateway
   }
 
   @UseGuards(WsJwtAuthGuard)
+  @UseFilters(new WsExceptionFilter())
   @SubscribeMessage('message')
   async handleMessage(
     @MessageBody() createMessageDto: CreateMessageDto,
     @WsCurrentUser() sender: User,
     @ConnectedSocket() client: Socket,
   ) {
-    try {
-      const message = await this.messagesService.create(
-        createMessageDto,
-        sender,
-      );
-      return message;
-    } catch (error) {
-      this.emitError(client, error);
-      return error;
-    }
-  }
+    const message = await this.messagesService.create(createMessageDto, sender);
+    const response = this.responseService.successResponse(message, 201);
 
-  private emitError(client: Socket, error: Error) {
-    client.emit('error', {
-      error: error.message,
-      success: false,
-      timestamp: new Date().toISOString(),
-    });
+    client.emit('message', response);
+    return response;
   }
 }
