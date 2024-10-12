@@ -184,7 +184,7 @@ describe('Comments', () => {
 
       expect(response.statusCode).toBe(404);
       expect(response.json()).toMatchObject({
-        statusCode: 404,
+        status: 404,
         message: 'Comment not found',
       });
     });
@@ -208,7 +208,7 @@ describe('Comments', () => {
 
       expect(response.statusCode).toBe(404);
       expect(response.json()).toMatchObject({
-        statusCode: 404,
+        status: 404,
         message: 'Comment not found',
       });
     });
@@ -315,7 +315,7 @@ describe('Comments', () => {
 
       expect(response.statusCode).toBe(409);
       expect(response.json()).toMatchObject({
-        statusCode: 409,
+        status: 409,
         message: 'Like already exists',
       });
     });
@@ -382,7 +382,7 @@ describe('Comments', () => {
 
       expect(response.statusCode).toBe(404);
       expect(response.json()).toMatchObject({
-        statusCode: 404,
+        status: 404,
         message: 'Like not found',
       });
     });

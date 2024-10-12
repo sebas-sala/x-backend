@@ -112,7 +112,7 @@ describe('Users API (e2e)', () => {
 
       expect(result.statusCode).toEqual(404);
       expect(JSON.parse(result.payload)).toMatchObject({
-        statusCode: 404,
+        status: 404,
         message: 'Following not found',
       });
     });
@@ -133,7 +133,7 @@ describe('Users API (e2e)', () => {
 
       expect(result.statusCode).toEqual(409);
       expect(payload).toMatchObject({
-        statusCode: 409,
+        status: 409,
         message: 'You cannot follow yourself',
       });
     });
@@ -161,7 +161,7 @@ describe('Users API (e2e)', () => {
 
       expect(result.statusCode).toEqual(409);
       expect(JSON.parse(result.payload)).toMatchObject({
-        statusCode: 409,
+        status: 409,
         message: 'Follow already exists',
       });
     });

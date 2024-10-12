@@ -181,7 +181,7 @@ describe('Chats API (e2e)', () => {
 
       expect(result.statusCode).toEqual(409);
       expect(result.json()).toMatchObject({
-        statusCode: 409,
+        status: 409,
         message: 'Chat already exists',
         error: 'ConflictException',
       });

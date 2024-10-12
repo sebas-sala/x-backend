@@ -161,7 +161,7 @@ describe('Posts API (e2e)', () => {
       expect(response.statusCode).toBe(401);
       expect(JSON.parse(response.payload)).toMatchObject({
         message: 'Unauthorized',
-        statusCode: 401,
+        status: 401,
       });
     });
   });
@@ -199,7 +199,7 @@ describe('Posts API (e2e)', () => {
       expect(JSON.parse(response.payload)).toMatchObject({
         message: 'Post not found',
         error: 'NotFoundException',
-        statusCode: 404,
+        status: 404,
       });
     });
   });
@@ -272,7 +272,7 @@ describe('Posts API (e2e)', () => {
       expect(response.statusCode).toBe(401);
       expect(JSON.parse(response.payload)).toMatchObject({
         message: 'Unauthorized',
-        statusCode: 401,
+        status: 401,
       });
     });
 
@@ -292,7 +292,7 @@ describe('Posts API (e2e)', () => {
       expect(JSON.parse(response.payload)).toMatchObject({
         message: 'Post not found',
         error: 'NotFoundException',
-        statusCode: 404,
+        status: 404,
       });
     });
   });
@@ -331,7 +331,7 @@ describe('Posts API (e2e)', () => {
       expect(response.statusCode).toBe(401);
       expect(JSON.parse(response.payload)).toMatchObject({
         message: 'Unauthorized',
-        statusCode: 401,
+        status: 401,
       });
     });
 
@@ -349,7 +349,7 @@ describe('Posts API (e2e)', () => {
       expect(JSON.parse(response.payload)).toMatchObject({
         message: 'Post not found',
         error: 'NotFoundException',
-        statusCode: 404,
+        status: 404,
       });
     });
   });
@@ -384,7 +384,7 @@ describe('Posts API (e2e)', () => {
       expect(response.statusCode).toBe(401);
       expect(JSON.parse(response.payload)).toMatchObject({
         message: 'Unauthorized',
-        statusCode: 401,
+        status: 401,
       });
     });
 
@@ -401,7 +401,7 @@ describe('Posts API (e2e)', () => {
       expect(JSON.parse(response.payload)).toMatchObject({
         message: 'Post not found',
         error: 'NotFoundException',
-        statusCode: 404,
+        status: 404,
       });
     });
   });
@@ -467,7 +467,7 @@ describe('Posts API (e2e)', () => {
       expect(response.statusCode).toBe(401);
       expect(JSON.parse(response.payload)).toMatchObject({
         message: 'Unauthorized',
-        statusCode: 401,
+        status: 401,
       });
     });
 
@@ -484,7 +484,7 @@ describe('Posts API (e2e)', () => {
       expect(JSON.parse(response.payload)).toMatchObject({
         message: 'Post not found',
         error: 'NotFoundException',
-        statusCode: 404,
+        status: 404,
       });
     });
 
@@ -506,7 +506,7 @@ describe('Posts API (e2e)', () => {
       expect(JSON.parse(response.payload)).toMatchObject({
         message: 'Like already exists',
         error: 'ConflictException',
-        statusCode: 409,
+        status: 409,
       });
     });
   });
@@ -542,7 +542,7 @@ describe('Posts API (e2e)', () => {
       expect(response.statusCode).toBe(401);
       expect(JSON.parse(response.payload)).toMatchObject({
         message: 'Unauthorized',
-        statusCode: 401,
+        status: 401,
       });
     });
 
@@ -559,7 +559,7 @@ describe('Posts API (e2e)', () => {
       expect(JSON.parse(response.payload)).toMatchObject({
         message: 'Post not found',
         error: 'NotFoundException',
-        statusCode: 404,
+        status: 404,
       });
     });
 
@@ -580,7 +580,7 @@ describe('Posts API (e2e)', () => {
       expect(JSON.parse(response.payload)).toMatchObject({
         message: 'Like not found',
         error: 'NotFoundException',
-        statusCode: 404,
+        status: 404,
       });
     });
   });

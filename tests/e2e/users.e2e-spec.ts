@@ -116,7 +116,7 @@ describe('Users API (e2e)', () => {
 
       expect(result.statusCode).toBe(409);
       expect(JSON.parse(result.payload)).toMatchObject({
-        statusCode: 409,
+        status: 409,
         message: 'Email already exists',
       });
     });
@@ -135,7 +135,7 @@ describe('Users API (e2e)', () => {
 
       expect(result.statusCode).toEqual(409);
       expect(JSON.parse(result.payload)).toMatchObject({
-        statusCode: 409,
+        status: 409,
         message: 'Username already exists',
       });
     });
@@ -153,7 +153,7 @@ describe('Users API (e2e)', () => {
 
       expect(result.statusCode).toEqual(400);
       expect(JSON.parse(result.payload)).toMatchObject({
-        statusCode: 400,
+        status: 400,
         message: 'email must be an email',
       });
     });
@@ -188,7 +188,7 @@ describe('Users API (e2e)', () => {
 
       expect(result.statusCode).toEqual(404);
       expect(payload).toMatchObject({
-        statusCode: 404,
+        status: 404,
         message: 'User not found',
       });
     });
@@ -231,7 +231,7 @@ describe('Users API (e2e)', () => {
 
       expect(result.statusCode).toEqual(404);
       expect(payload).toMatchObject({
-        statusCode: 404,
+        status: 404,
         message: 'User not found',
       });
     });
@@ -273,7 +273,7 @@ describe('Users API (e2e)', () => {
       const payload = JSON.parse(result.payload);
       expect(result.statusCode).toEqual(400);
       expect(payload).toMatchObject({
-        statusCode: 400,
+        status: 400,
         message: 'Payload cannot be empty',
       });
     });
@@ -290,7 +290,7 @@ describe('Users API (e2e)', () => {
       const payload = JSON.parse(result.payload);
       expect(result.statusCode).toEqual(401);
       expect(payload).toMatchObject({
-        statusCode: 401,
+        status: 401,
         message: 'Unauthorized',
       });
     });
@@ -458,7 +458,7 @@ describe('Users API (e2e)', () => {
 
       expect(result.statusCode).toEqual(404);
       expect(payload).toMatchObject({
-        statusCode: 404,
+        status: 404,
         message: `Blocked user not found`,
       });
     });
@@ -481,7 +481,7 @@ describe('Users API (e2e)', () => {
       const payload = JSON.parse(result.payload);
       expect(result.statusCode).toEqual(409);
       expect(payload).toMatchObject({
-        statusCode: 409,
+        status: 409,
         message: 'User already blocked',
       });
     });
@@ -521,7 +521,7 @@ describe('Users API (e2e)', () => {
       const payload = JSON.parse(result.payload);
       expect(result.statusCode).toEqual(404);
       expect(payload).toMatchObject({
-        statusCode: 404,
+        status: 404,
         message: `Blocked user not found`,
       });
     });

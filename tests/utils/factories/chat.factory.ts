@@ -1,11 +1,11 @@
-import { DataSource, In } from 'typeorm';
 import { faker } from '@faker-js/faker';
+import { DataSource, In } from 'typeorm';
+import { NotFoundException } from '@nestjs/common';
+
+import { Chat } from '@/src/chats/entities/chat.entity';
+import { User } from '@/src/users/entities/user.entity';
 
 import { CreateChatDto } from '@/src/chats/dto/create-chat.dto';
-import { Chat } from '@/src/chats/entities/chat.entity';
-import { UsersService } from '@/src/users/users.service';
-import { User } from '@/src/users/entities/user.entity';
-import { NotFoundException } from '@nestjs/common';
 
 export default class ChatFactory {
   constructor(private readonly dataSource?: DataSource) {}
@@ -50,6 +50,7 @@ export default class ChatFactory {
 
     try {
       const chatRepository = this.dataSource.getRepository(Chat);
+
       const createdChat = chatRepository.create({
         isChatGroup: createChatDto.isChatGroup,
         name: createChatDto.name,
