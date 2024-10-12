@@ -1,6 +1,7 @@
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { WsException } from '@nestjs/websockets';
 import { InjectRepository } from '@nestjs/typeorm';
 import { EntityManager, Repository } from 'typeorm';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 
 import { Message } from './entities/message.entity';
 import { Chat } from '../chats/entities/chat.entity';
@@ -10,7 +11,6 @@ import { ChatsService } from '../chats/chats.service';
 import { NotificationsService } from '../notifications/notifications.service';
 
 import { CreateMessageDto } from './dto/create-message.dto';
-import { UpdateMessageDto } from './dto/update-message.dto';
 
 @Injectable()
 export class MessagesService {
@@ -29,32 +29,23 @@ export class MessagesService {
     sender: User,
     manager?: EntityManager,
   ) {
-    const chat = await this.chatsService.findByIdOrFail(
-      createMessageDto.chatId,
-    );
-    const message = await this.createMessage(
-      createMessageDto,
-      sender,
-      chat,
-      manager,
-    );
-
     try {
-      const users = chat.users.filter((user) => user.id !== sender.id);
-      const usersIds = users.map((user) => user.id);
+      const chat = await this.chatsService.findByIdOrFail(
+        createMessageDto.chatId,
+      );
+      const message = await this.createMessage(
+        createMessageDto,
+        sender,
+        chat,
+        manager,
+      );
 
-      await this.notificationsService.create({
-        type: 'message',
-        sender: sender.id,
-        receivers: usersIds,
-        message: message.content,
-        title: chat.name || users[0].username,
-      });
+      await this.createMessageNotification(message, chat, sender);
+
+      return message;
     } catch (error) {
-      console.error(error);
+      throw new WsException(error.response);
     }
-
-    return message;
   }
 
   private async createMessage(
@@ -73,23 +64,33 @@ export class MessagesService {
     return await messageRepository.save(message);
   }
 
+  private async createMessageNotification(
+    message: Message,
+    chat: Chat,
+    sender: User,
+  ) {
+    try {
+      const users = chat.users
+        ? chat.users.filter((user) => user.id !== sender.id)
+        : [];
+
+      if (users.length === 0) return;
+
+      const usersIds = users.map((user) => user.id);
+
+      await this.notificationsService.create({
+        type: 'message',
+        sender: sender.id,
+        receivers: usersIds,
+        message: message.content,
+        title: chat.name || users[0].username,
+      });
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
   private setMessageRepository(manager?: EntityManager) {
     return manager ? manager.getRepository(Message) : this.messageRepository;
-  }
-
-  findAll() {
-    return `This action returns all messages`;
-  }
-
-  findOne(id: string) {
-    return `This action returns a #${id} message`;
-  }
-
-  update(id: string, updateMessageDto: UpdateMessageDto) {
-    return `This action updates a #${id} message`;
-  }
-
-  remove(id: string) {
-    return `This action removes a #${id} message`;
   }
 }
