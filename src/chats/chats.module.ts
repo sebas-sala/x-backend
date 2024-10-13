@@ -1,12 +1,13 @@
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { forwardRef, Module } from '@nestjs/common';
 
+import { Chat } from './entities/chat.entity';
 import { ChatsService } from './chats.service';
 import { ChatsController } from './chats.controller';
 
 import { UsersModule } from '../users/users.module';
 import { MessagesModule } from '../messages/messages.module';
-import { Chat } from './entities/chat.entity';
-import { TypeOrmModule } from '@nestjs/typeorm';
+import { BlockService } from '../common/services/block.service';
 
 @Module({
   imports: [
@@ -15,7 +16,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
     forwardRef(() => MessagesModule),
   ],
   controllers: [ChatsController],
-  providers: [ChatsService],
+  providers: [ChatsService, BlockService],
   exports: [ChatsService],
 })
 export class ChatsModule {}

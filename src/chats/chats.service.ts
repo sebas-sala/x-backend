@@ -12,6 +12,7 @@ import { Chat } from './entities/chat.entity';
 import { User } from '../users/entities/user.entity';
 
 import { UsersService } from '../users/users.service';
+import { BlockService } from '../common/services/block.service';
 import { MessagesService } from '../messages/messages.service';
 
 import { CreateChatDto } from './dto/create-chat.dto';
@@ -29,6 +30,7 @@ export class ChatsService {
     @Inject(forwardRef(() => MessagesService))
     private readonly messagesService: MessagesService,
     private readonly usersService: UsersService,
+    private readonly blockService: BlockService,
 
     private readonly dataSource: DataSource,
   ) {}
@@ -40,6 +42,7 @@ export class ChatsService {
     });
 
     await this.validateChatDoesNotExist(users, createChatDto.isChatGroup);
+    await this.blockService.validateIsBlocked(users, currentUser);
 
     const { isChatGroup, message: content, name } = createChatDto;
 
