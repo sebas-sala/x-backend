@@ -1,13 +1,14 @@
 import { User } from '@/src/users/entities/user.entity';
 import {
+  Index,
   Entity,
   Column,
   ManyToOne,
+  JoinTable,
+  ManyToMany,
   CreateDateColumn,
   UpdateDateColumn,
   PrimaryGeneratedColumn,
-  JoinTable,
-  ManyToMany,
 } from 'typeorm';
 
 import {
@@ -65,12 +66,14 @@ export class Notification {
   })
   entityType?: EntityType;
 
+  @Index()
   @Column({
     type: 'text',
     enum: NotificationTypes,
   })
   type: NotificationType;
 
+  @Index()
   @Column({
     type: 'text',
     enum: NotificationPriorities,

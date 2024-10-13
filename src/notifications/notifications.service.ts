@@ -89,7 +89,7 @@ export class NotificationsService {
 
     for (const type of notificationTypes) {
       try {
-        await this.processNotifications(type, 'high');
+        await this.processNotifications(type, priority);
       } catch (error) {
         console.error(
           `Error processing ${type} notifications: ${error.message}`,
