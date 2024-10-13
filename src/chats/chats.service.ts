@@ -38,16 +38,16 @@ export class ChatsService {
   ) {}
 
   async create(createChatDto: CreateChatDto, currentUser: User) {
-    const users = await this.setChatUsers({
-      usersIds: createChatDto.users,
-      currentUser,
-    });
-
-    if (users.length > this.MAX_USERS_IN_CHAT) {
+    if (createChatDto.users.length > this.MAX_USERS_IN_CHAT) {
       throw new ConflictException(
         `Maximum number of users in chat is ${this.MAX_USERS_IN_CHAT}`,
       );
     }
+
+    const users = await this.setChatUsers({
+      usersIds: createChatDto.users,
+      currentUser,
+    });
 
     await this.validateChatDoesNotExist(users, createChatDto.isChatGroup);
     await this.blockService.validateIsBlocked(users, currentUser);
