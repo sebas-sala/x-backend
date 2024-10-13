@@ -1,7 +1,7 @@
 import { Cron } from '@nestjs/schedule';
 import { Repository } from 'typeorm';
-import { InjectRepository } from '@nestjs/typeorm';
 import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
 
 import {
   Notification,
@@ -69,11 +69,27 @@ export class NotificationsService {
     return await this.notificationRepository.save(notification);
   }
 
-  @Cron('45 * * * * *')
-  async handleNotifications() {
-    for (const type of NotificationTypes) {
+  @Cron('*/45 * * * * *')
+  async handleLowPriorityNotifications() {
+    await this.handleNotifications('low');
+  }
+
+  @Cron('*/30 * * * * *')
+  async handleMediumPriorityNotifications() {
+    await this.handleNotifications('medium');
+  }
+
+  @Cron('*/15 * * * * *')
+  async handleHighPriorityNotifications() {
+    await this.handleNotifications('high');
+  }
+
+  private async handleNotifications(priority: string) {
+    const notificationTypes = this.getNotificationTypesByPriority(priority);
+
+    for (const type of notificationTypes) {
       try {
-        await this.processNotifications(type);
+        await this.processNotifications(type, 'high');
       } catch (error) {
         console.error(
           `Error processing ${type} notifications: ${error.message}`,
@@ -82,8 +98,17 @@ export class NotificationsService {
     }
   }
 
-  private async processNotifications(type: NotificationType) {
-    const groupedNotifications = await this.getGroupedNotifications(type);
+  private getNotificationTypesByPriority(priority: string) {
+    return NotificationTypes.filter(
+      (type) => this.priorities[type] === priority,
+    );
+  }
+
+  private async processNotifications(type: NotificationType, priority: string) {
+    const groupedNotifications = await this.getGroupedNotifications(
+      type,
+      priority,
+    );
 
     for (const { receiverId, count } of groupedNotifications) {
       if (count > 5) {
@@ -136,13 +161,14 @@ export class NotificationsService {
     }
   }
 
-  private async getGroupedNotifications(type: string) {
-    return this.notificationRepository
+  private async getGroupedNotifications(type: string, priority: string) {
+    return await this.notificationRepository
       .createQueryBuilder('notification')
       .select('notification.receiverId', 'receiverId')
       .addSelect('COUNT(notification.id)', 'count')
       .where('notification.read = false')
       .andWhere('notification.type = :type', { type })
+      .andWhere('notification.priority = :priority', { priority })
       .groupBy('notification.receiverId')
       .limit(this.MAX_BATCH_SIZE)
       .getRawMany();
