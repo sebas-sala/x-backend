@@ -23,6 +23,8 @@ import { CreateChatMessage } from './types/create-chat-message';
 
 @Injectable()
 export class ChatsService {
+  MAX_USERS_IN_CHAT = 5;
+
   constructor(
     @InjectRepository(Chat)
     private readonly chatRepository: Repository<Chat>,
@@ -40,6 +42,12 @@ export class ChatsService {
       usersIds: createChatDto.users,
       currentUser,
     });
+
+    if (users.length > this.MAX_USERS_IN_CHAT) {
+      throw new ConflictException(
+        `Maximum number of users in chat is ${this.MAX_USERS_IN_CHAT}`,
+      );
+    }
 
     await this.validateChatDoesNotExist(users, createChatDto.isChatGroup);
     await this.blockService.validateIsBlocked(users, currentUser);

@@ -162,6 +162,28 @@ describe('Chats API (e2e)', () => {
       expect(result.statusCode).toEqual(401);
     });
 
+    it('should throw 409 if users count is greater than 5', async () => {
+      const users = await userFactory.createManyUserEntities(6);
+
+      const result = await app.inject({
+        method: 'POST',
+        url: '/chats',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        payload: {
+          users: users.map((user) => user.id),
+        },
+      });
+
+      expect(result.statusCode).toEqual(409);
+      expect(result.json()).toMatchObject({
+        status: 409,
+        message: 'Maximum number of users in chat is 5',
+        error: 'ConflictException',
+      });
+    });
+
     it(`should throw 409 if user is blocked`, async () => {
       const mockUser = await userFactory.createUserEntity();
       await blockedUserFactory.createBlockedUser({

@@ -45,6 +45,21 @@ export default class UserFactory {
       throw error;
     }
   }
+
+  async createManyUserEntities(count: number): Promise<User[]> {
+    if (!this.dataSource) {
+      throw new Error('DataSource is required to create a User entity.');
+    }
+
+    const users: User[] = [];
+
+    for (let i = 0; i < count; i++) {
+      const user = await this.createUserEntity();
+      users.push(user);
+    }
+
+    return users;
+  }
 }
 
 export const mockUsersRepository = {
