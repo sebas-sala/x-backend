@@ -3,17 +3,18 @@ import { JwtService } from '@nestjs/jwt';
 import { NestFastifyApplication } from '@nestjs/platform-fastify';
 
 import { User } from '@/src/users/entities/user.entity';
-
-import { UserFactory } from '@/tests/utils/factories';
-import { setupTestApp } from '../utils/setup-test-app';
-import { Notification } from '@/src/notifications/entities/notification.entity';
-import { io, Socket } from 'socket.io-client';
-import ChatFactory from '../utils/factories/chat.factory';
 import { Message } from '@/src/messages/entities/message.entity';
+
+import { setupTestApp } from '../utils/setup-test-app';
+
+import {
+  BlockedUserFactory,
+  UserFactory,
+  ChatFactory,
+} from '@/tests/utils/factories';
 
 describe('Chats API (e2e)', () => {
   let app: NestFastifyApplication;
-  let socket: Socket;
 
   let dataSource: DataSource;
   let jwtService: JwtService;
@@ -23,20 +24,19 @@ describe('Chats API (e2e)', () => {
 
   let userFactory: UserFactory;
   let chatFactory: ChatFactory;
-
-  let port: number;
+  let blockedUserFactory: BlockedUserFactory;
 
   beforeAll(async () => {
     const setup = await setupTestApp();
 
     app = setup.app;
-    port = setup.currentPort;
 
     dataSource = setup.dataSource;
     jwtService = setup.jwtService;
 
     userFactory = setup.userFactory;
     chatFactory = setup.chatFactory;
+    blockedUserFactory = setup.blockedUserFactory;
   });
 
   afterAll(async () => {
@@ -160,6 +160,32 @@ describe('Chats API (e2e)', () => {
       });
 
       expect(result.statusCode).toEqual(401);
+    });
+
+    it(`should throw 409 if user is blocked`, async () => {
+      const mockUser = await userFactory.createUserEntity();
+      await blockedUserFactory.createBlockedUser({
+        blockingUserId: mockUser.id,
+        blockedUserId: currentUser.id,
+      });
+
+      const result = await app.inject({
+        method: 'POST',
+        url: '/chats',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        payload: {
+          users: [mockUser.id],
+        },
+      });
+
+      expect(result.statusCode).toEqual(409);
+      expect(result.json()).toMatchObject({
+        status: 409,
+        message: 'User is blocked',
+        error: 'ConflictException',
+      });
     });
 
     it(`should throw 409 error if chat already exists`, async () => {

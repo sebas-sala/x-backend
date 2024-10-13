@@ -1,7 +1,11 @@
-import { WsException } from '@nestjs/websockets';
 import { InjectRepository } from '@nestjs/typeorm';
 import { EntityManager, Repository } from 'typeorm';
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import {
+  forwardRef,
+  Inject,
+  Injectable,
+  ForbiddenException,
+} from '@nestjs/common';
 
 import { Message } from './entities/message.entity';
 import { Chat } from '../chats/entities/chat.entity';
@@ -33,6 +37,8 @@ export class MessagesService {
       createMessageDto.chatId,
     );
 
+    await this.validateChatMembership(chat, sender);
+
     const message = await this.createMessage(
       createMessageDto,
       sender,
@@ -59,6 +65,12 @@ export class MessagesService {
       user,
     });
     return await messageRepository.save(message);
+  }
+
+  private async validateChatMembership(chat: Chat, user: User) {
+    if (chat.users && !chat.users.some((chatUser) => chatUser.id === user.id)) {
+      throw new ForbiddenException('You are not a member of this chat');
+    }
   }
 
   private async createMessageNotification(
