@@ -12,14 +12,10 @@ export class PaginationDto {
   @Min(1)
   @IsInt()
   @Type(() => Number)
-  limit: number = 10;
+  perPage: number = 15;
 
-  constructor(page?: number, limit?: number) {
+  constructor(page?: number, perPage?: number) {
     this.page = page ?? 1;
-    this.limit = limit ?? 10;
-  }
-
-  static skip(page: number, limit: number) {
-    return (page - 1) * limit;
+    this.perPage = perPage ?? 15;
   }
 }

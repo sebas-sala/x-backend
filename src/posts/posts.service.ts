@@ -37,23 +37,24 @@ export class PostsService {
     currentUser,
   }: {
     filters: FilterDto;
-    pagination: { page: number; limit: number };
+    pagination: PaginationDto;
     currentUser?: User;
-  }): Promise<{ data: Post[]; meta: { pagination: PaginationDto } }> {
-    const { page, skip, limit } = this.paginationService.paginate(pagination);
+  }) {
+    const { page, perPage } = pagination;
 
-    const query = this.createQuery();
+    const query = this.postRepository
+      .createQueryBuilder('post')
+      .leftJoinAndSelect('post.user', 'user')
+      .leftJoinAndSelect('user.profile', 'profile')
+      .cache(false);
 
     this.applyFilters(query, filters, currentUser);
 
-    const { data, total } = await this.executeQuery(query, limit, skip);
-
-    return {
-      data,
-      meta: {
-        pagination: this.paginationService.metaPagination(page, limit, total),
-      },
-    };
+    return this.paginationService.paginate({
+      query,
+      page,
+      perPage,
+    });
   }
 
   async findOne(id: string): Promise<Post> {
@@ -122,14 +123,6 @@ export class PostsService {
     });
 
     return post;
-  }
-
-  private createQuery() {
-    return this.postRepository
-      .createQueryBuilder('post')
-      .leftJoinAndSelect('post.user', 'user')
-      .leftJoinAndSelect('user.profile', 'profile')
-      .cache(false);
   }
 
   private async executeQuery(

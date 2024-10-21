@@ -1,10 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { PaginationDto } from '../dto/pagination.dto';
+
+import { PaginatedMeta } from './pagination.service';
 
 @Injectable()
 export class ResponseService {
   successResponse<T>(
-    { data, meta }: { data: T; meta?: { pagination?: PaginationDto } },
+    { data, meta }: { data: T; meta?: PaginatedMeta },
     status = 200,
   ) {
     return {
