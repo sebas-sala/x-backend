@@ -1,22 +1,15 @@
 import {
-  IsEmail,
   IsNotEmpty,
   IsStrongPassword,
   MaxLength,
+  MinLength,
 } from 'class-validator';
 
 export class LoginAuthDto {
   @IsNotEmpty()
-  @IsEmail()
-  @MaxLength(50)
-  email: string;
-
-  // @ApiHideProperty()
-  // @IsOptional()
-  // @IsNotEmpty()
-  // @MinLength(3)
-  // @MaxLength(20)
-  // username: string;
+  @MinLength(3)
+  @MaxLength(20)
+  username: string;
 
   @IsNotEmpty()
   @MaxLength(30)

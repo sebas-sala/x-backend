@@ -6,11 +6,11 @@ export default class AuthFactory {
   constructor() {}
 
   static loginDto({
-    email,
+    username,
     password,
   }: Partial<LoginAuthDto> = {}): LoginAuthDto {
     const loginAuthDto: LoginAuthDto = new LoginAuthDto({
-      email: email || faker.internet.email(),
+      username: username || faker.internet.email(),
       password:
         password ||
         faker.internet.password({
