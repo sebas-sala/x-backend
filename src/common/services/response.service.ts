@@ -1,10 +1,15 @@
 import { Injectable } from '@nestjs/common';
+import { PaginationDto } from '../dto/pagination.dto';
 
 @Injectable()
 export class ResponseService {
-  successResponse(data: any, status = 200) {
+  successResponse<T>(
+    { data, meta }: { data: T; meta?: { pagination?: PaginationDto } },
+    status = 200,
+  ) {
     return {
       data,
+      meta,
       success: true,
       status,
       timestamp: new Date().toISOString(),
@@ -13,7 +18,7 @@ export class ResponseService {
 
   errorResponse(error: any, status = 500) {
     return {
-      data: error.response || null,
+      data: error.response || undefined,
       message: error.message || 'An error occurred',
       status: error.status || status,
       success: false,

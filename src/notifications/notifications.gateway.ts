@@ -76,7 +76,10 @@ export class NotificationsGateway
     @ConnectedSocket() client: Socket,
   ) {
     const message = await this.messagesService.create(createMessageDto, sender);
-    const response = this.responseService.successResponse(message, 201);
+    const response = this.responseService.successResponse(
+      { data: message },
+      201,
+    );
 
     client.emit('message', response);
     return response;
