@@ -6,14 +6,20 @@ import { Post } from './entities/post.entity';
 import { User } from '../users/entities/user.entity';
 import { BlockedUser } from '../blocked-users/entities/blocked-user.entity';
 
+import { PaginationService } from '../common/services/pagination.service';
+
+import { FilterDto } from './dto/filter.dto';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
+import { PaginationDto } from '../common/dto/pagination.dto';
 
 @Injectable()
 export class PostsService {
   constructor(
     @InjectRepository(Post)
     private readonly postRepository: Repository<Post>,
+
+    private readonly paginationService: PaginationService,
   ) {}
 
   async create(createPostDto: CreatePostDto, currentUser: User) {
@@ -25,14 +31,29 @@ export class PostsService {
     return await this.postRepository.save(post);
   }
 
-  async findAll(currentUser?: User) {
-    const query = this.createBaseFindAllQuery();
+  async findAll({
+    filters,
+    pagination,
+    currentUser,
+  }: {
+    filters: FilterDto;
+    pagination: { page: number; limit: number };
+    currentUser?: User;
+  }): Promise<{ data: Post[]; meta: { pagination: PaginationDto } }> {
+    const { page, skip, limit } = this.paginationService.paginate(pagination);
 
-    if (currentUser) {
-      this.applyBlockedUsersFilter(query, currentUser);
-    }
+    const query = this.createQuery();
 
-    return await query.getMany();
+    this.applyFilters(query, filters, currentUser);
+
+    const { data, total } = await this.executeQuery(query, limit, skip);
+
+    return {
+      data,
+      meta: {
+        pagination: this.paginationService.metaPagination(page, limit, total),
+      },
+    };
   }
 
   async findOne(id: string): Promise<Post> {
@@ -103,18 +124,43 @@ export class PostsService {
     return post;
   }
 
-  private createBaseFindAllQuery() {
+  private createQuery() {
     return this.postRepository
       .createQueryBuilder('post')
       .leftJoinAndSelect('post.user', 'user')
-      .leftJoinAndSelect('user.profile', 'profile');
+      .leftJoinAndSelect('user.profile', 'profile')
+      .cache(false);
   }
 
-  private applyBlockedUsersFilter(
+  private async executeQuery(
     query: SelectQueryBuilder<Post>,
-    currentUser: User,
+    limit: number,
+    skip: number,
+  ) {
+    const [data, total] = await query.skip(skip).take(limit).getManyAndCount();
+    return { data, total };
+  }
+
+  private applyFilters(
+    query: SelectQueryBuilder<Post>,
+    filters: FilterDto,
+    currentUser?: User,
   ): void {
-    query.where((qb) => {
+    this.byUsernameFilter(query, filters.by_username);
+    this.byBlockedUsersFilter(query, currentUser);
+  }
+
+  private byUsernameFilter(query: SelectQueryBuilder<Post>, username?: string) {
+    if (!username) return;
+    query.andWhere('user.username = :username', { username });
+  }
+
+  private byBlockedUsersFilter(
+    query: SelectQueryBuilder<Post>,
+    currentUser?: User,
+  ) {
+    if (!currentUser) return;
+    query.andWhere((qb) => {
       const subQuery = qb
         .subQuery()
         .select('1')

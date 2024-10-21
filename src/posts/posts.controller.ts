@@ -4,33 +4,36 @@ import {
   Body,
   Patch,
   Param,
+  Query,
   Delete,
   UseGuards,
   Controller,
 } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
 
 import { User } from '../users/entities/user.entity';
 
 import { PostsService } from './posts.service';
 import { LikesService } from '../likes/likes.service';
 import { CommentsService } from '../comments/comments.service';
+import { ResponseService } from '../common/services/response.service';
 
+import { FilterDto } from './dto/filter.dto';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
+import { PaginationDto } from '@common/dto/pagination.dto';
 import { CreateCommentDto } from '../comments/dto/create-comment.dto';
 
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { JwtAuthPublicGuard } from '../common/guards/jwt-auth-public.guard';
 
-@ApiTags('posts')
 @Controller('posts')
 export class PostsController {
   constructor(
     private readonly postsService: PostsService,
     private readonly likesService: LikesService,
     private readonly commentsService: CommentsService,
+    private readonly responseService: ResponseService,
   ) {}
 
   @UseGuards(JwtAuthGuard)
@@ -44,8 +47,18 @@ export class PostsController {
 
   @UseGuards(JwtAuthPublicGuard)
   @Get()
-  findAll(@CurrentUser() currentUser: User) {
-    return this.postsService.findAll(currentUser);
+  async findAll(
+    @CurrentUser() currentUser: User,
+    @Query() filters: FilterDto,
+    @Query() pagination: PaginationDto,
+  ) {
+    const { data, meta } = await this.postsService.findAll({
+      currentUser,
+      pagination,
+      filters,
+    });
+
+    return this.responseService.successResponse({ data, meta });
   }
 
   @Get(':id')

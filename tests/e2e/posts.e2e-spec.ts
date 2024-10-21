@@ -79,12 +79,12 @@ describe('Posts API (e2e)', () => {
         },
       });
 
+      const payload = JSON.parse(response.payload);
+      const data = payload.data as Post[];
       expect(response.statusCode).toBe(200);
-      expect(
-        JSON.parse(response.payload)
-          .map((post: Post) => post.id)
-          .sort(),
-      ).toEqual(posts.map((post) => post.id).sort());
+      expect(data.map((post) => post.id).sort()).toEqual(
+        posts.map((post) => post.id).sort(),
+      );
     });
 
     it('should return not return posts from blocked users', async () => {
@@ -106,8 +106,55 @@ describe('Posts API (e2e)', () => {
         },
       });
 
+      const payload = JSON.parse(response.payload);
+      const data = payload.data as Post[];
       expect(response.statusCode).toBe(200);
-      expect(JSON.parse(response.payload)).toEqual([]);
+      expect(data).toHaveLength(0);
+    });
+
+    it('should return posts filtered by username', async () => {
+      const user = await userFactory.createUserEntity();
+      const post = await postFactory.createPostEntity({
+        userId: user.id,
+      });
+
+      const response = await app.inject({
+        method: 'GET',
+        url: `/posts?by_username=${user.username}`,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const payload = JSON.parse(response.payload);
+      const data = payload.data as Post[];
+      expect(response.statusCode).toBe(200);
+      expect(data).toHaveLength(1);
+      expect(data[0].id).toBe(post.id);
+    });
+
+    it('should return posts from page 2', async () => {
+      await Promise.all(
+        Array.from({ length: 12 }, async (_, index) => {
+          return await postFactory.createPostEntity({
+            userId: currentUser.id,
+            content: `Post ${index}`,
+          });
+        }),
+      );
+
+      const response = await app.inject({
+        method: 'GET',
+        url: '/posts?page=2&limit=5',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const payload = JSON.parse(response.payload);
+      const data = payload.data as Post[];
+      expect(data).toHaveLength(5);
     });
 
     it('should return return posts from blocked users if youre not authenticated', async () => {
@@ -126,7 +173,8 @@ describe('Posts API (e2e)', () => {
       });
 
       expect(response.statusCode).toBe(200);
-      expect(JSON.parse(response.payload).length).toBe(1);
+      const payload = JSON.parse(response.payload);
+      expect(payload.data).toHaveLength(1);
     });
   });
 
