@@ -8,7 +8,6 @@ import {
   UseGuards,
   Controller,
 } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
 
 import { User } from '../users/entities/user.entity';
 import { Like } from '../likes/entities/like.entity';
@@ -23,7 +22,6 @@ import { UpdateCommentDto } from './dto/update-comment.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 
-@ApiTags('comments')
 @Controller('comments')
 export class CommentsController {
   constructor(

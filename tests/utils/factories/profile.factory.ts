@@ -60,13 +60,3 @@ export default class ProfileFactory {
     }
   }
 }
-
-export const mockProfilesService = {
-  update: jest.fn(),
-  findOneBy: jest.fn(),
-};
-
-export const mockProfilesRepository = {
-  findOne: jest.fn(),
-  update: jest.fn(),
-};

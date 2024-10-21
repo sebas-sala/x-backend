@@ -1,4 +1,3 @@
-import { ApiTags } from '@nestjs/swagger';
 import { Controller, Post, Body, Delete, UseGuards } from '@nestjs/common';
 
 import { User } from '../users/entities/user.entity';
@@ -11,7 +10,6 @@ import { DeleteFollowDto } from './dto/delete-follow.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 
-@ApiTags('follows')
 @Controller('follows')
 export class FollowController {
   constructor(private readonly followService: FollowService) {}

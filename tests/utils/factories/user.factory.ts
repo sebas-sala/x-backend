@@ -61,10 +61,3 @@ export default class UserFactory {
     return users;
   }
 }
-
-export const mockUsersRepository = {
-  find: jest.fn(),
-  findOne: jest.fn(),
-  create: jest.fn(),
-  save: jest.fn(),
-};

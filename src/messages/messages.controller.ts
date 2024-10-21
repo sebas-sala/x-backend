@@ -23,6 +23,6 @@ export class MessagesController {
       createMessageDto,
       currentUser,
     );
-    return this.responseService.successResponse(message);
+    return this.responseService.successResponse({ data: message });
   }
 }

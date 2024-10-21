@@ -10,7 +10,6 @@ import {
   CreateDateColumn,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { ApiHideProperty } from '@nestjs/swagger';
 
 import { Post } from '@/src/posts/entities/post.entity';
 import { Like } from '@/src/likes/entities/like.entity';
@@ -65,15 +64,12 @@ export class User {
   @OneToMany(() => BlockedUser, (blockedUser) => blockedUser.blockedUser)
   blockedBy: BlockedUser[];
 
-  @ApiHideProperty()
   @OneToMany(() => Follow, (follow) => follow.follower, { cascade: true })
   followers: Follow[];
 
-  @ApiHideProperty()
   @OneToMany(() => Follow, (follow) => follow.following, { cascade: true })
   following: Follow[];
 
-  @ApiHideProperty()
   @OneToMany(() => Post, (post) => post.user)
   posts: Post[];
 

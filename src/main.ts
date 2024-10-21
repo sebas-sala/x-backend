@@ -8,7 +8,6 @@ import { ValidationPipe, VersioningType } from '@nestjs/common';
 import fastifyCookie from '@fastify/cookie';
 import fastifyHelmet from '@fastify/helmet';
 import fastifyCsrfProtection from '@fastify/csrf-protection';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(
@@ -27,15 +26,15 @@ async function bootstrap() {
     { cors: true },
   );
 
-  const config = new DocumentBuilder()
-    .setTitle('X API')
-    .setDescription('The X API ')
-    .setVersion('1.0')
-    .addTag('X')
-    .build();
+  // const config = new DocumentBuilder()
+  //   .setTitle('X API')
+  //   .setDescription('The X API ')
+  //   .setVersion('1.0')
+  //   .addTag('X')
+  //   .build();
 
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('/swagger', app, document);
+  // const document = SwaggerModule.createDocument(app, config);
+  // SwaggerModule.setup('/swagger', app, document);
 
   app.useGlobalPipes(
     new ValidationPipe({
