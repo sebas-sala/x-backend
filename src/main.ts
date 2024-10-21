@@ -24,6 +24,7 @@ async function bootstrap() {
       bodyLimit: 10_485_760,
       maxParamLength: 5000,
     }),
+    { cors: true },
   );
 
   const config = new DocumentBuilder()

@@ -23,7 +23,7 @@
     "clone"
   ],
   "scripts": {
-    "build": "npm run build:clean && nest build",
+    "build": "rimraf dist && nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "node dist/main",
     "dev": "nest start --watch",

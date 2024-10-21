@@ -4,6 +4,7 @@ const config: Config = {
   rootDir: '.',
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1',
+    '^@common/(.*)$': '<rootDir>/src/common/$1',
   },
   testRegex: String.raw`.*\.spec\.ts$`,
   transform: {
