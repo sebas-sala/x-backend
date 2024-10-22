@@ -40,20 +40,16 @@ export class PostsService {
     pagination: PaginationDto;
     currentUser?: User;
   }) {
-    const { page, perPage } = pagination;
-
     const query = this.postRepository
       .createQueryBuilder('post')
       .leftJoinAndSelect('post.user', 'user')
-      .leftJoinAndSelect('user.profile', 'profile')
-      .cache(false);
+      .leftJoinAndSelect('user.profile', 'profile');
 
     this.applyFilters(query, filters, currentUser);
 
     return this.paginationService.paginate({
       query,
-      page,
-      perPage,
+      ...pagination,
     });
   }
 

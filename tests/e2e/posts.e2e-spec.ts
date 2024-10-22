@@ -145,7 +145,7 @@ describe('Posts API (e2e)', () => {
 
       const response = await app.inject({
         method: 'GET',
-        url: '/posts?page=2&limit=5',
+        url: '/posts?page=2&perPage=5',
         headers: {
           Authorization: `Bearer ${token}`,
         },

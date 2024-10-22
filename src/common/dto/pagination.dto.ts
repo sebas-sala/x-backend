@@ -13,9 +13,4 @@ export class PaginationDto {
   @IsInt()
   @Type(() => Number)
   perPage: number = 15;
-
-  constructor(page?: number, perPage?: number) {
-    this.page = page ?? 1;
-    this.perPage = perPage ?? 15;
-  }
 }
