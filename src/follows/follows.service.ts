@@ -14,6 +14,11 @@ import { DeleteFollowDto } from './dto/delete-follow.dto';
 
 import { UsersService } from '@/src/users/users.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import {
+  PaginatedResult,
+  PaginationService,
+} from '../common/services/pagination.service';
+import { PaginationDto } from '../common/dto/pagination.dto';
 
 @Injectable()
 export class FollowService {
@@ -31,30 +36,47 @@ export class FollowService {
 
     private readonly usersService: UsersService,
     private readonly notificationsService: NotificationsService,
+    private readonly paginationService: PaginationService,
   ) {}
 
-  async getFollowing(userId: string): Promise<User[]> {
-    const following = await this.usersRepository
+  async getFollowing({
+    userId,
+    paginationDto,
+  }: {
+    userId: string;
+    paginationDto: PaginationDto;
+  }): Promise<PaginatedResult<User>> {
+    const query = this.usersRepository
       .createQueryBuilder('user')
       .innerJoin('user.following', 'follow', 'follow.followerId = :userId', {
         userId,
       })
-      .leftJoinAndSelect('user.profile', 'profile')
-      .getMany();
+      .leftJoinAndSelect('user.profile', 'profile');
 
-    return following;
+    return this.paginationService.paginate({
+      query,
+      ...paginationDto,
+    });
   }
 
-  async getFollowers(userId: string): Promise<User[]> {
-    const followers = await this.usersRepository
+  async getFollowers({
+    userId,
+    paginationDto,
+  }: {
+    userId: string;
+    paginationDto: PaginationDto;
+  }): Promise<PaginatedResult<User>> {
+    const query = this.usersRepository
       .createQueryBuilder('user')
       .innerJoin('user.followers', 'follow', 'follow.followingId = :userId', {
         userId,
       })
-      .leftJoinAndSelect('user.profile', 'profile')
-      .getMany();
+      .leftJoinAndSelect('user.profile', 'profile');
 
-    return followers;
+    return this.paginationService.paginate({
+      query,
+      ...paginationDto,
+    });
   }
 
   async create(
@@ -142,10 +164,10 @@ export class FollowService {
   }
 
   private async validateFollowingExists(followingId: string): Promise<User> {
-    return await this.usersService.findOneByIdOrFail(
-      followingId,
-      this.ERROR_MESSAGES.FOLLOWING_NOT_FOUND,
-    );
+    return await this.usersService.findOneByIdOrFail({
+      id: followingId,
+      error: this.ERROR_MESSAGES.FOLLOWING_NOT_FOUND,
+    });
   }
 
   private async existsFollowByUsers(followerId: string, followingId: string) {

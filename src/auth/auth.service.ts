@@ -22,7 +22,7 @@ export class AuthService {
     const user = await this.usersService.findByUsername(username);
 
     if (user && (await bcrypt.compare(password, user.password))) {
-      const { password, ...result } = user as User;
+      const { password, ...result } = user;
       return result as User;
     }
 

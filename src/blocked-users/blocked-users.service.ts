@@ -6,6 +6,12 @@ import { User } from '../users/entities/user.entity';
 import { BlockedUser } from './entities/blocked-user.entity';
 
 import { UsersService } from '../users/users.service';
+import { PaginationDto } from '../common/dto/pagination.dto';
+
+import {
+  type PaginatedResult,
+  PaginationService,
+} from '../common/services/pagination.service';
 
 @Injectable()
 export class BlockedUsersService {
@@ -14,6 +20,7 @@ export class BlockedUsersService {
     private readonly blockedUsersRepository: Repository<BlockedUser>,
 
     private readonly usersService: UsersService,
+    private readonly paginationService: PaginationService,
   ) {}
 
   async blockUser(
@@ -45,24 +52,39 @@ export class BlockedUsersService {
     return result.affected;
   }
 
-  async getBlockedUsers(user: User): Promise<BlockedUser[]> {
-    const blockedUsers = await this.blockedUsersRepository.find({
-      where: {
-        blockingUser: { id: user.id },
-      },
-      relations: ['blockedUser', 'blockedUser.profile'],
+  async getBlockedUsers({
+    user,
+    paginationDto,
+  }: {
+    user: User;
+    paginationDto: PaginationDto;
+  }): Promise<PaginatedResult<BlockedUser>> {
+    const query = this.blockedUsersRepository
+      .createQueryBuilder('blockedUser')
+      .leftJoinAndSelect('blockedUser.blockedUser', 'user')
+      .where('blockedUser.blockingUserId = :userId', {
+        userId: user.id,
+      });
+
+    const paginatedResult = await this.paginationService.paginate<BlockedUser>({
+      query,
+      ...paginationDto,
     });
 
-    return blockedUsers;
+    paginatedResult.data = paginatedResult.data.map((blockedUser) => {
+      return blockedUser.blockedUser as unknown as BlockedUser;
+    });
+
+    return paginatedResult;
   }
 
   private async validateBlockedUserExists(
     blockedUserId: string,
   ): Promise<void> {
-    await this.usersService.findOneByIdOrFail(
-      blockedUserId,
-      `Blocked user not found`,
-    );
+    await this.usersService.findOneByIdOrFail({
+      id: blockedUserId,
+      error: `Blocked user not found`,
+    });
   }
 
   private async validateBlockDoesNotExist(

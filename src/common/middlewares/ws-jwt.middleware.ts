@@ -15,13 +15,17 @@ export class WsAuthMiddleware {
     }
 
     try {
-      const decoded = jwt.verify(
-        token,
-        process.env.JWT_SECRET || 'secret',
-      ) as any;
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret') as {
+        sub: string;
+        username: string;
+      };
 
-      const user = await this.usersService.findOneByUsernameOrFail(decoded.id);
+      const user = await this.usersService.findOneByUsernameOrFail({
+        username: decoded.username,
+      });
+
       socket.handshake.auth = user;
+
       return next();
     } catch (error) {
       return next(new Error('Authentication error'));

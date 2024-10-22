@@ -71,10 +71,27 @@ describe('Users API (e2e)', () => {
       });
 
       const payload = JSON.parse(result.payload);
+      const data = payload.data as User[];
       expect(result.statusCode).toEqual(200);
-      expect(payload.map((u: { id: string }) => u.id)).toEqual(
+      expect(data.map((u) => u.id)).toEqual(
         expect.arrayContaining(users.map((u) => u.id)),
       );
+    });
+
+    it(`should return page 2 of users`, async () => {
+      await Promise.all(
+        Array.from({ length: 20 }, () => userFactory.createUserEntity()),
+      );
+
+      const result = await app.inject({
+        method: 'GET',
+        url: '/users?page=2',
+      });
+
+      const payload = JSON.parse(result.payload);
+      const data = payload.data as User[];
+      expect(result.statusCode).toEqual(200);
+      expect(data).toHaveLength(6);
     });
   });
 
@@ -317,8 +334,9 @@ describe('Users API (e2e)', () => {
       });
 
       const payload = JSON.parse(result.payload);
+      const data = payload.data as User[];
       expect(result.statusCode).toEqual(200);
-      expect(payload.map((f: { id: string }) => f.id)).toEqual(
+      expect(data.map((f) => f.id)).toEqual(
         expect.arrayContaining(followers.map((f) => f.id)),
       );
     });
@@ -330,8 +348,37 @@ describe('Users API (e2e)', () => {
       });
 
       const payload = JSON.parse(result.payload);
+      const data = payload.data as User[];
       expect(result.statusCode).toEqual(200);
-      expect(payload).toEqual([]);
+      expect(data).toEqual([]);
+    });
+
+    it(`should paginate followers`, async () => {
+      const user = await userFactory.createUserEntity();
+      await Promise.all(
+        Array.from({ length: 20 }, async () => {
+          const follower = await userFactory.createUserEntity();
+          await followFactory.createFollow({
+            followingId: user.id,
+            followerId: follower.id,
+          });
+        }),
+      );
+
+      const result = await app.inject({
+        method: 'GET',
+        url: `/users/${user.id}/followers?page=2`,
+      });
+
+      const payload = JSON.parse(result.payload);
+      const data = payload.data as User[];
+      expect(result.statusCode).toEqual(200);
+      expect(data).toHaveLength(5);
+      expect(payload.meta.pagination).toMatchObject({
+        page: 2,
+        total: 20,
+        totalPages: 2,
+      });
     });
   });
 
@@ -356,8 +403,9 @@ describe('Users API (e2e)', () => {
       });
 
       const payload = JSON.parse(result.payload);
+      const data = payload.data as User[];
       expect(result.statusCode).toEqual(200);
-      expect(payload.map((f: { id: string }) => f.id)).toEqual(
+      expect(data.map((f) => f.id)).toEqual(
         expect.arrayContaining(following.map((f) => f.id)),
       );
     });
@@ -369,8 +417,37 @@ describe('Users API (e2e)', () => {
       });
 
       const payload = JSON.parse(result.payload);
+      const data = payload.data as User[];
       expect(result.statusCode).toEqual(200);
-      expect(payload).toEqual([]);
+      expect(data).toEqual([]);
+    });
+
+    it(`should paginate following`, async () => {
+      const user = await userFactory.createUserEntity();
+      await Promise.all(
+        Array.from({ length: 20 }, async () => {
+          const followed = await userFactory.createUserEntity();
+          await followFactory.createFollow({
+            followingId: followed.id,
+            followerId: user.id,
+          });
+        }),
+      );
+
+      const result = await app.inject({
+        method: 'GET',
+        url: `/users/${user.id}/following?page=2`,
+      });
+
+      const payload = JSON.parse(result.payload);
+      const data = payload.data as User[];
+      expect(result.statusCode).toEqual(200);
+      expect(data).toHaveLength(5);
+      expect(payload.meta.pagination).toMatchObject({
+        page: 2,
+        total: 20,
+        totalPages: 2,
+      });
     });
   });
 
@@ -397,12 +474,11 @@ describe('Users API (e2e)', () => {
       });
 
       const payload = JSON.parse(result.payload);
+      const data = payload.data as User[];
       expect(result.statusCode).toEqual(200);
-      expect(
-        payload.map((u: { id: string; blockedUser: { id: string } }) => {
-          return u.blockedUser.id;
-        }),
-      ).toEqual(expect.arrayContaining(blockedUsers.map((u) => u.id)));
+      expect(data.map((u) => u.id)).toEqual(
+        expect.arrayContaining(blockedUsers.map((u) => u.id)),
+      );
     });
 
     it(`should return an empty array if the user does not exists`, async () => {
@@ -415,8 +491,39 @@ describe('Users API (e2e)', () => {
       });
 
       const payload = JSON.parse(result.payload);
+      const data = payload.data as User[];
       expect(result.statusCode).toEqual(200);
-      expect(payload).toEqual([]);
+      expect(data).toEqual([]);
+    });
+
+    it(`should paginate blocked users`, async () => {
+      await Promise.all(
+        Array.from({ length: 20 }, async () => {
+          const blockedUser = await userFactory.createUserEntity();
+          await blockedUserFactory.createBlockedUser({
+            blockingUserId: currentUser.id,
+            blockedUserId: blockedUser.id,
+          });
+        }),
+      );
+
+      const result = await app.inject({
+        method: 'GET',
+        url: `/users/blocked?page=2`,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const payload = JSON.parse(result.payload);
+      const data = payload.data as User[];
+      expect(result.statusCode).toEqual(200);
+      expect(data).toHaveLength(5);
+      expect(payload.meta.pagination).toMatchObject({
+        page: 2,
+        total: 20,
+        totalPages: 2,
+      });
     });
   });
 

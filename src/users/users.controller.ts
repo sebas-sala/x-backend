@@ -4,6 +4,7 @@ import {
   Body,
   Param,
   Patch,
+  Query,
   Delete,
   UseGuards,
   Controller,
@@ -24,6 +25,8 @@ import { UpdateProfileDto } from '@/src/profiles/dto/update-profile.dto';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { NonEmptyPayloadGuard } from '../common/guards/non-empty-payload.guard';
+import { PaginationDto } from '../common/dto/pagination.dto';
+import { ResponseService } from '../common/services/response.service';
 
 @Controller('users')
 export class UsersController {
@@ -32,28 +35,33 @@ export class UsersController {
     private readonly usersService: UsersService,
     private readonly profilesService: ProfilesService,
     private readonly blockedUsersService: BlockedUsersService,
+    private readonly responseService: ResponseService,
   ) {}
 
   @Get()
-  async findAll() {
-    const users = await this.usersService.findAll();
-    return instanceToPlain(users, { groups: ['public'] });
+  async findAll(@Query() paginationDto: PaginationDto) {
+    const { data, meta } = await this.usersService.findAll({
+      paginationDto,
+    });
+
+    return this.responseService.successResponse({
+      data,
+      meta,
+    });
   }
 
   @Get(':id')
   async findOne(@Param('id') id: string) {
-    const user = await this.usersService.findOneByIdOrFail(id);
+    const user = await this.usersService.findOneByIdOrFail({ id });
     return instanceToPlain(user, { groups: ['private'] });
   }
 
   @Get(':username/profile')
   async getProfile(@Param('username') username: string) {
-    const user = await this.usersService.findOneByUsernameOrFail(
+    const user = await this.usersService.findOneByUsernameOrFail({
       username,
-      undefined,
-      ['profile'],
-    );
-
+      relations: ['profile'],
+    });
     return instanceToPlain(user, { groups: ['profile'] });
   }
 
@@ -75,19 +83,47 @@ export class UsersController {
   }
 
   @Get(':id/followers')
-  async getFollowers(@Param('id') id: string) {
-    return await this.followsService.getFollowers(id);
+  async getFollowers(
+    @Param('id') id: string,
+    @Query() paginationDto: PaginationDto,
+  ) {
+    const { data, meta } = await this.followsService.getFollowers({
+      userId: id,
+      paginationDto,
+    });
+
+    return this.responseService.successResponse({
+      data,
+      meta,
+    });
   }
 
   @Get(':id/following')
-  async getFollowing(@Param('id') id: string) {
-    return await this.followsService.getFollowing(id);
+  async getFollowing(
+    @Param('id') id: string,
+    @Query() paginationDto: PaginationDto,
+  ) {
+    return await this.followsService.getFollowing({
+      userId: id,
+      paginationDto,
+    });
   }
 
   @UseGuards(JwtAuthGuard)
   @Get('blocked')
-  async getBlockedUsers(@CurrentUser() currentUser: User) {
-    return await this.blockedUsersService.getBlockedUsers(currentUser);
+  async getBlockedUsers(
+    @CurrentUser() currentUser: User,
+    @Query() paginationDto: PaginationDto,
+  ) {
+    const { data, meta } = await this.blockedUsersService.getBlockedUsers({
+      user: currentUser,
+      paginationDto,
+    });
+
+    return this.responseService.successResponse({
+      data,
+      meta,
+    });
   }
 
   @UseGuards(JwtAuthGuard)

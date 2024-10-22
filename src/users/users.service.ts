@@ -14,6 +14,8 @@ import { Profile } from '@/src/profiles/entities/profile.entity';
 
 import { QueryRunnerFactory } from '@/src/common/factories/query-runner.factory';
 import { BCRYPT_SALT_ROUNDS, DEFAULT_PROFILE } from '@/src/config/constants';
+import { PaginationDto } from '../common/dto/pagination.dto';
+import { PaginationService } from '../common/services/pagination.service';
 
 @Injectable()
 export class UsersService {
@@ -21,10 +23,16 @@ export class UsersService {
     @InjectRepository(User)
     private readonly usersRepository: Repository<User>,
     private readonly queryRunnerFactory: QueryRunnerFactory,
+    private readonly paginationService: PaginationService,
   ) {}
 
-  async findAll(): Promise<User[]> {
-    return this.usersRepository.find();
+  async findAll({ paginationDto }: { paginationDto: PaginationDto }) {
+    const query = this.usersRepository.createQueryBuilder('user');
+
+    return this.paginationService.paginate({
+      query,
+      ...paginationDto,
+    });
   }
 
   async findOneById(
@@ -39,11 +47,15 @@ export class UsersService {
     return user;
   }
 
-  async findOneByIdOrFail(
-    id: string,
-    error?: string,
-    relations: string[] = [],
-  ): Promise<User> {
+  async findOneByIdOrFail({
+    id,
+    relations,
+    error,
+  }: {
+    id: string;
+    relations?: string[];
+    error?: string;
+  }): Promise<User> {
     const user = await this.usersRepository.findOne({
       where: { id },
       relations,
@@ -80,11 +92,15 @@ export class UsersService {
     return users;
   }
 
-  async findOneByUsernameOrFail(
-    username: string,
-    error?: string,
-    relations: string[] = [],
-  ): Promise<User> {
+  async findOneByUsernameOrFail({
+    username,
+    relations,
+    error,
+  }: {
+    username: string;
+    relations?: string[];
+    error?: string;
+  }): Promise<User> {
     const user = await this.usersRepository.findOne({
       where: { username },
       relations,

@@ -1,4 +1,4 @@
-import { forwardRef, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { User } from './entities/user.entity';
@@ -6,10 +6,12 @@ import { UsersService } from './users.service';
 import { UsersController } from './users.controller';
 
 import { ProfilesModule } from '@/src/profiles/profiles.module';
-
-import { QueryRunnerFactory } from '@/src/common/factories/query-runner.factory';
-import { BlockedUsersModule } from '../blocked-users/blocked-users.module';
 import { FollowsModule } from '../follows/follows.module';
+import { BlockedUsersModule } from '../blocked-users/blocked-users.module';
+
+import { ResponseService } from '../common/services/response.service';
+import { PaginationService } from '../common/services/pagination.service';
+import { QueryRunnerFactory } from '@/src/common/factories/query-runner.factory';
 
 @Module({
   imports: [
@@ -19,7 +21,12 @@ import { FollowsModule } from '../follows/follows.module';
     TypeOrmModule.forFeature([User]),
   ],
   controllers: [UsersController],
-  providers: [UsersService, QueryRunnerFactory],
+  providers: [
+    UsersService,
+    ResponseService,
+    PaginationService,
+    QueryRunnerFactory,
+  ],
   exports: [UsersService, TypeOrmModule],
 })
 export class UsersModule {}

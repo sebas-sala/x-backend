@@ -9,6 +9,8 @@ import { User } from '../users/entities/user.entity';
 import { UsersModule } from '../users/users.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 
+import { PaginationService } from '../common/services/pagination.service';
+
 @Module({
   imports: [
     NotificationsModule,
@@ -16,7 +18,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
     TypeOrmModule.forFeature([Follow, User]),
   ],
   controllers: [FollowController],
-  providers: [FollowService],
+  providers: [FollowService, PaginationService],
   exports: [FollowService],
 })
 export class FollowsModule {}
