@@ -1,17 +1,15 @@
 import { Injectable } from '@nestjs/common';
-import { ObjectLiteral, SelectQueryBuilder } from 'typeorm';
-import { ClassConstructor, plainToInstance } from 'class-transformer';
+import { SelectQueryBuilder, ObjectLiteral } from 'typeorm';
 
-interface PaginateOptions<T> {
-  query: SelectQueryBuilder<ObjectLiteral>;
+interface PaginateOptions<T extends ObjectLiteral> {
+  query: SelectQueryBuilder<T>;
   page?: number;
   perPage?: number;
-  dto?: ClassConstructor<T>;
-  nestedPagination?: boolean;
   snakeCase?: boolean;
+  nestedPagination?: boolean;
 }
 
-interface Pagination {
+interface PaginationCamelCase {
   page: number;
   perPage: number;
   total: number;
@@ -33,59 +31,65 @@ interface PaginationSnakeCase {
   next_page?: number;
 }
 
-export type PaginatedMeta =
-  | Pagination
-  | PaginationSnakeCase
-  | { pagination: Pagination | PaginationSnakeCase };
+export type Pagination = PaginationCamelCase | PaginationSnakeCase;
+
+export type Meta = { pagination: Pagination } | Pagination;
 
 export interface PaginatedResult<T> {
   data: T[];
-  meta: PaginatedMeta;
+  meta: Meta;
 }
 
 @Injectable()
 export class PaginationService {
-  private setPagination(
-    snakeCase: boolean,
-    page: number,
-    perPage: number,
-    total: number,
-  ): Pagination | PaginationSnakeCase {
-    const pagination = snakeCase
-      ? {
-          page,
-          per_page: perPage,
-          total,
-          total_pages: Math.ceil(total / perPage),
-          has_prev_page: page > 1,
-          has_next_page: total > page * perPage,
-          prev_page: page > 1 ? page - 1 : undefined,
-          next_page: total > page * perPage ? page + 1 : undefined,
-        }
-      : {
-          page,
-          perPage,
-          total,
-          totalPages: Math.ceil(total / perPage),
-          hasPrevPage: page > 1,
-          hasNextPage: total > page * perPage,
-          prevPage: page > 1 ? page - 1 : undefined,
-          nextPage: total > page * perPage ? page + 1 : undefined,
-        };
+  private setPagination({
+    page,
+    perPage,
+    total,
+    snakeCase,
+  }: {
+    page: number;
+    perPage: number;
+    total: number;
+    snakeCase: boolean;
+  }): Pagination {
+    const totalPages = Math.ceil(total / perPage);
+    const hasPrevPage = page > 1;
+    const hasNextPage = total > page * perPage;
+    const prevPage = page > 1 ? page - 1 : undefined;
+    const nextPage = total > page * perPage ? page + 1 : undefined;
 
-    return pagination;
+    if (snakeCase) {
+      return {
+        page,
+        per_page: perPage,
+        total,
+        total_pages: totalPages,
+        has_prev_page: hasPrevPage,
+        has_next_page: hasNextPage,
+        prev_page: prevPage,
+        next_page: nextPage,
+      };
+    }
+
+    return {
+      page,
+      perPage,
+      total,
+      totalPages,
+      hasPrevPage,
+      hasNextPage,
+      prevPage,
+      nextPage,
+    };
   }
 
-  private setMeta(
-    nestedPagination: boolean,
-    pagination: Pagination | PaginationSnakeCase,
-  ) {
-    return nestedPagination ? { pagination } : { ...pagination };
+  private setMeta(nestedPagination: boolean, pagination: Pagination): Meta {
+    return nestedPagination ? { pagination } : pagination;
   }
 
-  async paginate<T>({
+  async paginate<T extends ObjectLiteral>({
     query,
-    dto,
     page = 1,
     perPage = 15,
     nestedPagination = true,
@@ -99,18 +103,19 @@ export class PaginationService {
       .take(perPage)
       .getManyAndCount();
 
-    const pagination = this.setPagination(snakeCase, page, perPage, total);
+    const pagination = this.setPagination({
+      page,
+      perPage,
+      total,
+      snakeCase,
+    });
 
     const meta = this.setMeta(nestedPagination, pagination);
 
-    const result = {
-      data: dto ? plainToInstance(dto, data) : (data as T[]),
-      meta: {
-        ...meta,
-      },
+    return {
+      data,
+      meta,
     };
-
-    return result;
   }
 
   validations(page: number, perPage: number) {
