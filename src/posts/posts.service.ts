@@ -137,11 +137,23 @@ export class PostsService {
   ): void {
     this.byUsernameFilter(query, filters.by_username);
     this.byBlockedUsersFilter(query, currentUser);
+    this.byFollowingFilter(query, filters.by_following, currentUser);
   }
 
   private byUsernameFilter(query: SelectQueryBuilder<Post>, username?: string) {
     if (!username) return;
     query.andWhere('user.username = :username', { username });
+  }
+
+  private byFollowingFilter(
+    query: SelectQueryBuilder<Post>,
+    byFollowing?: boolean,
+    currentUser?: User,
+  ) {
+    if (!byFollowing || !currentUser) return;
+    query
+      .leftJoin('user.followers', 'follower')
+      .andWhere('follower.id = :userId', { userId: currentUser.id });
   }
 
   private byBlockedUsersFilter(

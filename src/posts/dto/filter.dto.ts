@@ -1,4 +1,5 @@
-import { IsOptional, IsString } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsBoolean, IsOptional, IsString } from 'class-validator';
 
 export class FilterDto {
   @IsOptional()
@@ -11,5 +12,11 @@ export class FilterDto {
 
   @IsOptional()
   @IsString()
+  @Type(() => Boolean)
   by_like?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  @Type(() => Boolean)
+  by_following?: boolean;
 }
