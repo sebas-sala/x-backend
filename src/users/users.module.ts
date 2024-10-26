@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { User } from './entities/user.entity';
@@ -12,9 +12,11 @@ import { BlockedUsersModule } from '../blocked-users/blocked-users.module';
 import { ResponseService } from '../common/services/response.service';
 import { PaginationService } from '../common/services/pagination.service';
 import { QueryRunnerFactory } from '@/src/common/factories/query-runner.factory';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
   imports: [
+    forwardRef(() => AuthModule),
     FollowsModule,
     ProfilesModule,
     BlockedUsersModule,

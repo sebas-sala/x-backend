@@ -16,6 +16,8 @@ import { QueryRunnerFactory } from '@/src/common/factories/query-runner.factory'
 import { BCRYPT_SALT_ROUNDS, DEFAULT_PROFILE } from '@/src/config/constants';
 import { PaginationDto } from '../common/dto/pagination.dto';
 import { PaginationService } from '../common/services/pagination.service';
+import { AuthService } from '../auth/auth.service';
+import { LoginResponse } from '../auth/types/auth-response.types';
 
 @Injectable()
 export class UsersService {
@@ -24,6 +26,7 @@ export class UsersService {
     private readonly usersRepository: Repository<User>,
     private readonly queryRunnerFactory: QueryRunnerFactory,
     private readonly paginationService: PaginationService,
+    private readonly authService: AuthService,
   ) {}
 
   async findAll({ paginationDto }: { paginationDto: PaginationDto }) {
@@ -113,7 +116,7 @@ export class UsersService {
     return user;
   }
 
-  async create(createUserDto: CreateUserDto): Promise<User | undefined> {
+  async create(createUserDto: CreateUserDto): Promise<User & LoginResponse> {
     const queryRunner = this.queryRunnerFactory.createQueryRunner();
 
     await queryRunner.connect();
@@ -135,10 +138,14 @@ export class UsersService {
         ...DEFAULT_PROFILE,
       });
       await queryRunner.manager.save(Profile, profile);
-
       await queryRunner.commitTransaction();
 
-      return user;
+      const access_token = await this.authService.login(user);
+
+      return {
+        ...user,
+        access_token: access_token.access_token,
+      };
     } catch (error) {
       await queryRunner.rollbackTransaction();
       throw error;

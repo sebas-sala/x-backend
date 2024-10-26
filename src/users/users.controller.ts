@@ -78,8 +78,16 @@ export class UsersController {
 
   @Post()
   async create(@Body() createUserDto: CreateUserDto) {
-    const user = await this.usersService.create(createUserDto);
-    return instanceToPlain(user, { groups: ['profile'] });
+    const response = await this.usersService.create(createUserDto);
+
+    const { access_token, ...user } = response;
+
+    return this.responseService.successResponse({
+      data: {
+        user: instanceToPlain(user, { groups: ['profile'] }),
+        access_token: access_token,
+      },
+    });
   }
 
   @Get(':id/followers')

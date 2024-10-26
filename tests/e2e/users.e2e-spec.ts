@@ -105,17 +105,25 @@ describe('Users API (e2e)', () => {
         payload: createUserDto,
       });
 
-      const createdUser = JSON.parse(result.payload);
+      const data = JSON.parse(result.payload).data;
+
+      const user = data.user as User;
+      const accessToken = data.access_token as string;
+
       expect(result.statusCode).toEqual(201);
-      expect(createdUser).toMatchObject({
+
+      expect(user).toMatchObject({
         name: createUserDto.name,
         username: createUserDto.username,
+        email: createUserDto.email,
       });
-      expect(createdUser).toHaveProperty('id');
-      expect(createdUser).toHaveProperty('createdAt');
-      expect(createdUser).toHaveProperty('updatedAt');
+      expect(user).toHaveProperty('id');
+      expect(accessToken).toBeDefined();
+
       expect(
-        await dataSource.getRepository(Profile).exists(createdUser.id),
+        await dataSource.getRepository(Profile).existsBy({
+          user: { id: user.id },
+        }),
       ).toBe(true);
     });
 

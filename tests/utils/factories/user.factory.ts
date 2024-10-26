@@ -1,8 +1,11 @@
 import { faker } from '@faker-js/faker';
 import { DataSource } from 'typeorm';
+import * as bcrypt from 'bcrypt';
 
 import { User } from '@/src/users/entities/user.entity';
 import { CreateUserDto } from '@/src/users/dto/create-user.dto';
+
+import { BCRYPT_SALT_ROUNDS } from '@/src/config/constants';
 
 export default class UserFactory {
   constructor(private dataSource?: DataSource) {}
@@ -36,9 +39,15 @@ export default class UserFactory {
     }
 
     const userDto = UserFactory.createUserDto(userData);
-    const usersRepository = this.dataSource.getRepository(User);
-    const user = usersRepository.create(userDto);
 
+    const saltOrRounds = await bcrypt.genSalt(BCRYPT_SALT_ROUNDS);
+    const encryptedPassword = await bcrypt.hash(userDto.password, saltOrRounds);
+
+    const usersRepository = this.dataSource.getRepository(User);
+    const user = usersRepository.create({
+      ...userDto,
+      password: encryptedPassword,
+    });
     try {
       return await usersRepository.save(user);
     } catch (error) {
