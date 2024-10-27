@@ -18,6 +18,7 @@ dist/
 # Tests Files
 tests/
 *.spec.ts
+database/
 
 # Database
 database.sqlite
