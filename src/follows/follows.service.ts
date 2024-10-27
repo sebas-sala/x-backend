@@ -113,9 +113,7 @@ export class FollowService {
     return savedFollow;
   }
 
-  async remove(deleteFollowDto: DeleteFollowDto, currentUser: User) {
-    const { followingId } = deleteFollowDto;
-
+  async remove(followingId: string, currentUser: User) {
     await this.validateFollowExists(currentUser.id, followingId);
 
     return await this.deleteFollow(currentUser.id, followingId);

@@ -3,7 +3,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { Follow } from './entities/follow.entity';
 import { FollowService } from './follows.service';
-import { FollowController } from './follows.controller';
 
 import { User } from '../users/entities/user.entity';
 import { UsersModule } from '../users/users.module';
@@ -17,7 +16,6 @@ import { PaginationService } from '../common/services/pagination.service';
     forwardRef(() => UsersModule),
     TypeOrmModule.forFeature([Follow, User]),
   ],
-  controllers: [FollowController],
   providers: [FollowService, PaginationService],
   exports: [FollowService],
 })

@@ -27,11 +27,13 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { NonEmptyPayloadGuard } from '../common/guards/non-empty-payload.guard';
 import { PaginationDto } from '../common/dto/pagination.dto';
 import { ResponseService } from '../common/services/response.service';
+import { ThrottlerGuard } from '@nestjs/throttler';
+import { CreateFollowDto } from '../follows/dto/create-follow.dto';
 
 @Controller('users')
 export class UsersController {
   constructor(
-    private followsService: FollowService,
+    private readonly followService: FollowService,
     private readonly usersService: UsersService,
     private readonly profilesService: ProfilesService,
     private readonly blockedUsersService: BlockedUsersService,
@@ -56,13 +58,17 @@ export class UsersController {
     return instanceToPlain(user, { groups: ['private'] });
   }
 
+  @UseGuards(ThrottlerGuard)
   @Get(':username/profile')
   async getProfile(@Param('username') username: string) {
     const user = await this.usersService.findOneByUsernameOrFail({
       username,
       relations: ['profile'],
     });
-    return instanceToPlain(user, { groups: ['profile'] });
+
+    return this.responseService.successResponse({
+      data: instanceToPlain(user, { groups: ['profile'] }),
+    });
   }
 
   @UseGuards(NonEmptyPayloadGuard)
@@ -95,7 +101,7 @@ export class UsersController {
     @Param('id') id: string,
     @Query() paginationDto: PaginationDto,
   ) {
-    const { data, meta } = await this.followsService.getFollowers({
+    const { data, meta } = await this.followService.getFollowers({
       userId: id,
       paginationDto,
     });
@@ -111,7 +117,7 @@ export class UsersController {
     @Param('id') id: string,
     @Query() paginationDto: PaginationDto,
   ) {
-    return await this.followsService.getFollowing({
+    return await this.followService.getFollowing({
       userId: id,
       paginationDto,
     });
@@ -144,5 +150,20 @@ export class UsersController {
   @Delete(':id/unblock')
   async unblockUser(@Param('id') id: string, @CurrentUser() currentUser: User) {
     return await this.blockedUsersService.unblockUser(id, currentUser);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post(':id/follow')
+  async follow(
+    @Body() createFollowDto: CreateFollowDto,
+    @CurrentUser() currentUser: User,
+  ) {
+    return await this.followService.create(createFollowDto, currentUser);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete(':id/unfollow')
+  async unfollow(@Param('id') id: string, @CurrentUser() currentUser: User) {
+    return await this.followService.remove(id, currentUser);
   }
 }

@@ -91,9 +91,9 @@ export class NotificationsService {
       try {
         await this.processNotifications(type, priority);
       } catch (error) {
-        console.error(
-          `Error processing ${type} notifications: ${error.message}`,
-        );
+        // console.error(
+        //   `Error processing ${type} notifications: ${error.message}`,
+        // );
       }
     }
   }
