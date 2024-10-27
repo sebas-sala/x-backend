@@ -16,11 +16,11 @@ EXPOSE $PORT
 CMD ["npm", "run", "dev"]
 
 # BUILD
-FROM base AS build
+# FROM base AS build
 
-RUN apk add --no-cache dumb-init
+# RUN apk add --no-cache dumb-init
 
-RUN npm run build && npm prune --production
+# RUN npm run build && npm prune --production
 
 # # PRODUCTION
 # FROM node:22.5.1-alpine3.20 as prod
