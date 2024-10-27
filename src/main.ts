@@ -58,6 +58,6 @@ async function bootstrap() {
     defaultVersion: '1',
   });
 
-  await app.listen(8080, '0.0.0.0');
+  await app.listen(3000, '0.0.0.0');
 }
 bootstrap();
