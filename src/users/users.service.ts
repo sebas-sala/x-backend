@@ -17,7 +17,6 @@ import { BCRYPT_SALT_ROUNDS, DEFAULT_PROFILE } from '@/src/config/constants';
 import { PaginationDto } from '../common/dto/pagination.dto';
 import { PaginationService } from '../common/services/pagination.service';
 import { AuthService } from '../auth/auth.service';
-import { LoginResponse } from '../auth/types/auth-response.types';
 
 @Injectable()
 export class UsersService {
@@ -116,7 +115,9 @@ export class UsersService {
     return user;
   }
 
-  async create(createUserDto: CreateUserDto): Promise<User & LoginResponse> {
+  async create(
+    createUserDto: CreateUserDto,
+  ): Promise<User & { access_token: string }> {
     const queryRunner = this.queryRunnerFactory.createQueryRunner();
 
     await queryRunner.connect();

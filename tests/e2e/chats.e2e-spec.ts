@@ -74,8 +74,8 @@ describe('Chats API (e2e)', () => {
       const result = await app.inject({
         method: 'POST',
         url: '/chats',
-        headers: {
-          Authorization: `Bearer ${token}`,
+        cookies: {
+          __session: token,
         },
         payload: {
           users: [user.id],
@@ -98,8 +98,8 @@ describe('Chats API (e2e)', () => {
       const result = await app.inject({
         method: 'POST',
         url: '/chats',
-        headers: {
-          Authorization: `Bearer ${token}`,
+        cookies: {
+          __session: token,
         },
         payload: {
           users: [user.id],
@@ -130,8 +130,8 @@ describe('Chats API (e2e)', () => {
       const result = await app.inject({
         method: 'POST',
         url: '/chats',
-        headers: {
-          Authorization: `Bearer ${token}`,
+        cookies: {
+          __session: token,
         },
         payload: {
           users: [user.id],
@@ -168,8 +168,8 @@ describe('Chats API (e2e)', () => {
       const result = await app.inject({
         method: 'POST',
         url: '/chats',
-        headers: {
-          Authorization: `Bearer ${token}`,
+        cookies: {
+          __session: token,
         },
         payload: {
           users: users.map((user) => user.id),
@@ -194,8 +194,8 @@ describe('Chats API (e2e)', () => {
       const result = await app.inject({
         method: 'POST',
         url: '/chats',
-        headers: {
-          Authorization: `Bearer ${token}`,
+        cookies: {
+          __session: token,
         },
         payload: {
           users: [mockUser.id],
@@ -219,8 +219,8 @@ describe('Chats API (e2e)', () => {
       const result = await app.inject({
         method: 'POST',
         url: '/chats',
-        headers: {
-          Authorization: `Bearer ${token}`,
+        cookies: {
+          __session: token,
         },
         payload: {
           users: [user.id],

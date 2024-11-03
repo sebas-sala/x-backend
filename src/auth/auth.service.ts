@@ -6,7 +6,6 @@ import { User } from '../users/entities/user.entity';
 import { UsersService } from '../users/users.service';
 
 import type { AuthPayload } from './types/auth-request.types';
-import type { LoginResponse } from './types/auth-response.types';
 
 @Injectable()
 export class AuthService {
@@ -30,14 +29,25 @@ export class AuthService {
     return undefined;
   }
 
-  async login(user: User): Promise<LoginResponse> {
+  async login(user: User) {
     const payload: AuthPayload = {
       sub: user.id,
       username: user.username,
     };
 
+    const loggedUser = await this.usersService.findOneByIdOrFail({
+      id: payload.sub,
+    });
+
+    const { password, ...result } = loggedUser;
+
+    const access_token = this.jwtService.sign(payload);
+
     return {
-      access_token: this.jwtService.sign(payload),
+      access_token,
+      user: {
+        ...result,
+      },
     };
   }
 }

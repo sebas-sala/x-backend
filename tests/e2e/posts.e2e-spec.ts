@@ -74,8 +74,8 @@ describe('Posts API (e2e)', () => {
       const response = await app.inject({
         method: 'GET',
         url: '/posts',
-        headers: {
-          Authorization: `Bearer ${token}`,
+        cookies: {
+          __session: token,
         },
       });
 
@@ -101,8 +101,8 @@ describe('Posts API (e2e)', () => {
       const response = await app.inject({
         method: 'GET',
         url: '/posts',
-        headers: {
-          Authorization: `Bearer ${token}`,
+        cookies: {
+          __session: token,
         },
       });
 
@@ -121,8 +121,8 @@ describe('Posts API (e2e)', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/posts?by_username=${user.username}`,
-        headers: {
-          Authorization: `Bearer ${token}`,
+        cookies: {
+          __session: token,
         },
       });
 
@@ -146,8 +146,8 @@ describe('Posts API (e2e)', () => {
       const response = await app.inject({
         method: 'GET',
         url: '/posts?page=2&perPage=5',
-        headers: {
-          Authorization: `Bearer ${token}`,
+        cookies: {
+          __session: token,
         },
       });
 
@@ -185,8 +185,8 @@ describe('Posts API (e2e)', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/posts',
-        headers: {
-          Authorization: `Bearer ${token}`,
+        cookies: {
+          __session: token,
         },
         payload: post,
       });
@@ -223,8 +223,8 @@ describe('Posts API (e2e)', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/posts/${post.id}`,
-        headers: {
-          Authorization: `Bearer ${token}`,
+        cookies: {
+          __session: token,
         },
       });
 
@@ -238,8 +238,8 @@ describe('Posts API (e2e)', () => {
       const response = await app.inject({
         method: 'GET',
         url: '/posts/1',
-        headers: {
-          Authorization: `Bearer ${token}`,
+        cookies: {
+          __session: token,
         },
       });
 
@@ -269,8 +269,8 @@ describe('Posts API (e2e)', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/posts/${post.id}/comments`,
-        headers: {
-          Authorization: `Bearer ${token}`,
+        cookies: {
+          __session: token,
         },
       });
 
@@ -293,8 +293,8 @@ describe('Posts API (e2e)', () => {
       const response = await app.inject({
         method: 'POST',
         url: `/posts/${post.id}/comments`,
-        headers: {
-          Authorization: `Bearer ${token}`,
+        cookies: {
+          __session: token,
         },
         payload: comment,
       });
@@ -328,8 +328,8 @@ describe('Posts API (e2e)', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/posts/1/comments',
-        headers: {
-          Authorization: `Bearer ${token}`,
+        cookies: {
+          __session: token,
         },
         payload: {
           content: 'This is a comment',
@@ -355,8 +355,8 @@ describe('Posts API (e2e)', () => {
       const response = await app.inject({
         method: 'PATCH',
         url: `/posts/${post.id}`,
-        headers: {
-          Authorization: `Bearer ${token}`,
+        cookies: {
+          __session: token,
         },
         payload: updatedPost,
       });
@@ -387,8 +387,8 @@ describe('Posts API (e2e)', () => {
       const response = await app.inject({
         method: 'PATCH',
         url: '/posts/1',
-        headers: {
-          Authorization: `Bearer ${token}`,
+        cookies: {
+          __session: token,
         },
         payload: PostFactory.createPostDto(),
       });
@@ -411,8 +411,8 @@ describe('Posts API (e2e)', () => {
       const response = await app.inject({
         method: 'DELETE',
         url: `/posts/${post.id}`,
-        headers: {
-          Authorization: `Bearer ${token}`,
+        cookies: {
+          __session: token,
         },
       });
 
@@ -440,8 +440,8 @@ describe('Posts API (e2e)', () => {
       const response = await app.inject({
         method: 'DELETE',
         url: '/posts/1',
-        headers: {
-          Authorization: `Bearer ${token}`,
+        cookies: {
+          __session: token,
         },
       });
 
@@ -464,8 +464,8 @@ describe('Posts API (e2e)', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/posts/${post.id}/likes`,
-        headers: {
-          Authorization: `Bearer ${token}`,
+        cookies: {
+          __session: token,
         },
       });
 
@@ -487,8 +487,8 @@ describe('Posts API (e2e)', () => {
       const response = await app.inject({
         method: 'POST',
         url: `/posts/${post.id}/likes`,
-        headers: {
-          Authorization: `Bearer ${token}`,
+        cookies: {
+          __session: token,
         },
       });
 
@@ -523,8 +523,8 @@ describe('Posts API (e2e)', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/posts/1/likes',
-        headers: {
-          Authorization: `Bearer ${token}`,
+        cookies: {
+          __session: token,
         },
       });
 
@@ -545,8 +545,8 @@ describe('Posts API (e2e)', () => {
       const response = await app.inject({
         method: 'POST',
         url: `/posts/${post.id}/likes`,
-        headers: {
-          Authorization: `Bearer ${token}`,
+        cookies: {
+          __session: token,
         },
       });
 
@@ -569,8 +569,8 @@ describe('Posts API (e2e)', () => {
       const response = await app.inject({
         method: 'DELETE',
         url: `/posts/${post.id}/likes`,
-        headers: {
-          Authorization: `Bearer ${token}`,
+        cookies: {
+          __session: token,
         },
       });
 
@@ -598,8 +598,8 @@ describe('Posts API (e2e)', () => {
       const response = await app.inject({
         method: 'DELETE',
         url: '/posts/1/likes',
-        headers: {
-          Authorization: `Bearer ${token}`,
+        cookies: {
+          __session: token,
         },
       });
 
@@ -619,8 +619,8 @@ describe('Posts API (e2e)', () => {
       const response = await app.inject({
         method: 'DELETE',
         url: `/posts/${post.id}/likes`,
-        headers: {
-          Authorization: `Bearer ${token}`,
+        cookies: {
+          __session: token,
         },
       });
 

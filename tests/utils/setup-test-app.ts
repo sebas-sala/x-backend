@@ -2,6 +2,7 @@ import { Test } from '@nestjs/testing';
 import { DataSource } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 import { ValidationPipe } from '@nestjs/common';
+import fastifyCookie from '@fastify/cookie';
 import { FastifyAdapter } from '@nestjs/platform-fastify';
 import { NestFastifyApplication } from '@nestjs/platform-fastify';
 
@@ -15,6 +16,18 @@ export async function setupTestApp(port = 0) {
 
   const app = moduleRef.createNestApplication<NestFastifyApplication>(
     new FastifyAdapter(),
+    {
+      logger: ['error', 'warn', 'log', 'debug', 'verbose'],
+      cors: {
+        origin: ['http://localhost:5173', 'http://localhost:3000'],
+        methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+        preflightContinue: false,
+        optionsSuccessStatus: 204,
+        credentials: true,
+        maxAge: 86_400,
+        exposedHeaders: ['Set-Cookie'],
+      },
+    },
   );
   app.useGlobalPipes(
     new ValidationPipe({
@@ -23,8 +36,12 @@ export async function setupTestApp(port = 0) {
     }),
   );
 
+  await app.register(fastifyCookie, {
+    secret: process.env.COOKIES_SECRET,
+  });
+
   await app.init();
-  await app.listen(port);
+  await app.listen({ port });
   await app.getHttpAdapter().getInstance().ready();
 
   const dataSource = moduleRef.get<DataSource>(DataSource);
@@ -33,7 +50,6 @@ export async function setupTestApp(port = 0) {
   const server = app.getHttpServer();
   const currentPort = (server.address() as any).port;
 
-  // const authFactory = new AuthFactory(dataSource);
   const factories = await initializeFactories(dataSource);
 
   async function closeApp() {

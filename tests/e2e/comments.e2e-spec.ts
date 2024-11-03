@@ -65,8 +65,8 @@ describe('Comments', () => {
       const response = await app.inject({
         method: 'POST',
         url: `/comments/${comment.id}/replies`,
-        headers: {
-          Authorization: `Bearer ${token}`,
+        cookies: {
+          __session: token,
         },
         payload: {
           content: 'Reply content',
@@ -113,8 +113,8 @@ describe('Comments', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/comments/1/replies',
-        headers: {
-          Authorization: `Bearer ${token}`,
+        cookies: {
+          __session: token,
         },
         payload: {
           content: 'Reply content',
@@ -134,8 +134,8 @@ describe('Comments', () => {
       const response = await app.inject({
         method: 'PATCH',
         url: `/comments/${comment.id}`,
-        headers: {
-          Authorization: `Bearer ${token}`,
+        cookies: {
+          __session: token,
         },
         payload: {
           content: 'Updated comment content',
@@ -174,8 +174,8 @@ describe('Comments', () => {
       const response = await app.inject({
         method: 'PATCH',
         url: '/comments/1',
-        headers: {
-          Authorization: `Bearer ${token}`,
+        cookies: {
+          __session: token,
         },
         payload: {
           content: 'Updated comment content',
@@ -198,8 +198,8 @@ describe('Comments', () => {
       const response = await app.inject({
         method: 'PATCH',
         url: `/comments/${comment.id}`,
-        headers: {
-          Authorization: `Bearer ${token}`,
+        cookies: {
+          __session: token,
         },
         payload: {
           content: 'Updated comment content',
@@ -225,8 +225,8 @@ describe('Comments', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/comments/${comment.id}/likes`,
-        headers: {
-          Authorization: `Bearer ${token}`,
+        cookies: {
+          __session: token,
         },
       });
 
@@ -254,8 +254,8 @@ describe('Comments', () => {
       const response = await app.inject({
         method: 'POST',
         url: `/comments/${comment.id}/likes`,
-        headers: {
-          Authorization: `Bearer ${token}`,
+        cookies: {
+          __session: token,
         },
       });
 
@@ -290,8 +290,8 @@ describe('Comments', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/comments/1/likes',
-        headers: {
-          Authorization: `Bearer ${token}`,
+        cookies: {
+          __session: token,
         },
       });
 
@@ -308,8 +308,8 @@ describe('Comments', () => {
       const response = await app.inject({
         method: 'POST',
         url: `/comments/${comment.id}/likes`,
-        headers: {
-          Authorization: `Bearer ${token}`,
+        cookies: {
+          __session: token,
         },
       });
 
@@ -332,8 +332,8 @@ describe('Comments', () => {
       const response = await app.inject({
         method: 'DELETE',
         url: `/comments/${comment.id}/likes`,
-        headers: {
-          Authorization: `Bearer ${token}`,
+        cookies: {
+          __session: token,
         },
       });
 
@@ -359,8 +359,8 @@ describe('Comments', () => {
       const response = await app.inject({
         method: 'DELETE',
         url: '/comments/1/likes',
-        headers: {
-          Authorization: `Bearer ${token}`,
+        cookies: {
+          __session: token,
         },
       });
 
@@ -375,8 +375,8 @@ describe('Comments', () => {
       const response = await app.inject({
         method: 'DELETE',
         url: `/comments/${comment.id}/likes`,
-        headers: {
-          Authorization: `Bearer ${token}`,
+        cookies: {
+          __session: token,
         },
       });
 

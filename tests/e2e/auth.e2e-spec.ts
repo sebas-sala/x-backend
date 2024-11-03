@@ -32,8 +32,8 @@ describe('Auth API (e2e)', () => {
   });
 
   describe('POST /auth/login', () => {
-    it(`should return a JWT token`, async () => {
-      const password = 'password';
+    it(`should return user data and set a cookie with the access token if the credentials are valid`, async () => {
+      const password = 'Password1!@#';
       const user = await userFactory.createUserEntity({
         password,
       });
@@ -50,7 +50,13 @@ describe('Auth API (e2e)', () => {
       const payload = JSON.parse(result.payload);
       const data = payload.data;
       expect(result.statusCode).toEqual(200);
-      expect(data.access_token).toBeDefined();
+      expect(data.user).toMatchObject({
+        id: user.id,
+        username: user.username,
+      });
+
+      expect(result.cookies).toHaveLength(1);
+      expect(result.cookies[0].name).toEqual('__session');
     });
 
     it(`should return a 401 error if the credentials are invalid`, async () => {

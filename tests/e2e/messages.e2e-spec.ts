@@ -66,8 +66,8 @@ describe('Messages API (e2e)', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/messages',
-        headers: {
-          Authorization: `Bearer ${token}`,
+        cookies: {
+          __session: token,
         },
         payload: messageDto,
       });
@@ -103,8 +103,8 @@ describe('Messages API (e2e)', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/messages',
-        headers: {
-          Authorization: `Bearer ${token}`,
+        cookies: {
+          __session: token,
         },
         payload: messageDto,
       });
@@ -160,8 +160,8 @@ describe('Messages API (e2e)', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/messages',
-        headers: {
-          Authorization: `Bearer ${token}`,
+        cookies: {
+          __session: token,
         },
         payload: messageDto,
       });
@@ -182,8 +182,8 @@ describe('Messages API (e2e)', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/messages',
-        headers: {
-          Authorization: `Bearer ${token}`,
+        cookies: {
+          __session: token,
         },
         payload: messageDto,
       });

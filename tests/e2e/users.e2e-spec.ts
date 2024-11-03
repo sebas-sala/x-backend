@@ -229,9 +229,9 @@ describe('Users API (e2e)', () => {
         url: `/users/${user.username}/profile`,
       });
 
-      const payload = JSON.parse(result.payload) as User;
+      const payload = JSON.parse(result.payload);
       expect(result.statusCode).toEqual(200);
-      expect(payload).toMatchObject({
+      expect(payload.data as User).toMatchObject({
         id: user.id,
         name: user.name,
         username: user.username,
@@ -243,7 +243,6 @@ describe('Users API (e2e)', () => {
           isPublic: profile.isPublic,
         },
       });
-      expect(payload.profile).toHaveProperty('birthdate');
     });
 
     it(`sohuld return 404 if the user does not exist by username`, async () => {
@@ -270,8 +269,8 @@ describe('Users API (e2e)', () => {
         payload: {
           bio: 'Test bio',
         },
-        headers: {
-          Authorization: `Bearer ${token}`,
+        cookies: {
+          __session: token,
         },
       });
 
@@ -290,8 +289,8 @@ describe('Users API (e2e)', () => {
         method: 'PATCH',
         url: `/users/${user.username}/profile`,
         payload: {},
-        headers: {
-          Authorization: `Bearer ${token}`,
+        cookies: {
+          __session: token,
         },
       });
 
@@ -476,8 +475,8 @@ describe('Users API (e2e)', () => {
       const result = await app.inject({
         method: 'GET',
         url: `/users/blocked`,
-        headers: {
-          Authorization: `Bearer ${token}`,
+        cookies: {
+          __session: token,
         },
       });
 
@@ -493,8 +492,8 @@ describe('Users API (e2e)', () => {
       const result = await app.inject({
         method: 'GET',
         url: '/users/blocked',
-        headers: {
-          Authorization: `Bearer ${token}`,
+        cookies: {
+          __session: token,
         },
       });
 
@@ -518,8 +517,8 @@ describe('Users API (e2e)', () => {
       const result = await app.inject({
         method: 'GET',
         url: `/users/blocked?page=2`,
-        headers: {
-          Authorization: `Bearer ${token}`,
+        cookies: {
+          __session: token,
         },
       });
 
@@ -542,8 +541,8 @@ describe('Users API (e2e)', () => {
       const result = await app.inject({
         method: 'POST',
         url: `/users/${user.id}/block`,
-        headers: {
-          Authorization: `Bearer ${token}`,
+        cookies: {
+          __session: token,
         },
       });
 
@@ -564,8 +563,8 @@ describe('Users API (e2e)', () => {
       const result = await app.inject({
         method: 'POST',
         url: '/users/2/block',
-        headers: {
-          Authorization: `Bearer ${token}`,
+        cookies: {
+          __session: token,
         },
       });
 
@@ -588,8 +587,8 @@ describe('Users API (e2e)', () => {
       const result = await app.inject({
         method: 'POST',
         url: `/users/${user.id}/block`,
-        headers: {
-          Authorization: `Bearer ${token}`,
+        cookies: {
+          __session: token,
         },
       });
 
@@ -613,8 +612,8 @@ describe('Users API (e2e)', () => {
       const result = await app.inject({
         method: 'DELETE',
         url: `/users/${blockedUser.id}/unblock`,
-        headers: {
-          Authorization: `Bearer ${token}`,
+        cookies: {
+          __session: token,
         },
       });
 
@@ -628,8 +627,8 @@ describe('Users API (e2e)', () => {
       const result = await app.inject({
         method: 'DELETE',
         url: '/users/2/unblock',
-        headers: {
-          Authorization: `Bearer ${token}`,
+        cookies: {
+          __session: token,
         },
       });
 

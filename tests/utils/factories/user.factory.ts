@@ -14,7 +14,7 @@ export default class UserFactory {
     return {
       name: userData.name ?? faker.person.fullName(),
       email: userData.email ?? faker.internet.email(),
-      username: userData.username ?? faker.internet.userName(),
+      username: userData.username ?? faker.internet.username(),
       password:
         userData.password ??
         faker.internet.password({

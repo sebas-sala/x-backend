@@ -11,7 +11,7 @@ import { setupTestApp } from '../utils/setup-test-app';
 import { Notification } from '@/src/notifications/entities/notification.entity';
 import { io, Socket } from 'socket.io-client';
 
-describe('Users API (e2e)', () => {
+describe('Follows API (e2e)', () => {
   let app: NestFastifyApplication;
   let socket: Socket;
 
@@ -65,15 +65,15 @@ describe('Users API (e2e)', () => {
     });
   });
 
-  describe('POST /follows', () => {
+  describe('POST /users/:id/follow', () => {
     it(`should create a follow`, async () => {
       const user = await userFactory.createUserEntity();
 
       const result = await app.inject({
         method: 'POST',
-        url: '/follows',
-        headers: {
-          Authorization: `Bearer ${token}`,
+        url: `/users/${user.id}/follow`,
+        cookies: {
+          __session: token,
         },
         payload: {
           followingId: user.id,
@@ -89,7 +89,7 @@ describe('Users API (e2e)', () => {
     it(`should return a 401 if the user is not authenticated`, async () => {
       const result = await app.inject({
         method: 'POST',
-        url: '/follows',
+        url: `/users/${currentUser.id}/follow`,
         payload: {
           followingId: '123',
         },
@@ -101,9 +101,9 @@ describe('Users API (e2e)', () => {
     it(`should return a 404 if the user does not exist`, async () => {
       const result = await app.inject({
         method: 'POST',
-        url: '/follows',
-        headers: {
-          Authorization: `Bearer ${token}`,
+        url: `/users/1/follow`,
+        cookies: {
+          __session: token,
         },
         payload: {
           followingId: faker.string.uuid(),
@@ -120,9 +120,9 @@ describe('Users API (e2e)', () => {
     it(`should return a 409 if the user is trying to follow themselves`, async () => {
       const result = await app.inject({
         method: 'POST',
-        url: '/follows',
-        headers: {
-          Authorization: `Bearer ${token}`,
+        url: `/users/${currentUser.id}/follow`,
+        cookies: {
+          __session: token,
         },
         payload: {
           followingId: currentUser.id,
@@ -150,9 +150,9 @@ describe('Users API (e2e)', () => {
 
       const result = await app.inject({
         method: 'POST',
-        url: '/follows',
-        headers: {
-          Authorization: `Bearer ${token}`,
+        url: `/users/${currentUser.id}/follow`,
+        cookies: {
+          __session: token,
         },
         payload: {
           followingId: user.id,
