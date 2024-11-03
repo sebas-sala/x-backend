@@ -23,18 +23,18 @@ async function bootstrap() {
       bodyLimit: 10_485_760,
       maxParamLength: 5000,
     }),
-    { cors: true },
+    {
+      cors: {
+        origin: 'http://localhost:5173',
+        methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+        preflightContinue: false,
+        optionsSuccessStatus: 204,
+        credentials: true,
+        maxAge: 86_400,
+        exposedHeaders: ['Set-Cookie'],
+      },
+    },
   );
-
-  // const config = new DocumentBuilder()
-  //   .setTitle('X API')
-  //   .setDescription('The X API ')
-  //   .setVersion('1.0')
-  //   .addTag('X')
-  //   .build();
-
-  // const document = SwaggerModule.createDocument(app, config);
-  // SwaggerModule.setup('/swagger', app, document);
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -58,6 +58,9 @@ async function bootstrap() {
     defaultVersion: '1',
   });
 
-  await app.listen(3000, '0.0.0.0');
+  await app.listen({
+    port: Number(process.env.PORT) || 3000,
+    host: process.env.HOST || '0.0.0.0',
+  });
 }
 bootstrap();

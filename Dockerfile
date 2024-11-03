@@ -1,11 +1,14 @@
+# BASE IMAGE
 FROM node:22.5.1-alpine3.20 as base
 
 ENV DIR /app
 WORKDIR $DIR
 
-COPY . .
+COPY package*.json ./
 
 RUN npm install
+
+COPY . .
 
 # DEVELOPMENT
 FROM base AS dev
@@ -16,26 +19,24 @@ EXPOSE $PORT
 CMD ["npm", "run", "dev"]
 
 # BUILD
-# FROM base AS build
+FROM base AS build
+RUN npm run build && npm prune --production
 
-# RUN apk add --no-cache dumb-init
+# PRODUCTION
+FROM node:22.5.1-alpine3.20 as prod
 
-# RUN npm run build && npm prune --production
+ENV NODE_ENV=production
+ENV USER=node
 
-# # PRODUCTION
-# FROM node:22.5.1-alpine3.20 as prod
+WORKDIR /app
 
-# ENV NODE_ENV=production
-# ENV USER=node
+COPY --from=build /app/dist ./dist
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/package.json ./
 
-# WORKDIR /app
+RUN chown -R node:node /app 
+RUN apk add --no-cache dumb-init
 
-# COPY --from=build /app/package*.json ./
-# COPY --from=build /app/node_modules ./node_modules
-# COPY --from=build /app/dist ./dist
-
-# RUN apk add --no-cache dumb-init
-
-# USER $USER
-# EXPOSE $PORT
-# CMD ["dumb-init", "node", "dist/main.js"]
+USER $USER
+EXPOSE $PORT
+CMD ["dumb-init", "node", "dist/main.js"]

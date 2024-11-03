@@ -12,3 +12,16 @@ services:
       - .:/app
       - /app/node_modules
     command: npm run dev
+
+  app-prod: 
+    build:
+      context: .
+      target: prod
+    environment:
+      - NODE_ENV=production
+      - PORT=4000
+    ports:
+      - '4000:4000' 
+    volumes:
+      - ./database.sqlite:/app/database.sqlite
+    command: npm run start

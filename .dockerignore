@@ -19,10 +19,13 @@ dist/
 tests/
 *.spec.ts
 database/
+coverage/
 
 # Database
-database.sqlite
+# database.sqlite
 
 # Documentation
+docker-compose.yml
+jest.config.ts
+scripts/
 README.md
-
