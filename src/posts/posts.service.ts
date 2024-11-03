@@ -150,9 +150,11 @@ export class PostsService {
     byFollowing?: boolean,
     currentUser?: User,
   ) {
-    if (!byFollowing || !currentUser) return;
+    if (!byFollowing) return;
+    if (!currentUser) return query.andWhere('1 = 0');
+
     query
-      .leftJoin('user.followers', 'follower')
+      .innerJoin('user.followers', 'follower')
       .andWhere('follower.id = :userId', { userId: currentUser.id });
   }
 
