@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { SelectQueryBuilder, ObjectLiteral } from 'typeorm';
+
+import { SelectQueryBuilder, ObjectLiteral, Raw } from 'typeorm';
 
 interface PaginateOptions<T extends ObjectLiteral> {
   query: SelectQueryBuilder<T>;
@@ -38,6 +39,7 @@ export type Meta = { pagination: Pagination } | Pagination;
 export interface PaginatedResult<T> {
   data: T[];
   meta: Meta;
+  raw: any;
 }
 
 @Injectable()
@@ -98,6 +100,8 @@ export class PaginationService {
     this.validations(page, perPage);
     const skip = (page - 1) * perPage;
 
+    const raw = await query.skip(skip).take(perPage).getRawMany();
+
     const [data, total] = await query
       .skip(skip)
       .take(perPage)
@@ -115,6 +119,7 @@ export class PaginationService {
     return {
       data,
       meta,
+      raw,
     };
   }
 
