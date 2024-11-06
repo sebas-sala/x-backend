@@ -43,14 +43,39 @@ export class PostsService {
     const query = this.postRepository
       .createQueryBuilder('post')
       .leftJoinAndSelect('post.user', 'user')
-      .leftJoinAndSelect('user.profile', 'profile');
+      .leftJoinAndSelect('user.profile', 'profile')
+      .addSelect(
+        `CASE WHEN EXISTS (
+          SELECT 1
+          FROM follow
+          WHERE follow.followerId = :currentUserId
+          AND follow.followingId = user.id
+        ) THEN 1 ELSE 0 END`,
+        'user_isFollowed',
+      )
+      .setParameter('currentUserId', currentUser?.id);
 
     this.applyFilters(query, filters, currentUser);
 
-    return this.paginationService.paginate({
+    const { data, meta, raw } = await this.paginationService.paginate({
       query,
       ...pagination,
     });
+
+    const transformedData = data.map((post) => {
+      const rawItem = raw.find((item: any) => item.post_id === post.id);
+
+      if (rawItem) {
+        post.user.isFollowed = rawItem.user_isFollowed === 1;
+      }
+
+      return post;
+    });
+
+    return {
+      data: transformedData,
+      meta,
+    };
   }
 
   async findOne(id: string): Promise<Post> {
@@ -136,8 +161,8 @@ export class PostsService {
     currentUser?: User,
   ): void {
     this.byUsernameFilter(query, filters.by_username);
-    this.byBlockedUsersFilter(query, currentUser);
     this.byFollowingFilter(query, filters.by_following, currentUser);
+    // this.byBlockedUsersFilter(query, currentUser);
   }
 
   private byUsernameFilter(query: SelectQueryBuilder<Post>, username?: string) {
@@ -145,7 +170,7 @@ export class PostsService {
     query.andWhere('user.username = :username', { username });
   }
 
-  private byFollowingFilter(
+  private async byFollowingFilter(
     query: SelectQueryBuilder<Post>,
     byFollowing?: boolean,
     currentUser?: User,
@@ -154,8 +179,10 @@ export class PostsService {
     if (!currentUser) return query.andWhere('1 = 0');
 
     query
-      .innerJoin('user.followers', 'follower')
-      .andWhere('follower.id = :userId', { userId: currentUser.id });
+      .innerJoin('Follow', 'follow', 'follow.followerId = :userId')
+      .innerJoin('follow.following', 'following')
+      .andWhere('following.id = post.userId')
+      .setParameter('userId', currentUser.id);
   }
 
   private byBlockedUsersFilter(
