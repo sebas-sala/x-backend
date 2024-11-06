@@ -28,7 +28,7 @@ import { NonEmptyPayloadGuard } from '../common/guards/non-empty-payload.guard';
 import { PaginationDto } from '../common/dto/pagination.dto';
 import { ResponseService } from '../common/services/response.service';
 import { ThrottlerGuard } from '@nestjs/throttler';
-import { CreateFollowDto } from '../follows/dto/create-follow.dto';
+import { JwtAuthPublicGuard } from '../common/guards/jwt-auth-public.guard';
 
 @Controller('users')
 export class UsersController {
@@ -40,22 +40,31 @@ export class UsersController {
     private readonly responseService: ResponseService,
   ) {}
 
+  @UseGuards(JwtAuthPublicGuard)
   @Get()
-  async findAll(@Query() paginationDto: PaginationDto) {
+  async findAll(
+    @Query() paginationDto: PaginationDto,
+    @CurrentUser() currentUser: User,
+  ) {
     const { data, meta } = await this.usersService.findAll({
       paginationDto,
+      currentUser,
     });
 
     return this.responseService.successResponse({
-      data,
+      data: instanceToPlain(data, { groups: ['profile'] }),
       meta,
     });
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get(':id')
   async findOne(@Param('id') id: string) {
     const user = await this.usersService.findOneByIdOrFail({ id });
-    return instanceToPlain(user, { groups: ['private'] });
+
+    return this.responseService.successResponse({
+      data: instanceToPlain(user, { groups: ['private'] }),
+    });
   }
 
   @UseGuards(ThrottlerGuard)
@@ -96,18 +105,18 @@ export class UsersController {
     });
   }
 
-  @Get(':id/followers')
+  @Get(':username/followers')
   async getFollowers(
-    @Param('id') id: string,
+    @Param('username') username: string,
     @Query() paginationDto: PaginationDto,
   ) {
     const { data, meta } = await this.followService.getFollowers({
-      userId: id,
+      username,
       paginationDto,
     });
 
     return this.responseService.successResponse({
-      data,
+      data: instanceToPlain(data, { groups: ['profile'] }),
       meta,
     });
   }
@@ -154,11 +163,8 @@ export class UsersController {
 
   @UseGuards(JwtAuthGuard)
   @Post(':id/follow')
-  async follow(
-    @Body() createFollowDto: CreateFollowDto,
-    @CurrentUser() currentUser: User,
-  ) {
-    return await this.followService.create(createFollowDto, currentUser);
+  async follow(@Param('id') id: string, @CurrentUser() currentUser: User) {
+    return await this.followService.create(id, currentUser);
   }
 
   @UseGuards(JwtAuthGuard)
