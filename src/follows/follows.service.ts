@@ -3,7 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 
 import { Follow } from './entities/follow.entity';
@@ -60,17 +60,26 @@ export class FollowService {
   }
 
   async getFollowers({
-    userId,
+    username,
     paginationDto,
   }: {
-    userId: string;
+    username: string;
     paginationDto: PaginationDto;
   }): Promise<PaginatedResult<User>> {
+    const user = await this.usersService.findOneByUsernameOrFail({
+      username,
+    });
+
     const query = this.usersRepository
       .createQueryBuilder('user')
-      .innerJoin('user.followers', 'follow', 'follow.followingId = :userId', {
-        userId,
-      })
+      .innerJoin(
+        'user.followers',
+        'followers',
+        'followers.followingId = :userId',
+        {
+          userId: user.id,
+        },
+      )
       .leftJoinAndSelect('user.profile', 'profile');
 
     return this.paginationService.paginate({
@@ -79,12 +88,7 @@ export class FollowService {
     });
   }
 
-  async create(
-    createFollowDto: CreateFollowDto,
-    currentUser: User,
-  ): Promise<Follow> {
-    const { followingId } = createFollowDto;
-
+  async create(followingId: string, currentUser: User): Promise<Follow> {
     if (followingId === currentUser.id) {
       throw new ConflictException('You cannot follow yourself');
     }
