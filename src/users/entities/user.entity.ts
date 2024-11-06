@@ -56,11 +56,9 @@ export class User {
   @JoinColumn({ name: 'profileId' })
   profile: Profile;
 
-  @Expose({ groups: ['profile', 'admin'] })
   @OneToMany(() => BlockedUser, (blockedUser) => blockedUser.blockingUser)
   blockedUsers: BlockedUser[];
 
-  @Expose({ groups: ['profile', 'admin'] })
   @OneToMany(() => BlockedUser, (blockedUser) => blockedUser.blockedUser)
   blockedBy: BlockedUser[];
 
@@ -90,6 +88,12 @@ export class User {
 
   // @OneToMany(() => Bookmark, (bookmark) => bookmark.user)
   // bookmarks: Bookmark[];
+
+  @Expose({ groups: ['public', 'private', 'admin', 'profile'] })
+  isFollowed?: boolean;
+
+  @Expose({ groups: ['public', 'private', 'admin', 'profile'] })
+  user_isFollowed?: number;
 
   constructor(partial: Partial<User>) {
     Object.assign(this, partial);

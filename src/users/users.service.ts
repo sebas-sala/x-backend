@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { EntityManager, In, Repository } from 'typeorm';
+import { EntityManager, In, Repository, SelectQueryBuilder } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 
 import { User } from './entities/user.entity';
@@ -28,13 +28,36 @@ export class UsersService {
     private readonly authService: AuthService,
   ) {}
 
-  async findAll({ paginationDto }: { paginationDto: PaginationDto }) {
+  async findAll({
+    paginationDto,
+    currentUser,
+  }: {
+    paginationDto: PaginationDto;
+    currentUser?: User;
+  }) {
     const query = this.usersRepository.createQueryBuilder('user');
 
-    return this.paginationService.paginate({
+    this.addFollowStatus(query, currentUser);
+
+    const { data, meta, raw } = await this.paginationService.paginate({
       query,
       ...paginationDto,
     });
+
+    const transformedData = data.map((user) => {
+      const rawItem = raw.find((item: any) => item.user_id === user.id);
+
+      if (rawItem) {
+        user.isFollowed = rawItem.user_isFollowed === 1;
+      }
+
+      return user;
+    });
+
+    return {
+      data: transformedData,
+      meta,
+    };
   }
 
   async findOneById(
@@ -115,9 +138,7 @@ export class UsersService {
     return user;
   }
 
-  async create(
-    createUserDto: CreateUserDto,
-  ): Promise<User & { access_token: string }> {
+  async create(createUserDto: CreateUserDto) {
     const queryRunner = this.queryRunnerFactory.createQueryRunner();
 
     await queryRunner.connect();
@@ -177,6 +198,24 @@ export class UsersService {
       if (existingUser.email === email) {
         throw new ConflictException('Email already exists');
       }
+    }
+  }
+
+  private async addFollowStatus(
+    query: SelectQueryBuilder<User>,
+    currentUser?: User,
+  ): Promise<void> {
+    if (currentUser) {
+      const currentUserId = currentUser.id;
+
+      query
+        .addSelect(
+          `(SELECT COUNT(*) > 0 FROM follow WHERE followerId = :currentUserId AND followingId = "user"."id")`,
+          'user_isFollowed',
+        )
+        .setParameter('currentUserId', currentUserId);
+    } else {
+      query.addSelect('0', 'user_isFollowed');
     }
   }
 }
