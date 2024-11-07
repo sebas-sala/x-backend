@@ -3,7 +3,7 @@ import {
   ConflictException,
   NotFoundException,
 } from '@nestjs/common';
-import { DataSource, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 
 import { Like } from './entities/like.entity';
@@ -22,7 +22,6 @@ export class LikesService {
     private readonly postService: PostsService,
     private readonly commentService: CommentsService,
     private readonly notificationsService: NotificationsService,
-    private readonly dataSource: DataSource,
   ) {}
 
   async getPostLikes(postId: string): Promise<Like[]> {
@@ -71,7 +70,8 @@ export class LikesService {
       postId,
       currentUser.id,
     );
-    await this.likeRepository.delete(like);
+
+    await this.likeRepository.remove(like);
   }
 
   async likeComment(commentId: string, user: User): Promise<Like> {
