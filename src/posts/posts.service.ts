@@ -53,7 +53,23 @@ export class PostsService {
         ) THEN 1 ELSE 0 END`,
         'user_isFollowed',
       )
-      .setParameter('currentUserId', currentUser?.id);
+      .setParameter('currentUserId', currentUser?.id)
+      .addSelect(
+        `CASE WHEN EXISTS (
+          SELECT 1
+          FROM like
+          WHERE like.userId = :currentUserId
+          AND like.postId = post.id
+        ) THEN 1 ELSE 0 END`,
+        'isLiked',
+      )
+      .setParameter('currentUserId', currentUser?.id)
+      .addSelect(
+        `(SELECT COUNT(*)
+          FROM like
+          WHERE like.postId = post.id)`,
+        'likesCount',
+      );
 
     this.applyFilters(query, filters, currentUser);
 
@@ -67,6 +83,8 @@ export class PostsService {
 
       if (rawItem) {
         post.user.isFollowed = rawItem.user_isFollowed === 1;
+        post.isLiked = rawItem.isLiked === 1;
+        post.likesCount = rawItem.likesCount;
       }
 
       return post;

@@ -26,7 +26,6 @@ import { CreateCommentDto } from '../comments/dto/create-comment.dto';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { JwtAuthPublicGuard } from '../common/guards/jwt-auth-public.guard';
-import { ThrottlerGuard } from '@nestjs/throttler';
 
 @Controller('posts')
 export class PostsController {

@@ -34,4 +34,7 @@ export class Post {
 
   @OneToMany(() => Like, (like) => like.post)
   likes: Like[];
+
+  isLiked?: boolean;
+  likesCount?: number;
 }
