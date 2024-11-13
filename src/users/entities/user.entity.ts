@@ -51,7 +51,7 @@ export class User {
   @UpdateDateColumn({ update: true })
   updatedAt: Date;
 
-  @Expose({ groups: ['profile', 'admin'] })
+  @Expose()
   @OneToOne(() => Profile, (profile) => profile.user, { cascade: true })
   @JoinColumn({ name: 'profileId' })
   profile: Profile;
@@ -89,11 +89,14 @@ export class User {
   // @OneToMany(() => Bookmark, (bookmark) => bookmark.user)
   // bookmarks: Bookmark[];
 
-  @Expose({ groups: ['public', 'private', 'admin', 'profile'] })
+  @Expose({ groups: ['public', 'private', 'profile'] })
   isFollowed?: boolean;
 
-  @Expose({ groups: ['public', 'private', 'admin', 'profile'] })
-  user_isFollowed?: number;
+  @Expose({ groups: ['public', 'private', 'profile'] })
+  followersCount?: number;
+
+  @Expose({ groups: ['public', 'private', 'profile'] })
+  followingCount?: number;
 
   constructor(partial: Partial<User>) {
     Object.assign(this, partial);

@@ -8,6 +8,7 @@ import {
 } from 'typeorm';
 
 import { User } from '@/src/users/entities/user.entity';
+import { Expose } from 'class-transformer';
 
 @Entity()
 export class Profile {
@@ -17,9 +18,11 @@ export class Profile {
   @Column({ nullable: true })
   bio?: string;
 
+  @Expose({ groups: ['private'] })
   @Column({ nullable: true })
   location?: string;
 
+  @Expose({ groups: ['private'] })
   @Column({ nullable: true })
   birthdate?: Date;
 

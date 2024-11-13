@@ -12,6 +12,7 @@ import { FilterDto } from './dto/filter.dto';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { PaginationDto } from '../common/dto/pagination.dto';
+import { instanceToPlain, plainToClass } from 'class-transformer';
 
 @Injectable()
 export class PostsService {
@@ -96,14 +97,58 @@ export class PostsService {
     };
   }
 
-  async findOne(id: string): Promise<Post> {
-    const post = await this.postRepository.findOne({
-      where: { id },
-      relations: ['user', 'user.profile'],
-    });
+  async findOne({
+    id,
+    currentUser,
+  }: {
+    id: string;
+    currentUser?: User;
+  }): Promise<Post> {
+    console.log('currentUser', currentUser);
+
+    const query = this.postRepository
+      .createQueryBuilder('post')
+      .leftJoinAndSelect('post.user', 'user')
+      .leftJoinAndSelect('user.profile', 'profile')
+      .where('post.id = :id', { id })
+      .addSelect(
+        `CASE WHEN EXISTS (
+        SELECT 1
+        FROM follow
+        WHERE follow.followerId = :currentUserId
+        AND follow.followingId = user.id
+      ) THEN 1 ELSE 0 END`,
+        'isFollowed',
+      )
+      .setParameter('currentUserId', currentUser?.id)
+      .addSelect(
+        `CASE WHEN EXISTS (
+        SELECT 1
+        FROM like
+        WHERE like.userId = :currentUserId
+        AND like.postId = post.id
+      ) THEN 1 ELSE 0 END`,
+        'isLiked',
+      )
+      .addSelect(
+        `(SELECT COUNT(*)
+        FROM like
+        WHERE like.postId = post.id)`,
+        'likesCount',
+      );
+
+    const post = await query.getOne();
 
     if (!post) {
       throw new NotFoundException('Post not found');
+    }
+
+    const rawItem = await query.getRawOne();
+
+    if (rawItem) {
+      post.user.isFollowed = rawItem.isFollowed === 1;
+      post.isLiked = rawItem.isLiked === 1;
+      post.likesCount = rawItem.likesCount;
     }
 
     return post;

@@ -40,32 +40,62 @@ export class FollowService {
   ) {}
 
   async getFollowing({
-    userId,
+    username,
     paginationDto,
+    currentUser,
   }: {
-    userId: string;
+    username: string;
     paginationDto: PaginationDto;
-  }): Promise<PaginatedResult<User>> {
+    currentUser: User;
+  }) {
+    const user = await this.usersService.findOneByUsernameOrFail({
+      username,
+    });
+
     const query = this.usersRepository
       .createQueryBuilder('user')
-      .innerJoin('user.following', 'follow', 'follow.followerId = :userId', {
-        userId,
-      })
-      .leftJoinAndSelect('user.profile', 'profile');
+      .innerJoin('user.following', 'follow', 'follow.followerId = :userId')
+      .setParameters({ userId: user.id })
+      .leftJoinAndSelect('user.profile', 'profile')
+      .addSelect(
+        `CASE WHEN EXISTS (
+          SELECT 1
+          FROM follow
+          WHERE follow.followerId = :currentUserId
+          AND follow.followingId = user.id
+        ) THEN 1 ELSE 0 END`,
+        'isFollowed',
+      )
+      .setParameter('currentUserId', currentUser?.id);
 
-    return this.paginationService.paginate({
+    const { data, meta, raw } = await this.paginationService.paginate({
       query,
       ...paginationDto,
     });
+
+    for (const user of data) {
+      const rawItem = raw.find((item: any) => item.user_id === user.id);
+
+      if (rawItem) {
+        user.isFollowed = rawItem.isFollowed === 1;
+      }
+    }
+
+    return {
+      data,
+      meta,
+    };
   }
 
   async getFollowers({
     username,
     paginationDto,
+    currentUser,
   }: {
     username: string;
     paginationDto: PaginationDto;
-  }): Promise<PaginatedResult<User>> {
+    currentUser: User;
+  }) {
     const user = await this.usersService.findOneByUsernameOrFail({
       username,
     });
@@ -76,16 +106,37 @@ export class FollowService {
         'user.followers',
         'followers',
         'followers.followingId = :userId',
-        {
-          userId: user.id,
-        },
       )
-      .leftJoinAndSelect('user.profile', 'profile');
+      .setParameters({ userId: user.id })
+      .leftJoinAndSelect('user.profile', 'profile')
+      .addSelect(
+        `CASE WHEN EXISTS (
+          SELECT 1
+          FROM follow
+          WHERE follow.followerId = :currentUserId
+          AND follow.followingId = user.id
+        ) THEN 1 ELSE 0 END`,
+        'isFollowed',
+      )
+      .setParameter('currentUserId', currentUser?.id);
 
-    return this.paginationService.paginate({
+    const { data, meta, raw } = await this.paginationService.paginate({
       query,
       ...paginationDto,
     });
+
+    for (const user of data) {
+      const rawItem = raw.find((item: any) => item.user_id === user.id);
+
+      if (rawItem) {
+        user.isFollowed = rawItem.isFollowed === 1;
+      }
+    }
+
+    return {
+      data,
+      meta,
+    };
   }
 
   async create(followingId: string, currentUser: User): Promise<Follow> {

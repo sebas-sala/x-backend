@@ -11,6 +11,7 @@ import {
 import { User } from '@/src/users/entities/user.entity';
 import { Comment } from '@/src/comments/entities/comment.entity';
 import { Like } from '@/src/likes/entities/like.entity';
+import { Expose, Type } from 'class-transformer';
 
 @Entity()
 export class Post {
@@ -26,6 +27,8 @@ export class Post {
   @UpdateDateColumn()
   updatedAt: Date;
 
+  @Expose()
+  @Type(() => User)
   @ManyToOne(() => User, (user) => user.posts, { eager: true, nullable: false })
   user: User;
 

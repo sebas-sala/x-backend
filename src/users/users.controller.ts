@@ -68,11 +68,16 @@ export class UsersController {
   }
 
   @UseGuards(ThrottlerGuard)
+  @UseGuards(JwtAuthPublicGuard)
   @Get(':username/profile')
-  async getProfile(@Param('username') username: string) {
+  async getProfile(
+    @Param('username') username: string,
+    @CurrentUser() currentUser: User,
+  ) {
     const user = await this.usersService.findOneByUsernameOrFail({
       username,
       relations: ['profile'],
+      currentUser,
     });
 
     return this.responseService.successResponse({
@@ -105,14 +110,17 @@ export class UsersController {
     });
   }
 
+  @UseGuards(JwtAuthPublicGuard)
   @Get(':username/followers')
   async getFollowers(
     @Param('username') username: string,
     @Query() paginationDto: PaginationDto,
+    @CurrentUser() currentUser: User,
   ) {
     const { data, meta } = await this.followService.getFollowers({
       username,
       paginationDto,
+      currentUser,
     });
 
     return this.responseService.successResponse({
@@ -121,14 +129,22 @@ export class UsersController {
     });
   }
 
-  @Get(':id/following')
+  @UseGuards(JwtAuthPublicGuard)
+  @Get(':username/following')
   async getFollowing(
-    @Param('id') id: string,
+    @Param('username') id: string,
     @Query() paginationDto: PaginationDto,
+    @CurrentUser() currentUser: User,
   ) {
-    return await this.followService.getFollowing({
-      userId: id,
+    const { data, meta } = await this.followService.getFollowing({
+      username: id,
       paginationDto,
+      currentUser,
+    });
+
+    return this.responseService.successResponse({
+      data: instanceToPlain(data, { groups: ['profile'] }),
+      meta,
     });
   }
 

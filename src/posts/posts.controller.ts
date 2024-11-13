@@ -26,6 +26,7 @@ import { CreateCommentDto } from '../comments/dto/create-comment.dto';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { JwtAuthPublicGuard } from '../common/guards/jwt-auth-public.guard';
+import { instanceToPlain } from 'class-transformer';
 
 @Controller('posts')
 export class PostsController {
@@ -61,9 +62,14 @@ export class PostsController {
     return this.responseService.successResponse({ data, meta });
   }
 
+  @UseGuards(JwtAuthPublicGuard)
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.postsService.findOne(id);
+  async findOne(@Param('id') id: string, @CurrentUser() currentUser?: User) {
+    const post = await this.postsService.findOne({ id, currentUser });
+
+    return this.responseService.successResponse({
+      data: instanceToPlain(post, { groups: ['public'] }),
+    });
   }
 
   @UseGuards(JwtAuthGuard)

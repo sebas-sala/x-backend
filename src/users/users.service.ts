@@ -121,10 +121,12 @@ export class UsersService {
     username,
     relations,
     error,
+    currentUser,
   }: {
     username: string;
     relations?: string[];
     error?: string;
+    currentUser?: User;
   }): Promise<User> {
     const user = await this.usersRepository.findOne({
       where: { username },
@@ -134,6 +136,31 @@ export class UsersService {
     if (!user) {
       throw new NotFoundException(error || 'User not found');
     }
+
+    const raw = await this.usersRepository
+      .createQueryBuilder('user')
+      .where('user.username = :username', { username })
+      .leftJoinAndSelect('user.profile', 'profile')
+      .addSelect(
+        `(SELECT COUNT(*) FROM follow WHERE followingId = user.id)`,
+        'followers',
+      )
+      .addSelect(
+        `(SELECT COUNT(*) FROM follow WHERE followerId = user.id)`,
+        'following',
+      )
+      .addSelect(
+        `(SELECT COUNT(*) > 0 FROM follow WHERE followerId = :currentUserId AND followingId = user.id)`,
+        'isFollowed',
+      )
+      .setParameter('currentUserId', currentUser?.id)
+      .getRawOne();
+
+    user.followersCount = raw.followers;
+    user.followingCount = raw.following;
+    console.log('raw', raw);
+    console.log(currentUser);
+    user.isFollowed = raw.isFollowed === 1;
 
     return user;
   }
