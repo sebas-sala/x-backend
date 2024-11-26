@@ -10,6 +10,7 @@ import { PostsController } from './posts.controller';
 
 import { ResponseService } from '../common/services/response.service';
 import { PaginationService } from '../common/services/pagination.service';
+import { BookmarksModule } from '../bookmarks/bookmarks.module';
 
 @Module({
   controllers: [PostsController],
@@ -18,6 +19,7 @@ import { PaginationService } from '../common/services/pagination.service';
     TypeOrmModule.forFeature([Post]),
     forwardRef(() => CommentsModule),
     forwardRef(() => LikesModule),
+    BookmarksModule,
   ],
   exports: [TypeOrmModule, PostsService],
 })

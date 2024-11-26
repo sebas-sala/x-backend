@@ -27,6 +27,7 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { JwtAuthPublicGuard } from '../common/guards/jwt-auth-public.guard';
 import { instanceToPlain } from 'class-transformer';
+import { BookmarksService } from '../bookmarks/bookmarks.service';
 
 @Controller('posts')
 export class PostsController {
@@ -35,6 +36,7 @@ export class PostsController {
     private readonly likesService: LikesService,
     private readonly commentsService: CommentsService,
     private readonly responseService: ResponseService,
+    private readonly bookmarksService: BookmarksService,
   ) {}
 
   @UseGuards(JwtAuthGuard)
@@ -122,5 +124,17 @@ export class PostsController {
   @Delete(':id/likes')
   unlikePost(@Param('id') id: string, @CurrentUser() currentUser: User) {
     return this.likesService.unlikePost(id, currentUser);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post(':id/bookmarks')
+  bookmarkPost(@Param('id') id: string, @CurrentUser() currentUser: User) {
+    return this.bookmarksService.bookmarkPost(id, currentUser);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete(':id/bookmarks')
+  unbookmarkPost(@Param('id') id: string, @CurrentUser() currentUser: User) {
+    return this.bookmarksService.unbookmarkPost(id, currentUser);
   }
 }

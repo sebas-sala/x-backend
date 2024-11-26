@@ -20,6 +20,7 @@ import { Comment } from '@/src/comments/entities/comment.entity';
 import { Message } from '@/src/messages/entities/message.entity';
 import { BlockedUser } from '@/src/blocked-users/entities/blocked-user.entity';
 import { Notification } from '@/src/notifications/entities/notification.entity';
+import { Bookmark } from '@/src/bookmarks/entities/bookmark.entity';
 
 @Entity()
 export class User {
@@ -97,6 +98,9 @@ export class User {
 
   @Expose({ groups: ['public', 'private', 'profile'] })
   followingCount?: number;
+
+  @OneToMany(() => Bookmark, (bookmark) => bookmark.user)
+  bookmarks: Bookmark[];
 
   constructor(partial: Partial<User>) {
     Object.assign(this, partial);

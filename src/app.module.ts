@@ -18,6 +18,7 @@ import { LikesModule } from './likes/likes.module';
 import { ChatsModule } from './chats/chats.module';
 import { CommentsModule } from './comments/comments.module';
 import { MessagesModule } from './messages/messages.module';
+import { BookmarksModule } from './bookmarks/bookmarks.module';
 import { BlockedUsersModule } from './blocked-users/blocked-users.module';
 import { NotificationsModule } from './notifications/notifications.module';
 
@@ -55,6 +56,7 @@ import configuration from './config/configuration';
     BlockedUsersModule,
     NotificationsModule,
     ChatsModule,
+    BookmarksModule,
   ],
   controllers: [AppController],
   providers: [

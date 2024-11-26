@@ -19,4 +19,9 @@ export class FilterDto {
   @IsBoolean()
   @Type(() => Boolean)
   by_following?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  @Type(() => Boolean)
+  by_bookmarked?: boolean;
 }
