@@ -12,7 +12,6 @@ import { FilterDto } from './dto/filter.dto';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { PaginationDto } from '../common/dto/pagination.dto';
-import { instanceToPlain, plainToClass } from 'class-transformer';
 
 @Injectable()
 export class PostsService {
@@ -41,38 +40,16 @@ export class PostsService {
     pagination: PaginationDto;
     currentUser?: User;
   }) {
-    const query = this.postRepository
-      .createQueryBuilder('post')
-      .leftJoinAndSelect('post.user', 'user')
-      .leftJoinAndSelect('user.profile', 'profile')
-      .addSelect(
-        `CASE WHEN EXISTS (
-          SELECT 1
-          FROM follow
-          WHERE follow.followerId = :currentUserId
-          AND follow.followingId = user.id
-        ) THEN 1 ELSE 0 END`,
-        'user_isFollowed',
-      )
-      .setParameter('currentUserId', currentUser?.id)
-      .addSelect(
-        `CASE WHEN EXISTS (
-          SELECT 1
-          FROM like
-          WHERE like.userId = :currentUserId
-          AND like.postId = post.id
-        ) THEN 1 ELSE 0 END`,
-        'isLiked',
-      )
-      .setParameter('currentUserId', currentUser?.id)
-      .addSelect(
-        `(SELECT COUNT(*)
-          FROM like
-          WHERE like.postId = post.id)`,
-        'likesCount',
-      );
+    const query = this.postRepository.createQueryBuilder('post');
+
+    this.selectProfile(query);
+    this.selectLikesCount(query);
+    this.selectIsLiked(query, currentUser);
+    this.selectIsFollowed(query, currentUser);
+    this.selectIsBookmarked(query, currentUser);
 
     this.applyFilters(query, filters, currentUser);
+    this.byBlockedUsersFilter(query, currentUser);
 
     const { data, meta, raw } = await this.paginationService.paginate({
       query,
@@ -83,9 +60,10 @@ export class PostsService {
       const rawItem = raw.find((item: any) => item.post_id === post.id);
 
       if (rawItem) {
-        post.user.isFollowed = rawItem.user_isFollowed === 1;
+        post.user.isFollowed = rawItem.isFollowed === 1;
         post.isLiked = rawItem.isLiked === 1;
         post.likesCount = rawItem.likesCount;
+        post.isBookmarked = rawItem.isBookmarked === 1;
       }
 
       return post;
@@ -104,38 +82,17 @@ export class PostsService {
     id: string;
     currentUser?: User;
   }): Promise<Post> {
-    console.log('currentUser', currentUser);
-
     const query = this.postRepository
       .createQueryBuilder('post')
-      .leftJoinAndSelect('post.user', 'user')
-      .leftJoinAndSelect('user.profile', 'profile')
-      .where('post.id = :id', { id })
-      .addSelect(
-        `CASE WHEN EXISTS (
-        SELECT 1
-        FROM follow
-        WHERE follow.followerId = :currentUserId
-        AND follow.followingId = user.id
-      ) THEN 1 ELSE 0 END`,
-        'isFollowed',
-      )
-      .setParameter('currentUserId', currentUser?.id)
-      .addSelect(
-        `CASE WHEN EXISTS (
-        SELECT 1
-        FROM like
-        WHERE like.userId = :currentUserId
-        AND like.postId = post.id
-      ) THEN 1 ELSE 0 END`,
-        'isLiked',
-      )
-      .addSelect(
-        `(SELECT COUNT(*)
-        FROM like
-        WHERE like.postId = post.id)`,
-        'likesCount',
-      );
+      .where('post.id = :id', { id });
+
+    this.selectProfile(query);
+    this.selectLikesCount(query);
+    this.selectIsLiked(query, currentUser);
+    this.selectIsFollowed(query, currentUser);
+    this.selectIsBookmarked(query, currentUser);
+
+    this.byBlockedUsersFilter(query, currentUser);
 
     const post = await query.getOne();
 
@@ -149,6 +106,7 @@ export class PostsService {
       post.user.isFollowed = rawItem.isFollowed === 1;
       post.isLiked = rawItem.isLiked === 1;
       post.likesCount = rawItem.likesCount;
+      post.isBookmarked = rawItem.isBookmarked === 1;
     }
 
     return post;
@@ -225,12 +183,21 @@ export class PostsService {
   ): void {
     this.byUsernameFilter(query, filters.by_username);
     this.byFollowingFilter(query, filters.by_following, currentUser);
+    this.byBookmarked(query, filters.by_bookmarked);
     // this.byBlockedUsersFilter(query, currentUser);
   }
 
   private byUsernameFilter(query: SelectQueryBuilder<Post>, username?: string) {
     if (!username) return;
     query.andWhere('user.username = :username', { username });
+  }
+
+  private byBookmarked(
+    query: SelectQueryBuilder<Post>,
+    byBookmarked?: boolean,
+  ) {
+    if (!byBookmarked) return;
+    query.innerJoin('bookmark', 'bookmark', 'bookmark.postId = post.id');
   }
 
   private async byFollowingFilter(
@@ -253,18 +220,88 @@ export class PostsService {
     currentUser?: User,
   ) {
     if (!currentUser) return;
+
     query.andWhere((qb) => {
       const subQuery = qb
         .subQuery()
         .select('1')
         .from(BlockedUser, 'blockedUser')
-        .where('blockedUser.blockedUserId = :userId', {
-          userId: currentUser.id,
-        })
-        .andWhere('blockedUser.blockingUserId = user.id')
+        .where(
+          '(blockedUser.blockingUserId = :userId AND blockedUser.blockedUserId = user.id) OR (blockedUser.blockedUserId = :userId AND blockedUser.blockingUserId = user.id)',
+          { userId: currentUser.id },
+        )
         .getQuery();
 
       return `NOT EXISTS ${subQuery}`;
     });
+  }
+
+  private async selectProfile(query: SelectQueryBuilder<Post>) {
+    query
+      .leftJoinAndSelect('post.user', 'user')
+      .leftJoinAndSelect('user.profile', 'profile');
+  }
+
+  private async selectIsFollowed(
+    query: SelectQueryBuilder<Post>,
+    currentUser?: User,
+  ) {
+    if (!currentUser) return;
+
+    query.addSelect(
+      `CASE WHEN EXISTS (
+        SELECT 1
+        FROM follow
+        WHERE follow.followerId = :currentUserId
+        AND follow.followingId = user.id
+      ) THEN 1 ELSE 0 END`,
+      'isFollowed',
+    );
+    query.setParameter('currentUserId', currentUser.id);
+  }
+
+  private async selectIsLiked(
+    query: SelectQueryBuilder<Post>,
+    currentUser?: User,
+  ) {
+    if (!currentUser) return;
+
+    query.addSelect(
+      `CASE WHEN EXISTS (
+        SELECT 1
+        FROM like
+        WHERE like.userId = :currentUserId
+        AND like.postId = post.id
+      ) THEN 1 ELSE 0 END`,
+      'isLiked',
+    );
+    query.setParameter('currentUserId', currentUser.id);
+  }
+
+  private async selectIsBookmarked(
+    query: SelectQueryBuilder<Post>,
+    currentUser?: User,
+  ) {
+    if (!currentUser) return;
+
+    query.addSelect(
+      `CASE WHEN EXISTS (
+        SELECT 1
+        FROM bookmark
+        WHERE bookmark.userId = :currentUserId
+        AND bookmark.postId = post.id
+      ) THEN 1 ELSE 0 END`,
+      'isBookmarked',
+    );
+    query.setParameter('currentUserId', currentUser.id);
+  }
+
+  private async selectLikesCount(query: SelectQueryBuilder<Post>) {
+    query.addSelect(
+      `(SELECT COUNT(*)
+        FROM like
+        WHERE like.postId = post.id)`,
+      'likesCount',
+    );
   }
 }
