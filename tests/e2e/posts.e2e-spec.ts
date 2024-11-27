@@ -5,13 +5,11 @@ import { NestFastifyApplication } from '@nestjs/platform-fastify';
 import { User } from '@/src/users/entities/user.entity';
 import { Like } from '@/src/likes/entities/like.entity';
 import { Post } from '@/src/posts/entities/post.entity';
-import { Comment } from '@/src/comments/entities/comment.entity';
 
 import {
   UserFactory,
   PostFactory,
   LikeFactory,
-  CommentFactory,
   BlockedUserFactory,
 } from '../utils/factories';
 
@@ -30,7 +28,6 @@ describe('Posts API (e2e)', () => {
   let userFactory: UserFactory;
   let postFactory: PostFactory;
   let likeFactory: LikeFactory;
-  let commentFactory: CommentFactory;
   let blockedUserFactory: BlockedUserFactory;
 
   beforeAll(async () => {
@@ -43,7 +40,6 @@ describe('Posts API (e2e)', () => {
     userFactory = setup.userFactory;
     postFactory = setup.postFactory;
     likeFactory = setup.likeFactory;
-    commentFactory = setup.commentFactory;
     blockedUserFactory = setup.blockedUserFactory;
   });
 
@@ -240,99 +236,6 @@ describe('Posts API (e2e)', () => {
         url: '/posts/1',
         cookies: {
           __session: token,
-        },
-      });
-
-      expect(response.statusCode).toBe(404);
-      expect(JSON.parse(response.payload)).toMatchObject({
-        message: 'Post not found',
-        error: 'NotFoundException',
-        status: 404,
-      });
-    });
-  });
-
-  describe('GET /posts/:id/comments', () => {
-    it('should return a list of comments', async () => {
-      const post = await postFactory.createPostEntity({
-        userId: currentUser.id,
-      });
-      const comments = await Promise.all(
-        Array.from({ length: 3 }, async () => {
-          return await commentFactory.createPostCommentEntity({
-            postId: post.id,
-            userId: currentUser.id,
-          });
-        }),
-      );
-
-      const response = await app.inject({
-        method: 'GET',
-        url: `/posts/${post.id}/comments`,
-        cookies: {
-          __session: token,
-        },
-      });
-
-      expect(response.statusCode).toBe(200);
-      expect(
-        JSON.parse(response.payload)
-          .map((comment: Comment) => comment.id)
-          .sort(),
-      ).toEqual(comments.map((comment) => comment.id).sort());
-    });
-  });
-
-  describe('POST /posts/:id/comments', () => {
-    it('should create a comment', async () => {
-      const post = await postFactory.createPostEntity({
-        userId: currentUser.id,
-      });
-      const comment = CommentFactory.createCommentDto();
-
-      const response = await app.inject({
-        method: 'POST',
-        url: `/posts/${post.id}/comments`,
-        cookies: {
-          __session: token,
-        },
-        payload: comment,
-      });
-
-      expect(response.statusCode).toBe(201);
-      expect(JSON.parse(response.payload)).toMatchObject(comment);
-    });
-
-    it('should return 401 if the user is not authenticated', async () => {
-      const post = await postFactory.createPostEntity({
-        userId: currentUser.id,
-      });
-      const comment = {
-        content: 'This is a comment',
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: `/posts/${post.id}/comments`,
-        payload: comment,
-      });
-
-      expect(response.statusCode).toBe(401);
-      expect(JSON.parse(response.payload)).toMatchObject({
-        message: 'Unauthorized',
-        status: 401,
-      });
-    });
-
-    it('should return a 404 if the post does not exist', async () => {
-      const response = await app.inject({
-        method: 'POST',
-        url: '/posts/1/comments',
-        cookies: {
-          __session: token,
-        },
-        payload: {
-          content: 'This is a comment',
         },
       });
 

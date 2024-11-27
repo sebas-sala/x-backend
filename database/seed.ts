@@ -6,7 +6,6 @@ export const seed = async () => {
   // const {
   //   userRepository,
   //   postRepository,
-  //   commentRepository,
   //   likeRepository,
   //   followRepository,
   //   profileRepository,
@@ -18,7 +17,6 @@ export const seed = async () => {
     likeFactory,
     followFactory,
     profileFactory,
-    commentFactory,
   } = factories(dataSource);
 
   const users = await userFactory.createManyUserEntities(10);
@@ -45,9 +43,9 @@ export const seed = async () => {
 
   for (const post of posts) {
     for (let i = 0; i < 10; i++) {
-      await commentFactory.createPostCommentEntity({
+      await postFactory.createPostEntity({
         userId: users[i].id,
-        postId: post.id,
+        parentId: post.id,
       });
       await likeFactory.createPostLike(post.id, users[i].id);
     }

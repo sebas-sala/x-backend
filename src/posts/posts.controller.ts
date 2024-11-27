@@ -14,14 +14,12 @@ import { User } from '../users/entities/user.entity';
 
 import { PostsService } from './posts.service';
 import { LikesService } from '../likes/likes.service';
-import { CommentsService } from '../comments/comments.service';
 import { ResponseService } from '../common/services/response.service';
 
 import { FilterDto } from './dto/filter.dto';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { PaginationDto } from '@common/dto/pagination.dto';
-import { CreateCommentDto } from '../comments/dto/create-comment.dto';
 
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
@@ -34,7 +32,6 @@ export class PostsController {
   constructor(
     private readonly postsService: PostsService,
     private readonly likesService: LikesService,
-    private readonly commentsService: CommentsService,
     private readonly responseService: ResponseService,
     private readonly bookmarksService: BookmarksService,
   ) {}
@@ -88,25 +85,6 @@ export class PostsController {
   @Delete(':id')
   remove(@Param('id') id: string, @CurrentUser() currentUser: User) {
     return this.postsService.remove(id, currentUser);
-  }
-
-  @Get(':id/comments')
-  getComments(@Param('id') id: string) {
-    return this.commentsService.findAll(id, 'post');
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Post(':id/comments')
-  createComment(
-    @Param('id') id: string,
-    @Body() createCommentDto: CreateCommentDto,
-    @CurrentUser() currentUser: User,
-  ) {
-    return this.commentsService.createPostComment(
-      id,
-      createCommentDto,
-      currentUser,
-    );
   }
 
   @Get(':id/likes')

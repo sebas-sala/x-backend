@@ -8,7 +8,6 @@ import {
   FollowFactory,
   MessageFactory,
   ProfileFactory,
-  CommentFactory,
   BlockedUserFactory,
   ChatFactory,
 } from './factories';
@@ -21,7 +20,6 @@ export async function initializeFactories(dataSource?: DataSource) {
   const followFactory = new FollowFactory(dataSource);
   const messageFactory = new MessageFactory(dataSource);
   const profileFactory = new ProfileFactory(dataSource);
-  const commentFactory = new CommentFactory(dataSource);
   const blockedUserFactory = new BlockedUserFactory(dataSource);
   const chatFactory = new ChatFactory(dataSource);
 
@@ -33,7 +31,6 @@ export async function initializeFactories(dataSource?: DataSource) {
     followFactory,
     messageFactory,
     profileFactory,
-    commentFactory,
     blockedUserFactory,
   };
 }

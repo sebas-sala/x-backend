@@ -10,7 +10,6 @@ import { Like } from './entities/like.entity';
 import { User } from '../users/entities/user.entity';
 
 import { PostsService } from '../posts/posts.service';
-import { CommentsService } from '../comments/comments.service';
 import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
@@ -20,19 +19,12 @@ export class LikesService {
     private readonly likeRepository: Repository<Like>,
 
     private readonly postService: PostsService,
-    private readonly commentService: CommentsService,
     private readonly notificationsService: NotificationsService,
   ) {}
 
   async getPostLikes(postId: string): Promise<Like[]> {
     return await this.likeRepository.find({
       where: { post: { id: postId } },
-    });
-  }
-
-  async getCommentLikes(commentId: string): Promise<Like[]> {
-    return await this.likeRepository.find({
-      where: { comment: { id: commentId } },
     });
   }
 
@@ -72,28 +64,6 @@ export class LikesService {
     );
 
     await this.likeRepository.remove(like);
-  }
-
-  async likeComment(commentId: string, user: User): Promise<Like> {
-    await this.commentService.findCommentByIdOrFail(commentId);
-    await this.validateLikeDoesNotExists('comment', commentId, user.id);
-
-    const like = this.likeRepository.create({
-      comment: { id: commentId },
-      user: { id: user.id },
-    });
-    return await this.likeRepository.save(like);
-  }
-
-  async unlikeComment(commentId: string, user: User): Promise<void> {
-    await this.commentService.findCommentByIdOrFail(commentId);
-
-    const like = await this.findLikeByEntityAndUserOrFail(
-      'comment',
-      commentId,
-      user.id,
-    );
-    await this.likeRepository.delete(like);
   }
 
   async findLikeByEntityAndUser(

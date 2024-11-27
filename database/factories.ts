@@ -5,7 +5,6 @@ import {
   AuthFactory,
   BlockedUserFactory,
   ChatFactory,
-  CommentFactory,
   LikeFactory,
   MessageFactory,
   PostFactory,
@@ -19,7 +18,6 @@ export function factories(dataSource: DataSource) {
   const likeFactory = new LikeFactory(dataSource);
   const postFactory = new PostFactory(dataSource);
   const followFactory = new FollowFactory(dataSource);
-  const commentFactory = new CommentFactory(dataSource);
   const messageFactory = new MessageFactory(dataSource);
   const profileFactory = new ProfileFactory(dataSource);
   const blockedUserFactory = new BlockedUserFactory(dataSource);
@@ -30,7 +28,6 @@ export function factories(dataSource: DataSource) {
     likeFactory,
     postFactory,
     followFactory,
-    commentFactory,
     messageFactory,
     profileFactory,
     blockedUserFactory,

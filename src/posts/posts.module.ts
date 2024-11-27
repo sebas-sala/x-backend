@@ -2,7 +2,6 @@ import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { LikesModule } from '../likes/likes.module';
-import { CommentsModule } from '../comments/comments.module';
 
 import { Post } from './entities/post.entity';
 import { PostsService } from './posts.service';
@@ -17,7 +16,6 @@ import { BookmarksModule } from '../bookmarks/bookmarks.module';
   providers: [PostsService, ResponseService, PaginationService],
   imports: [
     TypeOrmModule.forFeature([Post]),
-    forwardRef(() => CommentsModule),
     forwardRef(() => LikesModule),
     BookmarksModule,
   ],

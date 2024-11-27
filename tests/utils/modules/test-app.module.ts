@@ -12,7 +12,6 @@ import { LikesModule } from '@/src/likes/likes.module';
 import { ChatsModule } from '@/src/chats/chats.module';
 import { FollowsModule } from '@/src/follows/follows.module';
 import { MessagesModule } from '@/src/messages/messages.module';
-import { CommentsModule } from '@/src/comments/comments.module';
 import { ProfilesModule } from '@/src/profiles/profiles.module';
 import { BlockedUsersModule } from '@/src/blocked-users/blocked-users.module';
 import { NotificationsModule } from '@/src/notifications/notifications.module';
@@ -30,7 +29,6 @@ import { HttpExceptionFilter } from '@/src/common/filters/http-exception.filter'
     ChatsModule,
     FollowsModule,
     ProfilesModule,
-    CommentsModule,
     MessagesModule,
     BlockedUsersModule,
     NotificationsModule,

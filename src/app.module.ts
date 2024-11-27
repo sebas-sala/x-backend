@@ -16,7 +16,6 @@ import { ProfilesModule } from './profiles/profiles.module';
 import { PostsModule } from './posts/posts.module';
 import { LikesModule } from './likes/likes.module';
 import { ChatsModule } from './chats/chats.module';
-import { CommentsModule } from './comments/comments.module';
 import { MessagesModule } from './messages/messages.module';
 import { BookmarksModule } from './bookmarks/bookmarks.module';
 import { BlockedUsersModule } from './blocked-users/blocked-users.module';
@@ -51,7 +50,6 @@ import configuration from './config/configuration';
     LikesModule,
     FollowsModule,
     ProfilesModule,
-    CommentsModule,
     MessagesModule,
     BlockedUsersModule,
     NotificationsModule,
