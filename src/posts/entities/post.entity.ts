@@ -7,11 +7,10 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { Expose, Type } from 'class-transformer';
 
 import { User } from '@/src/users/entities/user.entity';
-import { Comment } from '@/src/comments/entities/comment.entity';
 import { Like } from '@/src/likes/entities/like.entity';
-import { Expose, Type } from 'class-transformer';
 import { Bookmark } from '@/src/bookmarks/entities/bookmark.entity';
 
 @Entity()
@@ -21,6 +20,9 @@ export class Post {
 
   @Column()
   content: string;
+
+  @Column({ default: false })
+  isReply: boolean;
 
   @CreateDateColumn()
   createdAt: Date;
@@ -33,8 +35,15 @@ export class Post {
   @ManyToOne(() => User, (user) => user.posts, { eager: true, nullable: false })
   user: User;
 
-  @OneToMany(() => Comment, (comment) => comment.post)
-  comments: Comment[];
+  @ManyToOne(() => Post, (post) => post.replies, {
+    nullable: true,
+  })
+  parent: Post;
+
+  @OneToMany(() => Post, (post) => post.parent, {
+    nullable: true,
+  })
+  replies: Post[];
 
   @OneToMany(() => Like, (like) => like.post)
   likes: Like[];

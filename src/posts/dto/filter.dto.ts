@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { IsBoolean, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsOptional, IsString, IsUUID } from 'class-validator';
 
 export class FilterDto {
   @IsOptional()
@@ -11,7 +11,7 @@ export class FilterDto {
   by_username?: string;
 
   @IsOptional()
-  @IsString()
+  @IsBoolean()
   @Type(() => Boolean)
   by_like?: boolean;
 
@@ -24,4 +24,13 @@ export class FilterDto {
   @IsBoolean()
   @Type(() => Boolean)
   by_bookmarked?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  @Type(() => Boolean)
+  by_reply?: boolean;
+
+  @IsOptional()
+  @IsUUID()
+  by_parent?: string;
 }

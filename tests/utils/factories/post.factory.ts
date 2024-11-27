@@ -7,6 +7,7 @@ import { Post } from '@/src/posts/entities/post.entity';
 interface CreatePost {
   content: string;
   userId: string;
+  parentId?: string;
 }
 
 export default class PostFactory {
@@ -25,6 +26,7 @@ export default class PostFactory {
   async createPostEntity({
     content,
     userId,
+    parentId,
   }: Partial<CreatePost> = {}): Promise<Post> {
     if (!this.dataSource) {
       throw new Error('DataSource is required to create a Post entity.');
@@ -38,10 +40,21 @@ export default class PostFactory {
     try {
       const postsRepository = this.dataSource.getRepository(Post);
 
-      const createdPost = postsRepository.create({
-        ...createPostDto,
-        user: { id: userId },
+      const parentPost = await postsRepository.findOneBy({
+        id: parentId,
       });
+
+      const createdPost = parentPost
+        ? postsRepository.create({
+            ...createPostDto,
+            user: { id: userId },
+            parent: parentPost,
+            isReply: true,
+          })
+        : postsRepository.create({
+            ...createPostDto,
+            user: { id: userId },
+          });
 
       return await postsRepository.save(createdPost);
     } catch (error) {

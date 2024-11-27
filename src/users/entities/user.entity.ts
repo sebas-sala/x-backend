@@ -16,7 +16,6 @@ import { Like } from '@/src/likes/entities/like.entity';
 import { Chat } from '@/src/chats/entities/chat.entity';
 import { Follow } from '@/src/follows/entities/follow.entity';
 import { Profile } from '@/src/profiles/entities/profile.entity';
-import { Comment } from '@/src/comments/entities/comment.entity';
 import { Message } from '@/src/messages/entities/message.entity';
 import { BlockedUser } from '@/src/blocked-users/entities/blocked-user.entity';
 import { Notification } from '@/src/notifications/entities/notification.entity';
@@ -72,8 +71,8 @@ export class User {
   @OneToMany(() => Post, (post) => post.user)
   posts: Post[];
 
-  @OneToMany(() => Comment, (comment) => comment.user)
-  comments: Comment[];
+  @OneToMany(() => Post, (post) => post.user)
+  replies: Post[];
 
   @OneToMany(() => Like, (like) => like.user)
   likes: Like[];
