@@ -23,9 +23,17 @@ export class PostsService {
   ) {}
 
   async create(createPostDto: CreatePostDto, currentUser: User) {
+    let parent: Post | undefined;
+
+    if (createPostDto.parentId) {
+      parent = (await this.findPostById(createPostDto.parentId)) || undefined;
+    }
+
     const post = this.postRepository.create({
       ...createPostDto,
       user: { id: currentUser.id },
+      parent,
+      isReply: !!parent,
     });
 
     return await this.postRepository.save(post);
@@ -49,7 +57,6 @@ export class PostsService {
     this.selectIsBookmarked(query, currentUser);
 
     this.applyFilters(query, filters, currentUser);
-    this.byBlockedUsersFilter(query, currentUser);
 
     const { data, meta, raw } = await this.paginationService.paginate({
       query,
@@ -167,15 +174,6 @@ export class PostsService {
     return post;
   }
 
-  private async executeQuery(
-    query: SelectQueryBuilder<Post>,
-    limit: number,
-    skip: number,
-  ) {
-    const [data, total] = await query.skip(skip).take(limit).getManyAndCount();
-    return { data, total };
-  }
-
   private applyFilters(
     query: SelectQueryBuilder<Post>,
     filters: FilterDto,
@@ -183,8 +181,10 @@ export class PostsService {
   ): void {
     this.byUsernameFilter(query, filters.by_username);
     this.byFollowingFilter(query, filters.by_following, currentUser);
-    this.byBookmarked(query, filters.by_bookmarked);
-    // this.byBlockedUsersFilter(query, currentUser);
+    this.byBookmarked(query, filters.by_bookmarked, currentUser);
+    this.byLikeFilter(query, filters.by_like, currentUser);
+    this.byBlockedUsersFilter(query, currentUser);
+    this.byParentFilter(query, filters.by_parent);
   }
 
   private byUsernameFilter(query: SelectQueryBuilder<Post>, username?: string) {
@@ -192,12 +192,33 @@ export class PostsService {
     query.andWhere('user.username = :username', { username });
   }
 
+  private byParentFilter(query: SelectQueryBuilder<Post>, parentId?: string) {
+    if (!parentId) return;
+    query.andWhere('post.parentId = :parentId', { parentId });
+  }
+
+  private byLikeFilter(
+    query: SelectQueryBuilder<Post>,
+    byLike?: boolean,
+    currentUser?: User,
+  ) {
+    if (!byLike) return;
+    query
+      .innerJoin('like', 'like', 'like.postId = post.id')
+      .andWhere('like.userId = :userId')
+      .setParameter('userId', currentUser?.id);
+  }
+
   private byBookmarked(
     query: SelectQueryBuilder<Post>,
     byBookmarked?: boolean,
+    currentUser?: User,
   ) {
     if (!byBookmarked) return;
-    query.innerJoin('bookmark', 'bookmark', 'bookmark.postId = post.id');
+    query
+      .innerJoin('bookmark', 'bookmark', 'bookmark.postId = post.id')
+      .andWhere('bookmark.userId = :userId')
+      .setParameter('userId', currentUser?.id);
   }
 
   private async byFollowingFilter(
