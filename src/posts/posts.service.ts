@@ -242,19 +242,15 @@ export class PostsService {
   ) {
     if (!currentUser) return;
 
-    query.andWhere((qb) => {
-      const subQuery = qb
-        .subQuery()
-        .select('1')
-        .from(BlockedUser, 'blockedUser')
-        .where(
-          '(blockedUser.blockingUserId = :userId AND blockedUser.blockedUserId = user.id) OR (blockedUser.blockedUserId = :userId AND blockedUser.blockingUserId = user.id)',
-          { userId: currentUser.id },
-        )
-        .getQuery();
-
-      return `NOT EXISTS ${subQuery}`;
-    });
+    query.andWhere(
+      `NOT EXISTS (
+        SELECT 1
+        FROM blocked_user
+        WHERE (blocked_user.blockingUserId = :userId AND blocked_user.blockedUserId = user.id)
+        OR (blocked_user.blockedUserId = :userId AND blocked_user.blockingUserId = user.id)
+      )`,
+      { userId: currentUser.id },
+    );
   }
 
   private async selectProfile(query: SelectQueryBuilder<Post>) {

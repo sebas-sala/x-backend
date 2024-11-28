@@ -3,7 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { In, Repository } from 'typeorm';
+import { In, Repository, SelectQueryBuilder } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 
 import { Follow } from './entities/follow.entity';
@@ -56,17 +56,11 @@ export class FollowService {
       .createQueryBuilder('user')
       .innerJoin('user.following', 'follow', 'follow.followerId = :userId')
       .setParameters({ userId: user.id })
-      .leftJoinAndSelect('user.profile', 'profile')
-      .addSelect(
-        `CASE WHEN EXISTS (
-          SELECT 1
-          FROM follow
-          WHERE follow.followerId = :currentUserId
-          AND follow.followingId = user.id
-        ) THEN 1 ELSE 0 END`,
-        'isFollowed',
-      )
-      .setParameter('currentUserId', currentUser?.id);
+      .leftJoinAndSelect('user.profile', 'profile');
+
+    this.selectIsFollowed(query, currentUser);
+
+    this.applyFilters(query, currentUser);
 
     const { data, meta, raw } = await this.paginationService.paginate({
       query,
@@ -228,5 +222,40 @@ export class FollowService {
       follower: { id: followerId },
       following: { id: followingId },
     });
+  }
+
+  private async selectIsFollowed(
+    query: SelectQueryBuilder<User>,
+    currentUser?: User,
+  ): Promise<void> {
+    if (!currentUser) return;
+    query
+      .addSelect(
+        `CASE WHEN EXISTS (
+        SELECT 1
+        FROM follow
+        WHERE follow.followerId = :currentUserId
+        AND follow.followingId = user.id
+      ) THEN 1 ELSE 0 END`,
+        'isFollowed',
+      )
+      .setParameter('currentUserId', currentUser.id);
+  }
+
+  private async applyFilters(
+    query: SelectQueryBuilder<User>,
+    currentUser?: User,
+  ): Promise<void> {
+    if (!currentUser) return;
+
+    query.andWhere(
+      `NOT EXISTS (
+      SELECT 1
+      FROM blocked_user
+      WHERE (blocked_user.blockingUserId = :userId AND blocked_user.blockedUserId = user.id)
+        OR (blocked_user.blockedUserId = :userId AND blocked_user.blockingUserId = user.id)
+      )`,
+      { userId: currentUser.id },
+    );
   }
 }

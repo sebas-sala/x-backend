@@ -37,7 +37,8 @@ export class UsersService {
   }) {
     const query = this.usersRepository.createQueryBuilder('user');
 
-    this.addFollowStatus(query, currentUser);
+    this.applyFilters(query, currentUser);
+    this.selectFollowStatus(query, currentUser);
 
     const { data, meta, raw } = await this.paginationService.paginate({
       query,
@@ -137,30 +138,20 @@ export class UsersService {
       throw new NotFoundException(error || 'User not found');
     }
 
-    const raw = await this.usersRepository
+    const raw = this.usersRepository
       .createQueryBuilder('user')
       .where('user.username = :username', { username })
-      .leftJoinAndSelect('user.profile', 'profile')
-      .addSelect(
-        `(SELECT COUNT(*) FROM follow WHERE followingId = user.id)`,
-        'followers',
-      )
-      .addSelect(
-        `(SELECT COUNT(*) FROM follow WHERE followerId = user.id)`,
-        'following',
-      )
-      .addSelect(
-        `(SELECT COUNT(*) > 0 FROM follow WHERE followerId = :currentUserId AND followingId = user.id)`,
-        'isFollowed',
-      )
-      .setParameter('currentUserId', currentUser?.id)
-      .getRawOne();
+      .leftJoinAndSelect('user.profile', 'profile');
 
-    user.followersCount = raw.followers;
-    user.followingCount = raw.following;
-    console.log('raw', raw);
-    console.log(currentUser);
-    user.isFollowed = raw.isFollowed === 1;
+    this.selectFollowCounts(raw);
+    this.selectIsFollowed(raw, currentUser);
+
+    const rawUser = await raw.getRawOne();
+
+    user.followersCount = rawUser.followers;
+    user.followingCount = rawUser.following;
+
+    user.isFollowed = rawUser.isFollowed === 1;
 
     return user;
   }
@@ -228,7 +219,7 @@ export class UsersService {
     }
   }
 
-  private async addFollowStatus(
+  private async selectFollowStatus(
     query: SelectQueryBuilder<User>,
     currentUser?: User,
   ): Promise<void> {
@@ -244,5 +235,71 @@ export class UsersService {
     } else {
       query.addSelect('0', 'user_isFollowed');
     }
+  }
+
+  private async selectFollowCounts(
+    query: SelectQueryBuilder<User>,
+  ): Promise<void> {
+    query.addSelect(`
+      (
+        SELECT 
+          COUNT(*) FILTER (WHERE followingId = user.id AND followerId NOT IN (
+            SELECT blockedUserId 
+            FROM blocked_user 
+            WHERE blockingUserId = user.id
+          )) 
+        FROM follow
+      ) AS followers,
+      (
+        SELECT 
+          COUNT(*) FILTER (WHERE followerId = user.id AND followingId NOT IN (
+            SELECT blockedUserId 
+            FROM blocked_user 
+            WHERE blockingUserId = user.id
+          )) 
+        FROM follow
+      ) AS following
+    `);
+  }
+
+  private async selectIsFollowed(
+    query: SelectQueryBuilder<User>,
+    currentUser?: User,
+  ): Promise<void> {
+    if (currentUser) {
+      query
+        .addSelect(
+          `(SELECT COUNT(*) > 0 FROM follow WHERE followerId = :currentUserId AND followingId = user.id)`,
+          'isFollowed',
+        )
+        .setParameter('currentUserId', currentUser.id);
+    } else {
+      query.addSelect('0', 'isFollowed');
+    }
+  }
+
+  private async applyFilters(
+    query: SelectQueryBuilder<User>,
+    currentUser?: User,
+  ): Promise<void> {
+    await this.filterByBlockedUsers(query, currentUser);
+  }
+
+  private async filterByBlockedUsers(
+    query: SelectQueryBuilder<User>,
+    currentUser?: User,
+  ): Promise<void> {
+    if (!currentUser) return;
+
+    query
+      .andWhere(
+        `NOT EXISTS (
+        SELECT 1
+        FROM blocked_user
+        WHERE blockingUserId = :currentUserId
+        AND blockedUserId = user.id
+      )`,
+      )
+      .setParameter('currentUserId', currentUser.id);
   }
 }
