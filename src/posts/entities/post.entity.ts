@@ -1,7 +1,7 @@
 import {
+  Entity,
   Column,
   CreateDateColumn,
-  Entity,
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
@@ -11,6 +11,7 @@ import { Expose, Type } from 'class-transformer';
 
 import { User } from '@/src/users/entities/user.entity';
 import { Like } from '@/src/likes/entities/like.entity';
+import { View } from '@/src/views/entities/view.entity';
 import { Bookmark } from '@/src/bookmarks/entities/bookmark.entity';
 
 @Entity()
@@ -48,10 +49,15 @@ export class Post {
   @OneToMany(() => Like, (like) => like.post)
   likes: Like[];
 
+  @OneToMany(() => View, (view) => view.post)
+  views: View[];
+
   @OneToMany(() => Bookmark, (bookmark) => bookmark.post)
   bookmarks: Bookmark[];
 
   isLiked?: boolean;
   isBookmarked?: boolean;
   likesCount?: number;
+  isViewed?: boolean;
+  viewsCount?: number;
 }

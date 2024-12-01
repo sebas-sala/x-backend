@@ -9,6 +9,8 @@ export type NotificationType = (typeof NotificationTypes)[number];
 export type NotificationPriority = (typeof NotificationPriorities)[number];
 
 export interface NotificationDto {
+  id?: string;
+  createdAt?: Date;
   title: string;
   sender: string;
   message: string;

@@ -1,6 +1,12 @@
 import { Cron } from '@nestjs/schedule';
-import { Repository } from 'typeorm';
-import { Injectable } from '@nestjs/common';
+import { In, Repository } from 'typeorm';
+import {
+  ConsoleLogger,
+  forwardRef,
+  Inject,
+  Injectable,
+  Logger,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 
 import {
@@ -16,13 +22,14 @@ import {
   NotificationType,
 } from './interfaces/notification-dto';
 import { CreateNotificationDto } from './dto/create-notification.dto';
+import { PaginationService } from '../common/services/pagination.service';
 
 @Injectable()
 export class NotificationsService {
   private readonly MAX_BATCH_SIZE = 200;
 
   private readonly priorities = {
-    like: 'low',
+    like: 'high',
     follow: 'low',
     message: 'high',
     comment: 'medium',
@@ -49,9 +56,26 @@ export class NotificationsService {
     @InjectRepository(Notification)
     private readonly notificationRepository: Repository<Notification>,
 
-    private notificationGateway: NotificationsGateway,
     private readonly usersService: UsersService,
+    private readonly paginationService: PaginationService,
+
+    @Inject(forwardRef(() => NotificationsGateway))
+    private notificationGateway: NotificationsGateway,
   ) {}
+
+  private readonly logger = new Logger(NotificationsService.name);
+
+  async findAll(userId: string) {
+    const notifications = this.notificationRepository
+      .createQueryBuilder('notification')
+      .leftJoinAndSelect('notification.receivers', 'receivers')
+      .leftJoinAndSelect('notification.sender', 'sender')
+      .where('receivers.id = :userId', { userId });
+
+    return this.paginationService.paginate({
+      query: notifications,
+    });
+  }
 
   async create(
     createNotificationDto: CreateNotificationDto,
@@ -67,6 +91,31 @@ export class NotificationsService {
       receivers: users,
     });
     return await this.notificationRepository.save(notification);
+  }
+
+  async updateSent(notification: NotificationDto) {
+    if (notification.sender === 'system') {
+      for (const receiver of notification.receivers) {
+        const notificationsToUpdate = await this.notificationRepository.find({
+          where: {
+            type: notification.type,
+            receivers: { id: receiver },
+          },
+        });
+
+        const notificationIds = notificationsToUpdate.map((notif) => notif.id);
+
+        await this.notificationRepository.update(
+          { id: In(notificationIds) },
+          { sent: true },
+        );
+      }
+    } else {
+      await this.notificationRepository.update(
+        { id: notification.id },
+        { sent: true },
+      );
+    }
   }
 
   @Cron('*/45 * * * * *')
@@ -87,14 +136,13 @@ export class NotificationsService {
   private async handleNotifications(priority: string) {
     const notificationTypes = this.getNotificationTypesByPriority(priority);
 
-    for (const type of notificationTypes) {
-      try {
+    try {
+      for (const type of notificationTypes) {
         await this.processNotifications(type, priority);
-      } catch (error) {
-        // console.error(
-        //   `Error processing ${type} notifications: ${error.message}`,
-        // );
       }
+    } catch (error) {
+      this.logger.error(`Error processing notifications: ${error.message}`);
+      throw new Error(error.message);
     }
   }
 
@@ -110,9 +158,13 @@ export class NotificationsService {
       priority,
     );
 
-    for (const { receiverId, count } of groupedNotifications) {
+    if (groupedNotifications.length === 0) {
+      return;
+    }
+
+    for (const { receiverId, count, latestCreatedAt } of groupedNotifications) {
       if (count > 5) {
-        this.sendGroupedNotifications(receiverId, count, type);
+        this.sendGroupedNotifications(receiverId, count, type, latestCreatedAt);
       } else {
         await this.sendIndividualNotifications(receiverId, count, type);
       }
@@ -123,6 +175,7 @@ export class NotificationsService {
     receiverId: string,
     count: number,
     type: NotificationType,
+    latestCreatedAt: Date,
   ) {
     const notification = this.setNotificationDto({
       type: type,
@@ -130,7 +183,9 @@ export class NotificationsService {
       title: this.messageTitle.like,
       receivers: [receiverId],
       message: `${this.messagePrefix.like} ${count} ${type}s`,
+      createdAt: latestCreatedAt,
     });
+
     this.notificationGateway.sendNotification(receiverId, notification);
   }
 
@@ -150,11 +205,15 @@ export class NotificationsService {
 
     for (const notification of notifications) {
       const _notification = this.setNotificationDto({
+        id: notification.id,
         receivers: [receiverId],
         type: notification.type,
         title: notification.title,
         message: notification.message,
         sender: notification.sender?.username || 'system',
+        entityId: notification.entityId,
+        entityType: notification.entityType,
+        createdAt: notification.createdAt,
       });
 
       this.notificationGateway.sendNotification(receiverId, _notification);
@@ -164,17 +223,33 @@ export class NotificationsService {
   private async getGroupedNotifications(type: string, priority: string) {
     return await this.notificationRepository
       .createQueryBuilder('notification')
-      .select('notification.receiverId', 'receiverId')
+      .select('receiver.id', 'receiverId')
       .addSelect('COUNT(notification.id)', 'count')
-      .where('notification.read = false')
+      .addSelect('MAX(notification.createdAt)', 'latestCreatedAt')
+      .innerJoin('notification.receivers', 'receiver')
+      .where('notification.isRead = false')
       .andWhere('notification.type = :type', { type })
       .andWhere('notification.priority = :priority', { priority })
-      .groupBy('notification.receiverId')
+      .andWhere('notification.sent = false')
+      .groupBy('receiver.id')
       .limit(this.MAX_BATCH_SIZE)
       .getRawMany();
   }
 
+  async findNotificationByEntityAndUser(
+    type: NotificationType,
+    entityId: string,
+    userId: string,
+  ): Promise<Notification | null> {
+    return await this.notificationRepository.findOneBy({
+      entityId,
+      type,
+      receivers: { id: userId },
+    });
+  }
+
   setNotificationDto({
+    id,
     type,
     title,
     sender,
@@ -184,8 +259,10 @@ export class NotificationsService {
     link,
     entityId,
     entityType,
+    createdAt,
   }: CreateNotificationDto): NotificationDto {
     return {
+      id,
       type,
       title,
       sender,
@@ -195,6 +272,7 @@ export class NotificationsService {
       link,
       entityId,
       entityType,
+      createdAt,
     };
   }
 }

@@ -20,6 +20,7 @@ import { Message } from '@/src/messages/entities/message.entity';
 import { BlockedUser } from '@/src/blocked-users/entities/blocked-user.entity';
 import { Notification } from '@/src/notifications/entities/notification.entity';
 import { Bookmark } from '@/src/bookmarks/entities/bookmark.entity';
+import { View } from '@/src/views/entities/view.entity';
 
 @Entity()
 export class User {
@@ -70,6 +71,9 @@ export class User {
 
   @OneToMany(() => Post, (post) => post.user)
   posts: Post[];
+
+  @OneToMany(() => Post, (post) => post.user)
+  views: View[];
 
   @OneToMany(() => Post, (post) => post.user)
   replies: Post[];

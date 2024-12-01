@@ -43,20 +43,18 @@ export class PostsService {
     filters,
     pagination,
     currentUser,
+    orderBy,
   }: {
     filters: FilterDto;
     pagination: PaginationDto;
     currentUser?: User;
+    orderBy: string;
   }) {
     const query = this.postRepository.createQueryBuilder('post');
 
-    this.selectProfile(query);
-    this.selectLikesCount(query);
-    this.selectIsLiked(query, currentUser);
-    this.selectIsFollowed(query, currentUser);
-    this.selectIsBookmarked(query, currentUser);
-
+    this.applySelects(query, currentUser);
     this.applyFilters(query, filters, currentUser);
+    this.applyOrderBy(query, orderBy);
 
     const { data, meta, raw } = await this.paginationService.paginate({
       query,
@@ -71,6 +69,8 @@ export class PostsService {
         post.isLiked = rawItem.isLiked === 1;
         post.likesCount = rawItem.likesCount;
         post.isBookmarked = rawItem.isBookmarked === 1;
+        post.isViewed = rawItem.isViewed === 1;
+        post.viewsCount = rawItem.viewsCount;
       }
 
       return post;
@@ -93,11 +93,7 @@ export class PostsService {
       .createQueryBuilder('post')
       .where('post.id = :id', { id });
 
-    this.selectProfile(query);
-    this.selectLikesCount(query);
-    this.selectIsLiked(query, currentUser);
-    this.selectIsFollowed(query, currentUser);
-    this.selectIsBookmarked(query, currentUser);
+    this.applySelects(query, currentUser);
 
     this.byBlockedUsersFilter(query, currentUser);
 
@@ -114,6 +110,8 @@ export class PostsService {
       post.isLiked = rawItem.isLiked === 1;
       post.likesCount = rawItem.likesCount;
       post.isBookmarked = rawItem.isBookmarked === 1;
+      post.isViewed = rawItem.isViewed === 1;
+      post.viewsCount = rawItem.viewsCount;
     }
 
     return post;
@@ -185,6 +183,34 @@ export class PostsService {
     this.byLikeFilter(query, filters.by_like, currentUser);
     this.byBlockedUsersFilter(query, currentUser);
     this.byParentFilter(query, filters.by_parent);
+  }
+
+  private applyOrderBy(query: SelectQueryBuilder<Post>, orderBy: string) {
+    if (orderBy === 'trending') {
+      return this.orderByViewsCount(query);
+    }
+  }
+
+  private applySelects(query: SelectQueryBuilder<Post>, currentUser?: User) {
+    this.selectProfile(query);
+    this.selectLikesCount(query);
+    this.selectIsLiked(query, currentUser);
+    this.selectIsFollowed(query, currentUser);
+    this.selectIsBookmarked(query, currentUser);
+    this.selectIsViewed(query, currentUser);
+    this.selectViewsCount(query);
+  }
+
+  private async orderByViewsCount(query: SelectQueryBuilder<Post>) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    query
+      .leftJoin('post.views', 'postViews', 'postViews.createdAt >= :today')
+      .addSelect('COUNT(postViews.id)', 'viewsToday')
+      .groupBy('post.id')
+      .orderBy('viewsToday', 'DESC')
+      .setParameter('today', today);
   }
 
   private byUsernameFilter(query: SelectQueryBuilder<Post>, username?: string) {
@@ -277,6 +303,24 @@ export class PostsService {
     query.setParameter('currentUserId', currentUser.id);
   }
 
+  private async selectIsViewed(
+    query: SelectQueryBuilder<Post>,
+    currentUser?: User,
+  ) {
+    if (!currentUser) return;
+
+    query.addSelect(
+      `CASE WHEN EXISTS (
+        SELECT 1
+        FROM view
+        WHERE view.userId = :currentUserId
+        AND view.postId = post.id
+      ) THEN 1 ELSE 0 END`,
+      'isViewed',
+    );
+    query.setParameter('currentUserId', currentUser.id);
+  }
+
   private async selectIsLiked(
     query: SelectQueryBuilder<Post>,
     currentUser?: User,
@@ -319,6 +363,15 @@ export class PostsService {
         FROM like
         WHERE like.postId = post.id)`,
       'likesCount',
+    );
+  }
+
+  private async selectViewsCount(query: SelectQueryBuilder<Post>) {
+    query.addSelect(
+      `(SELECT COUNT(*)
+        FROM view
+        WHERE view.postId = post.id)`,
+      'viewsCount',
     );
   }
 }

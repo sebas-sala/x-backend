@@ -10,12 +10,13 @@ import { PostsController } from './posts.controller';
 import { ResponseService } from '../common/services/response.service';
 import { PaginationService } from '../common/services/pagination.service';
 import { BookmarksModule } from '../bookmarks/bookmarks.module';
+import { View } from '../views/entities/view.entity';
 
 @Module({
   controllers: [PostsController],
   providers: [PostsService, ResponseService, PaginationService],
   imports: [
-    TypeOrmModule.forFeature([Post]),
+    TypeOrmModule.forFeature([Post, View]),
     forwardRef(() => LikesModule),
     BookmarksModule,
   ],

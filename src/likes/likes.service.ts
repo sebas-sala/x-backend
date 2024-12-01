@@ -39,17 +39,7 @@ export class LikesService {
 
     const savedLike = await this.likeRepository.save(like);
 
-    try {
-      await this.notificationsService.create({
-        type: 'like',
-        title: 'New like',
-        sender: currentUser.id,
-        receivers: [post.user.id],
-        message: `${currentUser.username} liked your post`,
-      });
-    } catch (error) {
-      console.log(error);
-    }
+    this.createLikeNotification(postId, currentUser);
 
     return savedLike;
   }
@@ -104,6 +94,36 @@ export class LikesService {
 
     if (like) {
       throw new ConflictException('Like already exists');
+    }
+  }
+
+  private async createLikeNotification(
+    entityId: string,
+    currentUser: User,
+  ): Promise<void> {
+    try {
+      const existingNotification =
+        await this.notificationsService.findNotificationByEntityAndUser(
+          'like',
+          entityId,
+          currentUser.id,
+        );
+
+      // if (existingNotification) {
+      //   return;
+      // }
+
+      await this.notificationsService.create({
+        type: 'like',
+        title: 'New like',
+        sender: currentUser.id,
+        receivers: [entityId],
+        message: `@${currentUser.username} liked your post`,
+        entityId: entityId,
+        entityType: 'like',
+      });
+    } catch (error) {
+      console.log(error);
     }
   }
 }

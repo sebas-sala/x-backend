@@ -53,6 +53,9 @@ export class Notification {
   @Column({ default: false })
   isDeleted: boolean;
 
+  @Column({ default: false })
+  sent: boolean;
+
   @Column({ nullable: true, type: 'text' })
   deletedAt: Date | null;
 

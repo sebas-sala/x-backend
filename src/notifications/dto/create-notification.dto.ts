@@ -18,6 +18,9 @@ import {
 } from '../interfaces/notification-dto';
 
 export class CreateNotificationDto {
+  id?: string;
+  createdAt?: Date;
+
   @IsString()
   @IsNotEmpty()
   title: string;

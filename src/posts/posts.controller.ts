@@ -51,11 +51,13 @@ export class PostsController {
     @CurrentUser() currentUser: User,
     @Query() filters: FilterDto,
     @Query() pagination: PaginationDto,
+    @Query('orderBy') orderBy: string,
   ) {
     const { data, meta } = await this.postsService.findAll({
       currentUser,
       pagination,
       filters,
+      orderBy,
     });
 
     return this.responseService.successResponse({ data, meta });

@@ -22,6 +22,7 @@ import { BlockedUsersModule } from './blocked-users/blocked-users.module';
 import { NotificationsModule } from './notifications/notifications.module';
 
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
+import { ViewsModule } from './views/views.module';
 
 import configuration from './config/configuration';
 
@@ -55,6 +56,7 @@ import configuration from './config/configuration';
     NotificationsModule,
     ChatsModule,
     BookmarksModule,
+    ViewsModule,
   ],
   controllers: [AppController],
   providers: [

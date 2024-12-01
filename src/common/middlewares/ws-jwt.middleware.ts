@@ -1,6 +1,6 @@
 import * as jwt from 'jsonwebtoken';
 import { Socket } from 'socket.io';
-import { Injectable } from '@nestjs/common';
+import { Injectable, ForbiddenException } from '@nestjs/common';
 
 import { UsersService } from '@/src/users/users.service';
 
@@ -9,9 +9,10 @@ export class WsAuthMiddleware {
   constructor(private readonly usersService: UsersService) {}
 
   async use(socket: Socket, next: (err?: Error) => void) {
-    const token = socket.handshake?.headers?.authorization?.split(' ')[1];
+    const token = socket.handshake?.auth?.token as string;
+
     if (!token) {
-      return next(new Error('Authentication error'));
+      return next(new ForbiddenException('Failed to authenticate'));
     }
 
     try {
@@ -28,7 +29,7 @@ export class WsAuthMiddleware {
 
       return next();
     } catch (error) {
-      return next(new Error('Authentication error'));
+      return next(new ForbiddenException(error.message));
     }
   }
 }

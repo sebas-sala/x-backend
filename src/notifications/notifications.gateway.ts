@@ -9,7 +9,7 @@ import {
 } from '@nestjs/websockets';
 import { Server } from 'socket.io';
 import { Socket } from 'socket.io-client';
-import { UseFilters, UseGuards } from '@nestjs/common';
+import { forwardRef, Inject, UseFilters, UseGuards } from '@nestjs/common';
 
 import { User } from '../users/entities/user.entity';
 
@@ -24,11 +24,13 @@ import { WsExceptionFilter } from '../common/filters/ws-exception.filter';
 import { CreateMessageDto } from '../messages/dto/create-message.dto';
 
 import { NotificationDto } from './interfaces/notification-dto';
+import { NotificationsService } from './notifications.service';
 
 @WebSocketGateway({
   namespace: 'notifications',
   cors: {
     origin: '*',
+    methods: ['GET', 'POST'],
   },
 })
 export class NotificationsGateway
@@ -37,13 +39,16 @@ export class NotificationsGateway
   @WebSocketServer()
   server: Server;
 
-  private connectedUsers: Set<string> = new Set();
+  private connectedUsers = new Map<string, string>();
 
   constructor(
     private readonly messagesService: MessagesService,
     private wsAuthMiddleware: WsAuthMiddleware,
 
     private readonly responseService: ResponseService,
+
+    @Inject(forwardRef(() => NotificationsService))
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   afterInit(server: Server) {
@@ -52,7 +57,7 @@ export class NotificationsGateway
 
   handleConnection(client: any, ...args: any[]) {
     const user = client.handshake.auth as User;
-    this.connectedUsers.add(user.id);
+    this.connectedUsers.set(user.id, client.id);
   }
 
   handleDisconnect(client: any) {
@@ -60,10 +65,30 @@ export class NotificationsGateway
     this.connectedUsers.delete(user.id);
   }
 
+  @SubscribeMessage('getNotifications')
+  async getNotifications(@ConnectedSocket() client: any) {
+    const user = client?.handshake?.auth as User;
+
+    const { data, meta } = await this.notificationsService.findAll(user.id);
+
+    return this.responseService.successResponse({ data, meta }, 200);
+  }
+
   @SubscribeMessage('sendNotification')
   sendNotification(userId: string, notification: NotificationDto) {
-    if (this.connectedUsers.has(userId)) {
-      this.server.to(userId).emit('sendNotification', notification);
+    const socketIds = notification.receivers
+      .map((receiverId) => this.connectedUsers.get(receiverId))
+      .filter(Boolean);
+
+    if (socketIds.length === 0) {
+      return;
+    }
+
+    for (const socketId of socketIds) {
+      if (socketId) {
+        this.server.to(socketId).emit('notification', notification);
+        this.notificationsService.updateSent(notification);
+      }
     }
   }
 

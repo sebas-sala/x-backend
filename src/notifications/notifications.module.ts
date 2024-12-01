@@ -10,6 +10,7 @@ import { MessagesModule } from '../messages/messages.module';
 
 import { WsAuthMiddleware } from '../common/middlewares/ws-jwt.middleware';
 import { ResponseService } from '../common/services/response.service';
+import { PaginationService } from '../common/services/pagination.service';
 
 @Module({
   providers: [
@@ -17,6 +18,7 @@ import { ResponseService } from '../common/services/response.service';
     NotificationsService,
     WsAuthMiddleware,
     ResponseService,
+    PaginationService,
   ],
   imports: [
     TypeOrmModule.forFeature([Notification]),
