@@ -90,9 +90,6 @@ export class User {
   @OneToMany(() => Message, (message) => message.user)
   messages: Message[];
 
-  // @OneToMany(() => Bookmark, (bookmark) => bookmark.user)
-  // bookmarks: Bookmark[];
-
   @Expose({ groups: ['public', 'private', 'profile'] })
   isFollowed?: boolean;
 

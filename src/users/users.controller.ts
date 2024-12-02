@@ -29,6 +29,7 @@ import { PaginationDto } from '../common/dto/pagination.dto';
 import { ResponseService } from '../common/services/response.service';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { JwtAuthPublicGuard } from '../common/guards/jwt-auth-public.guard';
+import { FiltersDto } from './dto/filters.dto';
 
 @Controller('users')
 export class UsersController {
@@ -44,11 +45,13 @@ export class UsersController {
   @Get()
   async findAll(
     @Query() paginationDto: PaginationDto,
+    @Query() filtersDto: FiltersDto,
     @CurrentUser() currentUser: User,
   ) {
     const { data, meta } = await this.usersService.findAll({
       paginationDto,
       currentUser,
+      filtersDto,
     });
 
     return this.responseService.successResponse({

@@ -1,5 +1,6 @@
 import {
   IsNotEmpty,
+  IsOptional,
   IsString,
   IsUUID,
   MaxLength,
@@ -15,6 +16,7 @@ export class CreatePostDto {
 
   @IsString()
   @IsUUID()
+  @IsOptional()
   parentId?: string;
 
   constructor(createPostDto: Partial<CreatePostDto>) {

@@ -39,7 +39,9 @@ export class LikesService {
 
     const savedLike = await this.likeRepository.save(like);
 
-    this.createLikeNotification(postId, currentUser);
+    if (post.user.id !== currentUser.id) {
+    }
+    await this.createLikeNotification(postId, currentUser);
 
     return savedLike;
   }
@@ -102,12 +104,12 @@ export class LikesService {
     currentUser: User,
   ): Promise<void> {
     try {
-      const existingNotification =
-        await this.notificationsService.findNotificationByEntityAndUser(
-          'like',
-          entityId,
-          currentUser.id,
-        );
+      // const existingNotification =
+      //   await this.notificationsService.findNotificationByEntityAndUser(
+      //     'like',
+      //     entityId,
+      //     currentUser.id,
+      //   );
 
       // if (existingNotification) {
       //   return;

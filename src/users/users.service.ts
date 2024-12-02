@@ -17,6 +17,7 @@ import { BCRYPT_SALT_ROUNDS, DEFAULT_PROFILE } from '@/src/config/constants';
 import { PaginationDto } from '../common/dto/pagination.dto';
 import { PaginationService } from '../common/services/pagination.service';
 import { AuthService } from '../auth/auth.service';
+import { FiltersDto } from './dto/filters.dto';
 
 @Injectable()
 export class UsersService {
@@ -31,13 +32,15 @@ export class UsersService {
   async findAll({
     paginationDto,
     currentUser,
+    filtersDto,
   }: {
     paginationDto: PaginationDto;
     currentUser?: User;
+    filtersDto?: FiltersDto;
   }) {
     const query = this.usersRepository.createQueryBuilder('user');
 
-    this.applyFilters(query, currentUser);
+    this.applyFilters(query, currentUser, filtersDto);
     this.selectFollowStatus(query, currentUser);
 
     const { data, meta, raw } = await this.paginationService.paginate({
@@ -281,8 +284,28 @@ export class UsersService {
   private async applyFilters(
     query: SelectQueryBuilder<User>,
     currentUser?: User,
+    filtersDto?: FiltersDto,
   ): Promise<void> {
     await this.filterByBlockedUsers(query, currentUser);
+
+    if (!filtersDto) return;
+
+    await this.filterByQuery(query, filtersDto.by_query);
+  }
+
+  private async filterByQuery(
+    query: SelectQueryBuilder<User>,
+    by_query?: string,
+  ): Promise<void> {
+    if (!by_query) return;
+
+    query
+      .andWhere('user.username LIKE :query', {
+        query: `%${by_query}%`,
+      })
+      .orWhere('user.name LIKE :query', {
+        query: `%${by_query}%`,
+      });
   }
 
   private async filterByBlockedUsers(
