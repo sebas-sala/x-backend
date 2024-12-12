@@ -36,6 +36,9 @@ export class Post {
   @ManyToOne(() => User, (user) => user.posts, { eager: true, nullable: false })
   user: User;
 
+  @Column({ nullable: true })
+  image_url?: string;
+
   @ManyToOne(() => Post, (post) => post.replies, {
     nullable: true,
   })

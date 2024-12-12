@@ -1,10 +1,9 @@
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, SelectQueryBuilder } from 'typeorm';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 
 import { Post } from './entities/post.entity';
 import { User } from '../users/entities/user.entity';
-import { BlockedUser } from '../blocked-users/entities/blocked-user.entity';
 
 import { PaginationService } from '../common/services/pagination.service';
 
@@ -12,6 +11,8 @@ import { FilterDto } from './dto/filter.dto';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { PaginationDto } from '../common/dto/pagination.dto';
+import { StorageService } from '../common/services/storage.service';
+import { File } from '@nest-lab/fastify-multer';
 
 @Injectable()
 export class PostsService {
@@ -20,22 +21,43 @@ export class PostsService {
     private readonly postRepository: Repository<Post>,
 
     private readonly paginationService: PaginationService,
+    private readonly storageService: StorageService,
   ) {}
 
-  async create(createPostDto: CreatePostDto, currentUser: User) {
-    let parent: Post | undefined;
+  private readonly logger = new Logger(PostsService.name);
 
-    if (createPostDto.parentId) {
-      parent = (await this.findPostById(createPostDto.parentId)) || undefined;
+  async create(createPostDto: CreatePostDto, currentUser: User, file?: File) {
+    let imageUrl: string | undefined;
+    const parent = createPostDto.parentId
+      ? await this.findPostByIdOrFail(createPostDto.parentId)
+      : undefined;
+
+    if (createPostDto.image) {
+      const imageBuffer = Buffer.from(
+        createPostDto.image.split(',')[1],
+        'base64',
+      );
+      const contentType =
+        createPostDto.image.match(/data:(.*);base64/)?.[1] ?? '';
+      const fileName = `${currentUser.id}-${Date.now()}.${
+        contentType.split('/')[1]
+      }`;
+      imageUrl = await this.storageService.uploadImage({
+        fileName,
+        contentType,
+        fileBuffer: imageBuffer,
+      });
     }
 
-    const post = this.postRepository.create({
-      ...createPostDto,
-      user: { id: currentUser.id },
-      parent,
-      isReply: !!parent,
-    });
+    const postData = {
+      content: createPostDto.content,
+      user: { id: currentUser?.id },
+      parent: parent,
+      isReply: !!createPostDto.parentId,
+      image_url: imageUrl,
+    };
 
+    const post = this.postRepository.create(postData);
     return await this.postRepository.save(post);
   }
 
@@ -47,8 +69,8 @@ export class PostsService {
   }: {
     filters: FilterDto;
     pagination: PaginationDto;
-    currentUser?: User;
     orderBy: string;
+    currentUser?: User;
   }) {
     const query = this.postRepository.createQueryBuilder('post');
 
@@ -182,12 +204,15 @@ export class PostsService {
     this.byBookmarked(query, filters.by_bookmarked, currentUser);
     this.byLikeFilter(query, filters.by_like, currentUser);
     this.byBlockedUsersFilter(query, currentUser);
+    this.byReplyFilter(query, filters.by_reply);
     this.byParentFilter(query, filters.by_parent);
   }
 
   private applyOrderBy(query: SelectQueryBuilder<Post>, orderBy: string) {
     if (orderBy === 'trending') {
       return this.orderByViewsCount(query);
+    } else if (orderBy === 'createdAt') {
+      query.orderBy('post.createdAt', 'DESC');
     }
   }
 
@@ -216,6 +241,10 @@ export class PostsService {
   private byUsernameFilter(query: SelectQueryBuilder<Post>, username?: string) {
     if (!username) return;
     query.andWhere('user.username = :username', { username });
+  }
+
+  private byReplyFilter(query: SelectQueryBuilder<Post>, isReply?: boolean) {
+    query.andWhere('post.isReply = :isReply', { isReply });
   }
 
   private byParentFilter(query: SelectQueryBuilder<Post>, parentId?: string) {

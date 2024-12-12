@@ -8,6 +8,9 @@ import {
   Delete,
   UseGuards,
   Controller,
+  UseInterceptors,
+  UploadedFile,
+  Logger,
 } from '@nestjs/common';
 
 import { User } from '../users/entities/user.entity';
@@ -26,6 +29,7 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { JwtAuthPublicGuard } from '../common/guards/jwt-auth-public.guard';
 import { instanceToPlain } from 'class-transformer';
 import { BookmarksService } from '../bookmarks/bookmarks.service';
+import { File, FileInterceptor } from '@nest-lab/fastify-multer';
 
 @Controller('posts')
 export class PostsController {
@@ -36,13 +40,23 @@ export class PostsController {
     private readonly bookmarksService: BookmarksService,
   ) {}
 
+  private readonly logger = new Logger(PostsController.name);
+
   @UseGuards(JwtAuthGuard)
   @Post()
+  @UseInterceptors(
+    FileInterceptor('image', {
+      limits: {
+        fileSize: 10_485_760,
+      },
+    }),
+  )
   create(
     @Body() createPostDto: CreatePostDto,
     @CurrentUser() currentUser: User,
+    @UploadedFile() image: File,
   ) {
-    return this.postsService.create(createPostDto, currentUser);
+    return this.postsService.create(createPostDto, currentUser, image);
   }
 
   @UseGuards(JwtAuthPublicGuard)
@@ -51,7 +65,7 @@ export class PostsController {
     @CurrentUser() currentUser: User,
     @Query() filters: FilterDto,
     @Query() pagination: PaginationDto,
-    @Query('orderBy') orderBy: string,
+    @Query('orderBy') orderBy: string = 'createdAt',
   ) {
     const { data, meta } = await this.postsService.findAll({
       currentUser,

@@ -28,7 +28,7 @@ export class FilterDto {
   @IsOptional()
   @IsBoolean()
   @Type(() => Boolean)
-  by_reply?: boolean;
+  by_reply: boolean = false;
 
   @IsOptional()
   @IsUUID()
