@@ -1,6 +1,7 @@
 import {
   ConflictException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { In, Repository, SelectQueryBuilder } from 'typeorm';
@@ -9,15 +10,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Follow } from './entities/follow.entity';
 import { User } from '../users/entities/user.entity';
 
-import { CreateFollowDto } from './dto/create-follow.dto';
-import { DeleteFollowDto } from './dto/delete-follow.dto';
-
 import { UsersService } from '@/src/users/users.service';
 import { NotificationsService } from '../notifications/notifications.service';
-import {
-  PaginatedResult,
-  PaginationService,
-} from '../common/services/pagination.service';
+import { PaginationService } from '../common/services/pagination.service';
 import { PaginationDto } from '../common/dto/pagination.dto';
 
 @Injectable()
@@ -27,6 +22,8 @@ export class FollowService {
     FOLLOWING_NOT_FOUND: 'Following not found',
     FOLLOW_ALREADY_EXISTS: 'Follow already exists',
   };
+
+  private readonly logger = new Logger(FollowService.name);
 
   constructor(
     @InjectRepository(User)
@@ -147,17 +144,7 @@ export class FollowService {
     });
     const savedFollow = await this.followRepository.save(follow);
 
-    try {
-      await this.notificationsService.create({
-        type: 'follow',
-        title: 'New follower',
-        sender: currentUser.id,
-        receivers: [followingId],
-        message: `${currentUser.username} started following you`,
-      });
-    } catch (error) {
-      console.error(error);
-    }
+    await this.createFollowNotification(savedFollow, followingId, currentUser);
 
     return savedFollow;
   }
@@ -166,6 +153,26 @@ export class FollowService {
     await this.validateFollowExists(currentUser.id, followingId);
 
     return await this.deleteFollow(currentUser.id, followingId);
+  }
+
+  private async createFollowNotification(
+    follow: Follow,
+    followingId: string,
+    currentUser: User,
+  ) {
+    try {
+      return await this.notificationsService.create({
+        type: 'follow',
+        title: 'New follower',
+        sender: currentUser.id,
+        receivers: [followingId],
+        message: `${currentUser.username} started following you`,
+        entityId: follow.id,
+        entityType: 'follow',
+      });
+    } catch (error) {
+      this.logger.error(error);
+    }
   }
 
   private async deleteFollow(followerId: string, followingId: string) {

@@ -13,6 +13,7 @@ import { BookmarksModule } from '../bookmarks/bookmarks.module';
 import { View } from '../views/entities/view.entity';
 import { StorageService } from '../common/services/storage.service';
 import { FastifyMulterModule } from '@nest-lab/fastify-multer';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   controllers: [PostsController],
@@ -22,6 +23,7 @@ import { FastifyMulterModule } from '@nest-lab/fastify-multer';
     forwardRef(() => LikesModule),
     BookmarksModule,
     FastifyMulterModule,
+    NotificationsModule,
   ],
   exports: [TypeOrmModule, PostsService],
 })

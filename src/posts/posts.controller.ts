@@ -54,9 +54,9 @@ export class PostsController {
   create(
     @Body() createPostDto: CreatePostDto,
     @CurrentUser() currentUser: User,
-    @UploadedFile() image: File,
+    @UploadedFile() file: File,
   ) {
-    return this.postsService.create(createPostDto, currentUser, image);
+    return this.postsService.create(createPostDto, currentUser, file);
   }
 
   @UseGuards(JwtAuthPublicGuard)

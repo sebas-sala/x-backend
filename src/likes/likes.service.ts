@@ -104,16 +104,16 @@ export class LikesService {
     currentUser: User,
   ): Promise<void> {
     try {
-      // const existingNotification =
-      //   await this.notificationsService.findNotificationByEntityAndUser(
-      //     'like',
-      //     entityId,
-      //     currentUser.id,
-      //   );
+      const existingNotification =
+        await this.notificationsService.findNotificationByEntityAndUser(
+          'like',
+          entityId,
+          currentUser.id,
+        );
 
-      // if (existingNotification) {
-      //   return;
-      // }
+      if (existingNotification) {
+        return;
+      }
 
       await this.notificationsService.create({
         type: 'like',

@@ -13,6 +13,7 @@ import { UpdatePostDto } from './dto/update-post.dto';
 import { PaginationDto } from '../common/dto/pagination.dto';
 import { StorageService } from '../common/services/storage.service';
 import { File } from '@nest-lab/fastify-multer';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class PostsService {
@@ -22,32 +23,31 @@ export class PostsService {
 
     private readonly paginationService: PaginationService,
     private readonly storageService: StorageService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   private readonly logger = new Logger(PostsService.name);
 
+  async createImagePost(file?: File, currentUser?: User) {
+    if (!file || !currentUser) return;
+
+    const imageBuffer = file.buffer;
+    const contentType = file.mimetype;
+    const fileName = `${currentUser.id}/${file.originalname}`;
+
+    return await this.storageService.uploadImage({
+      fileName,
+      contentType,
+      fileBuffer: imageBuffer,
+    });
+  }
+
   async create(createPostDto: CreatePostDto, currentUser: User, file?: File) {
-    let imageUrl: string | undefined;
     const parent = createPostDto.parentId
       ? await this.findPostByIdOrFail(createPostDto.parentId)
       : undefined;
 
-    if (createPostDto.image) {
-      const imageBuffer = Buffer.from(
-        createPostDto.image.split(',')[1],
-        'base64',
-      );
-      const contentType =
-        createPostDto.image.match(/data:(.*);base64/)?.[1] ?? '';
-      const fileName = `${currentUser.id}-${Date.now()}.${
-        contentType.split('/')[1]
-      }`;
-      imageUrl = await this.storageService.uploadImage({
-        fileName,
-        contentType,
-        fileBuffer: imageBuffer,
-      });
-    }
+    const imageUrl = await this.createImagePost(file, currentUser);
 
     const postData = {
       content: createPostDto.content,
@@ -58,7 +58,11 @@ export class PostsService {
     };
 
     const post = this.postRepository.create(postData);
-    return await this.postRepository.save(post);
+    const savedPost = await this.postRepository.save(post);
+
+    await this.createPostNotification(savedPost, currentUser);
+
+    return savedPost;
   }
 
   async findAll({
@@ -262,6 +266,24 @@ export class PostsService {
       .innerJoin('like', 'like', 'like.postId = post.id')
       .andWhere('like.userId = :userId')
       .setParameter('userId', currentUser?.id);
+  }
+
+  private async createPostNotification(post: Post, currentUser: User) {
+    if (!post.parent || !post.isReply) return;
+
+    try {
+      return await this.notificationsService.create({
+        type: 'comment',
+        title: 'New comment',
+        sender: currentUser.id,
+        receivers: [post.user.id],
+        message: `@${currentUser.username} comment your post`,
+        entityId: post.id,
+        entityType: 'comment',
+      });
+    } catch (error) {
+      this.logger.error(error.message);
+    }
   }
 
   private byBookmarked(

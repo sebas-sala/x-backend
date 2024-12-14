@@ -1,5 +1,4 @@
 import {
-  IsBase64,
   IsNotEmpty,
   IsOptional,
   IsString,
@@ -19,10 +18,6 @@ export class CreatePostDto {
   @IsUUID()
   @IsOptional()
   parentId?: string;
-
-  @IsOptional()
-  @IsString()
-  image?: string;
 
   constructor(createPostDto: Partial<CreatePostDto>) {
     Object.assign(this, createPostDto);

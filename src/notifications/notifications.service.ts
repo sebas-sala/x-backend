@@ -1,12 +1,6 @@
 import { Cron } from '@nestjs/schedule';
 import { In, Repository } from 'typeorm';
-import {
-  ConsoleLogger,
-  forwardRef,
-  Inject,
-  Injectable,
-  Logger,
-} from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 
 import {
@@ -23,6 +17,8 @@ import {
 } from './interfaces/notification-dto';
 import { CreateNotificationDto } from './dto/create-notification.dto';
 import { PaginationService } from '../common/services/pagination.service';
+import { PaginationDto } from '../common/dto/pagination.dto';
+import { User } from '../users/entities/user.entity';
 
 @Injectable()
 export class NotificationsService {
@@ -30,9 +26,9 @@ export class NotificationsService {
 
   private readonly priorities = {
     like: 'high',
-    follow: 'low',
+    follow: 'high',
     message: 'high',
-    comment: 'medium',
+    comment: 'high',
     mention: 'low',
   } as const;
 
@@ -65,16 +61,32 @@ export class NotificationsService {
 
   private readonly logger = new Logger(NotificationsService.name);
 
-  async findAll(userId: string) {
+  async findAll({
+    currentUser,
+    pagination,
+    orderBy,
+  }: {
+    currentUser: User;
+    pagination: PaginationDto;
+    orderBy: string;
+  }) {
     const notifications = this.notificationRepository
       .createQueryBuilder('notification')
       .leftJoinAndSelect('notification.receivers', 'receivers')
       .leftJoinAndSelect('notification.sender', 'sender')
-      .where('receivers.id = :userId', { userId });
+      .where('receivers.id = :userId', { userId: currentUser.id })
+      .orderBy(`notification.${orderBy}`, 'DESC');
 
-    return this.paginationService.paginate({
+    const { data, meta } = await this.paginationService.paginate({
       query: notifications,
+      page: pagination.page,
+      perPage: pagination.perPage,
     });
+
+    return {
+      data,
+      meta,
+    };
   }
 
   async create(
@@ -128,7 +140,7 @@ export class NotificationsService {
     await this.handleNotifications('medium');
   }
 
-  @Cron('*/15 * * * * *')
+  @Cron('*/2 * * * * *')
   async handleHighPriorityNotifications() {
     await this.handleNotifications('high');
   }

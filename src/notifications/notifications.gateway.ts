@@ -65,15 +65,6 @@ export class NotificationsGateway
     this.connectedUsers.delete(user.id);
   }
 
-  @SubscribeMessage('getNotifications')
-  async getNotifications(@ConnectedSocket() client: any) {
-    const user = client?.handshake?.auth as User;
-
-    const { data, meta } = await this.notificationsService.findAll(user.id);
-
-    return this.responseService.successResponse({ data, meta }, 200);
-  }
-
   @SubscribeMessage('sendNotification')
   sendNotification(userId: string, notification: NotificationDto) {
     const socketIds = notification.receivers

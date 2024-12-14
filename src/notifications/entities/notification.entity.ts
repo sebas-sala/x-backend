@@ -25,7 +25,13 @@ export const NotificationTypes = [
   'mention',
 ] as const;
 export const NotificationPriorities = ['low', 'medium', 'high'] as const;
-export const EntityTypes = ['post', 'message', 'comment', 'like'] as const;
+export const EntityTypes = [
+  'post',
+  'message',
+  'comment',
+  'like',
+  'follow',
+] as const;
 
 @Entity()
 export class Notification {

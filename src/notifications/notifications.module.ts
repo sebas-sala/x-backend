@@ -11,6 +11,7 @@ import { MessagesModule } from '../messages/messages.module';
 import { WsAuthMiddleware } from '../common/middlewares/ws-jwt.middleware';
 import { ResponseService } from '../common/services/response.service';
 import { PaginationService } from '../common/services/pagination.service';
+import { NotificationsController } from './notifications.controller';
 
 @Module({
   providers: [
@@ -25,6 +26,7 @@ import { PaginationService } from '../common/services/pagination.service';
     forwardRef(() => MessagesModule),
     forwardRef(() => UsersModule),
   ],
+  controllers: [NotificationsController],
   exports: [NotificationsService, NotificationsGateway],
 })
 export class NotificationsModule {}
