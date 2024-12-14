@@ -29,7 +29,11 @@ import { NotificationsService } from './notifications.service';
 @WebSocketGateway({
   namespace: 'notifications',
   cors: {
-    origin: '*',
+    origin: [
+      'http://localhost:5173',
+      'https://x-frontend-orcin.vercel.app',
+      'https://x-frontend-sebastianssalas-projects.vercel.app/',
+    ],
     methods: ['GET', 'POST'],
   },
 })

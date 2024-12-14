@@ -19,7 +19,11 @@ export async function setupTestApp(port = 0) {
     {
       logger: ['error', 'warn', 'log', 'debug', 'verbose'],
       cors: {
-        origin: ['http://localhost:5173', 'http://localhost:3000'],
+        origin: [
+          'http://localhost:5173',
+          'https://x-frontend-orcin.vercel.app',
+          'https://x-frontend-sebastianssalas-projects.vercel.app/',
+        ],
         methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
         preflightContinue: false,
         optionsSuccessStatus: 204,
